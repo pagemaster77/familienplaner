@@ -1,0 +1,72 @@
+/* Wandkalender: nur Ansicht, fürs Display. Feste helle Darstellung, große Schrift. */
+:root{--bg:#f3f5f9;--card:#fff;--text:#1d2433;--muted:#6b7488;--line:#dfe4ee;--primary:#2b6cb0;--today:#fff6d6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:clamp(13px,1.35vw,22px)/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden;cursor:none;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;cursor:none}
+#wall{height:100dvh;display:flex;flex-direction:column;padding:.8em 1em;gap:.7em}
+
+/* Kopfzeile */
+.head{display:flex;align-items:center;gap:1em}
+.head .title{font-weight:700;font-size:1.25em;white-space:nowrap}
+.head .range{color:var(--muted);white-space:nowrap}
+.head .grow{flex:1}
+.clock{text-align:right;line-height:1.1}
+.clock b{font-size:1.9em;font-weight:700;display:block}
+.clock span{color:var(--muted)}
+.buttons{display:flex;gap:.5em;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:.4em;padding:.55em 1em;border:1px solid var(--line);border-radius:.8em;
+  background:var(--card);font-weight:600}
+.btn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.nav{padding:.55em .8em}
+.stale{background:#ffe3e3;color:#a12626;padding:.2em .7em;border-radius:.6em;font-size:.85em}
+
+/* Wochenraster: links Personen, oben Tage */
+.view{flex:1;min-height:0;display:flex;flex-direction:column}
+.grid{flex:1;min-height:0;display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:.8em;overflow:hidden}
+.grid>div{background:var(--card);min-width:0;min-height:0;overflow:hidden}
+.dayh{padding:.4em .5em;text-align:center;font-weight:600;background:#fafbfd!important}
+.dayh small{display:block;color:var(--muted);font-weight:400}
+.dayh.today{background:var(--today)!important}
+.dayh.we{color:#a14a4a}
+.corner{background:#fafbfd!important}
+.person{display:flex;align-items:center;gap:.5em;padding:.4em .5em;font-weight:600;background:#fafbfd!important}
+.person .pn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell{padding:.25em;display:flex;flex-direction:column;gap:.2em}
+.cell.today{background:var(--today)!important}
+.chip{padding:.15em .4em;border-left:.3em solid var(--c);background:var(--bg-c);border-radius:.3em;
+  font-size:.9em;line-height:1.2;overflow:hidden;overflow-wrap:anywhere;flex-shrink:0}
+.chip b{font-weight:700;margin-right:.3em}
+.more{color:var(--muted);font-size:.8em;padding-left:.3em}
+
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:2.3em;height:2.3em;border-radius:50%;
+  overflow:hidden;flex:none;font-size:1em;color:#fff}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar.s{width:1.8em;height:1.8em}
+
+/* andere Ansichten */
+.cards{flex:1;min-height:0;display:grid;gap:.7em;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:.8em;padding:.8em;overflow:hidden;display:flex;flex-direction:column;gap:.4em}
+.card h2{margin:0 0 .2em;font-size:1.1em;display:flex;align-items:center;gap:.5em}
+.row{display:flex;align-items:center;gap:.6em;padding:.3em 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row .grow{flex:1;min-width:0}
+.pts{background:#eaf2ff;color:var(--primary);border-radius:.6em;padding:.05em .5em;font-weight:700;font-size:.9em;white-space:nowrap}
+.done{text-decoration:line-through;color:var(--muted)}
+.muted{color:var(--muted)}
+.cols{columns:3 14em;column-gap:1.2em;flex:1;min-height:0;overflow:hidden}
+.item{break-inside:avoid;padding:.35em .2em;border-bottom:1px solid var(--line)}
+.meals{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,1fr);gap:.6em}
+.meal{background:var(--card);border:1px solid var(--line);border-radius:.8em;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.meal.today{background:var(--today)}
+.meal .d{padding:.4em .6em;font-weight:600;background:#fafbfd;text-align:center}
+.meal.today .d{background:var(--today)}
+.meal .img{flex:1;min-height:0;background:#eee center/cover no-repeat}
+.meal .t{padding:.5em .6em;font-weight:600}
+.meal .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.chat{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:.5em;overflow:hidden}
+.msg{display:flex;gap:.6em;align-items:flex-start}
+.bubble{background:var(--card);border:1px solid var(--line);border-radius:.8em;padding:.4em .8em;max-width:70%}
+.bubble small{color:var(--muted);display:block}
+.center{height:100dvh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2em;color:var(--muted);font-size:1.3em}

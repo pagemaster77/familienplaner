@@ -80,3 +80,15 @@ Admin-Rechte:
 - Wer die Familie anlegt, ist Admin.
 - Admins sehen unter „Familie“ bei jedem Mitglied den Knopf „Zum Admin machen“ bzw. „Admin entziehen“, dürfen den Familiennamen ändern und Chat-Nachrichten löschen (× an der Nachricht).
 - Es bleibt immer mindestens ein Admin.
+
+---
+
+## Wandanzeige (nur ansehen, ohne Anmeldung)
+
+Für ein Display in der Wohnung gibt es die Seite `wand.html`: Wochenkalender mit den Personen links, oben Schalter für To-Do, Einkauf, Essen und Chat. Sie kann nichts eintragen.
+
+1. Ein Admin geht in der App auf **Familie → Wandanzeige → einschalten** und kopiert die Adresse.
+2. Die Adresse im Browser des Displays öffnen und als Lesezeichen speichern.
+3. Geht die Adresse verloren oder in falsche Hände: **Neue Adresse** erzeugen (die alte wird sofort ungültig) oder **Ausschalten**.
+
+Technik: Edge Function `wall-data` (ohne Login, geschützt durch die geheime Adresse). Die privaten Kalender-Links der Personen verlassen den Server nie.

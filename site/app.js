@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "7 (29.10.)";
+const VERSION = "8 (29.10.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -421,6 +421,7 @@ function viewFamily() {
       <p class="sub">Google: Kalender-Einstellungen → „Geheime Adresse im iCal-Format“. iCloud: Kalender teilen → „Öffentlicher Kalender“ → Link kopieren.</p>
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
+    ${S.me.is_admin ? `<div class="card"><h2>Wandanzeige</h2>${wallCard()}</div>` : ""}
     <div class="card"><h2>Anzeige</h2>
       <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
       <a class="btn block" href="#display">📺 Tablet-Ansicht starten</a></div>
@@ -517,7 +518,35 @@ async function pushLoad() {
   } catch (_) { S.push = null; }
 }
 
+/* Wandanzeige: geheime Adresse zum reinen Ansehen, ohne Anmeldung (für das Display in der Wohnung) */
+function wallUrl() {
+  return location.origin + location.pathname.replace(/[^/]*$/, "") + "wand.html#k=" + S.family.wall_token;
+}
+function wallCard() {
+  if (!S.family.wall_token) return `<p class="sub">Ein Display in der Wohnung zeigt Wochenkalender, To-Dos, Einkauf, Essen und Chat. Es kann nur anzeigen, nichts eintragen. Dafür gibt es eine geheime Adresse, die ohne Anmeldung funktioniert.</p>
+    <button class="btn block" data-act="wallOn">Wandanzeige einschalten</button>`;
+  return `<p class="sub">Diese Adresse im Browser des Displays öffnen (und als Lesezeichen speichern). Wer die Adresse kennt, kann die Familiendaten ansehen, aber nichts ändern. Nicht weitergeben.</p>
+    <input id="wallurl" readonly value="${esc(wallUrl())}" onclick="this.select()" style="font-size:13px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn small" data-act="wallCopy">Adresse kopieren</button>
+      <a class="btn small ghost" href="${esc(wallUrl())}" target="_blank" rel="noopener">Vorschau öffnen</a>
+      <button class="btn small ghost" data-act="wallNew">Neue Adresse (alte wird ungültig)</button>
+      <button class="btn small ghost" data-act="wallOff">Ausschalten</button></div>`;
+}
+const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
+async function setWall(tok) {
+  await q(sb.from("families").update({ wall_token: tok }).eq("id", S.family.id));
+  S.family.wall_token = tok; render();
+}
+
 const ACT = {
+  async wallOn() { await setWall(newToken()); },
+  async wallNew() { if (confirm("Die alte Adresse wird ungültig. Das Display muss dann mit der neuen Adresse neu geöffnet werden. Fortfahren?")) await setWall(newToken()); },
+  async wallOff() { if (confirm("Wandanzeige ausschalten? Die Adresse funktioniert dann nicht mehr.")) await setWall(null); },
+  async wallCopy() {
+    try { await navigator.clipboard.writeText(wallUrl()); toast("Adresse kopiert"); }
+    catch (_) { const i = document.getElementById("wallurl"); if (i) { i.select(); toast("Bitte lange drücken und kopieren"); } }
+  },
   async pushOn() {
     try {
       const perm = await Notification.requestPermission();
