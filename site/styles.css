@@ -1,0 +1,163 @@
+:root{
+  --bg:#f4f6fa; --card:#fff; --text:#1d2433; --muted:#6b7488; --line:#e3e7ef;
+  --primary:#2b6cb0; --primary-d:#1f4e82; --ok:#2f9e5b; --warn:#d9822b; --danger:#d64545;
+  --radius:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#10141c; --card:#1a202c; --text:#eef1f7; --muted:#9aa4b8; --line:#2b3447;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+.hidden,[hidden]{display:none!important}
+
+/* ---------- Anmeldung ---------- */
+.auth{max-width:420px;margin:0 auto;padding:48px 20px}
+.auth h1{font-size:28px;margin-bottom:6px}
+.auth p{color:var(--muted);margin:0 0 20px}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+textarea{min-height:90px;resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border:0;border-radius:12px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
+.btn:active{background:var(--primary-d)}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--line)}
+.btn.danger{background:var(--danger)}
+.btn.small{padding:6px 12px;font-size:14px;border-radius:10px}
+.link{background:none;border:0;color:var(--primary);cursor:pointer;padding:8px 0;text-decoration:underline}
+
+/* ---------- Rahmen mit Menüleiste ---------- */
+.shell{min-height:100dvh;padding-bottom:84px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
+.top h1{font-size:20px}
+.top .who{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.main{max-width:760px;margin:0 auto;padding:16px}
+.tabs{position:fixed;bottom:0;left:0;right:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;background:none;border:0;padding:8px 2px 10px;color:var(--muted);font-size:11px;cursor:pointer}
+.tabs button .ic{display:block;font-size:22px;line-height:1.2}
+.tabs button.on{color:var(--primary);font-weight:700}
+
+/* ---------- Karten und Listen ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.card h2{font-size:17px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .grow{flex:1;min-width:0}
+.row .sub{font-size:13px;color:var(--muted)}
+.row.done .t{text-decoration:line-through;color:var(--muted)}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:none;cursor:pointer;flex:none;font-size:15px;color:#fff;line-height:1}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.pts{font-weight:700;color:var(--warn);white-space:nowrap}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex:none;color:#fff}
+.add{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.add input{flex:1;min-width:120px}
+.add .pt{max-width:80px}
+.empty{color:var(--muted);text-align:center;padding:16px 0}
+.x{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px}
+
+/* ---------- Rangliste ---------- */
+.rank{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.rank .p{min-width:92px;text-align:center;padding:10px 6px;border-radius:14px;background:var(--bg)}
+.rank .p b{display:block;font-size:20px;color:var(--warn)}
+.rank .p small{color:var(--muted)}
+
+/* ---------- Chat ---------- */
+.chat{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.msg{max-width:84%;padding:8px 12px;border-radius:16px;background:var(--bg)}
+.msg.me{align-self:flex-end;background:var(--primary);color:#fff}
+.msg small{display:block;opacity:.7;font-size:11px;margin-bottom:2px}
+
+/* ---------- Essen ---------- */
+.meal{display:flex;gap:12px}
+.meal img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none;background:var(--bg)}
+.meal .ph{width:84px;height:84px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px;flex:none}
+details.recipe{margin-top:8px}
+details.recipe pre{white-space:pre-wrap;font:inherit;margin:6px 0}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted)}
+
+/* ---------- Kalender ---------- */
+.day{font-weight:700;margin:14px 0 4px;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+.ev{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ev:last-child{border-bottom:0}
+.ev .time{width:56px;color:var(--muted);font-size:14px;flex:none}
+
+/* ---------- Tablet / Display ---------- */
+.board{padding:16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-items:start}
+.board .card{margin:0}
+.board-head{display:flex;justify-content:space-between;align-items:baseline;padding:14px 20px 0}
+.board-head h1{font-size:34px}
+.board-head .clock{font-size:34px;font-weight:700}
+.board .row{font-size:18px}
+.board .card h2{font-size:20px}
+
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:12px;z-index:20;max-width:90%}
+.err{color:var(--danger);font-size:14px;margin:6px 0}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.swatches button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.swatches button.on{border-color:var(--text)}
+.emojis{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.emojis button{font-size:24px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:4px 8px;cursor:pointer}
+.emojis button.on{border-color:var(--primary)}
+
+/* ---------- Tablet: großer Kalender ---------- */
+.bd{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;height:100dvh;padding:14px;overflow:hidden}
+.bd-main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.bd-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.bd-head h1{font-size:30px;text-transform:capitalize}
+.bd-ctl{display:flex;gap:6px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;font-size:14px;color:var(--muted)}
+.legend .lg{display:flex;align-items:center;gap:6px}
+.calgrid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(var(--rows),minmax(0,1fr));
+  border-top:1px solid var(--line);border-left:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+.wh{padding:6px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg)}
+.cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px;overflow:hidden;min-width:0}
+.cell.other{opacity:.45}
+.cell.today{background:rgba(79,140,255,.14)}
+.cell .dn{font-size:13px;font-weight:700;margin-bottom:2px;color:var(--muted)}
+.cell.today .dn{color:var(--primary)}
+.chip{font-size:12px;line-height:1.25;color:#fff;border-radius:6px;padding:2px 5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip b{font-weight:700}
+.calgrid.week .chip{font-size:15px;white-space:normal;padding:4px 6px;margin-top:4px}
+.more{font-size:11px;color:var(--muted);margin-top:2px}
+.bd-side{overflow-y:auto;min-height:0;padding-right:2px}
+.bd-side .card{margin-bottom:12px}
+.bd-side .meal img{width:72px;height:72px}
+.side-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.side-head .clock{font-size:36px;font-weight:700}
+.side-head .x{margin-left:auto}
+@media (max-width:900px){
+  .bd{grid-template-columns:1fr;height:auto;overflow:visible}
+  .calgrid{min-height:70vh}
+  .bd-side{overflow:visible}
+}
+
+/* ---------- Menüleiste oben (damit nichts verdeckt wird) ---------- */
+.top-wrap{position:sticky;top:0;z-index:6;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-wrap .top{position:static;border-bottom:0;padding-bottom:6px}
+.top-wrap .tabs{position:static;border-top:0;background:transparent;padding-bottom:0}
+.top-wrap .tabs button{padding:4px 2px 7px}
+.top-wrap .tabs button .ic{font-size:20px}
+.top-wrap .tabs button.on{box-shadow:inset 0 -3px 0 var(--primary)}
+.shell{padding-bottom:100px}
+#toast{bottom:auto;top:130px}
+
+/* ---------- Update 4: Rezepte, Chat-Löschen ---------- */
+input[type=checkbox]{width:auto;padding:0;margin:0 8px 0 0;flex:none;accent-color:var(--primary)}
+.ings{margin:8px 0}
+.ing{display:flex;align-items:flex-start;padding:5px 0;font-size:15px}
+.lnk{display:inline-block;margin-top:4px;font-size:14px;color:var(--primary)}
+.msg{position:relative}
+.msg .mx{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--danger);color:#fff;font-size:14px;line-height:1;cursor:pointer;padding:0}
+.btn.small + .ings, details.recipe .btn.small{margin-top:4px}
+
+/* ---------- Update 5: Profilfotos, Punkte-Knopf ---------- */
+.avatar{overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.photo-row input[type=file]{padding:8px}
+button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;color:var(--warn);padding:2px 6px;border-radius:8px;text-decoration:underline dotted}

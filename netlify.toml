@@ -1,0 +1,3 @@
+# Netlify veröffentlicht nur den Ordner "site" (die App). Kein Build nötig.
+[build]
+  publish = "site"
