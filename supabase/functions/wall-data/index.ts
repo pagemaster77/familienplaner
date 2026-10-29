@@ -33,7 +33,29 @@ async function fetchIcal(url: string): Promise<string | null> {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { token, what } = await req.json();
+    const { token, what, nonce } = await req.json();
+
+    // Kopplung per kurzem Code (für Displays ohne Tastatur)
+    if (what === "pair_start" || what === "pair_poll") {
+      if (typeof nonce !== "string" || !/^[0-9a-f]{32}$/.test(nonce)) return json({ ok: false, error: "invalid" }, 400);
+      await db.from("wall_pairings").delete().lt("created_at", new Date(Date.now() - 15 * 60000).toISOString());
+      const { data: row } = await db.from("wall_pairings").select("code,token").eq("nonce", nonce).maybeSingle();
+      if (row?.token) {
+        await db.from("wall_pairings").delete().eq("nonce", nonce);
+        return json({ ok: true, status: "ok", token: row.token });
+      }
+      if (row) return json({ ok: true, status: "wait", code: row.code });
+      if (what === "pair_poll") return json({ ok: true, status: "expired" });
+      const { count } = await db.from("wall_pairings").select("code", { count: "exact", head: true });
+      if ((count ?? 0) > 100) return json({ ok: false, error: "busy" }, 429);
+      for (let i = 0; i < 5; i++) {
+        const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0");
+        const { error } = await db.from("wall_pairings").insert({ code, nonce });
+        if (!error) return json({ ok: true, status: "wait", code });
+      }
+      return json({ ok: false, error: "busy" }, 429);
+    }
+
     if (typeof token !== "string" || !/^[0-9a-f]{32}$/.test(token)) return json({ ok: false, error: "invalid" }, 403);
     const { data: fam } = await db.from("families").select("id,name").eq("wall_token", token).maybeSingle();
     if (!fam) return json({ ok: false, error: "invalid" }, 403);

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "8 (29.10.)";
+const VERSION = "9 (29.10.)"; 
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -523,15 +523,17 @@ function wallUrl() {
   return location.origin + location.pathname.replace(/[^/]*$/, "") + "wand.html#k=" + S.family.wall_token;
 }
 function wallCard() {
-  if (!S.family.wall_token) return `<p class="sub">Ein Display in der Wohnung zeigt Wochenkalender, To-Dos, Einkauf, Essen und Chat. Es kann nur anzeigen, nichts eintragen. Dafür gibt es eine geheime Adresse, die ohne Anmeldung funktioniert.</p>
-    <button class="btn block" data-act="wallOn">Wandanzeige einschalten</button>`;
-  return `<p class="sub">Diese Adresse im Browser des Displays öffnen (und als Lesezeichen speichern). Wer die Adresse kennt, kann die Familiendaten ansehen, aber nichts ändern. Nicht weitergeben.</p>
-    <input id="wallurl" readonly value="${esc(wallUrl())}" onclick="this.select()" style="font-size:13px">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn small" data-act="wallCopy">Adresse kopieren</button>
-      <a class="btn small ghost" href="${esc(wallUrl())}" target="_blank" rel="noopener">Vorschau öffnen</a>
-      <button class="btn small ghost" data-act="wallNew">Neue Adresse (alte wird ungültig)</button>
-      <button class="btn small ghost" data-act="wallOff">Ausschalten</button></div>`;
+  const on = !!S.family.wall_token;
+  return `<p class="sub">Ein Display in der Wohnung zeigt Wochenkalender, To-Dos, Einkauf, Essen und Chat. Es kann nur anzeigen, nichts eintragen.</p>
+    <p class="sub"><b>Display koppeln:</b> Auf dem Display die Adresse <b>${esc(location.origin + location.pathname.replace(/[^/]*$/, "") + "wand.html")}</b> öffnen. Dort erscheint ein Code, den du hier eingibst.</p>
+    <form class="add" data-form="wallpair" style="margin:6px 0 10px"><input name="code" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="Code vom Display, z. B. 123 456" required aria-label="Code vom Display"><button class="btn">Koppeln</button></form>
+    ${on ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn small ghost" data-act="wallNew">Alle Displays abmelden</button>
+      <button class="btn small ghost" data-act="wallOff">Wandanzeige ausschalten</button></div>
+    <details style="margin-top:10px"><summary class="sub" style="cursor:pointer">Erweitert: Direktlink</summary>
+      <p class="sub">Alternative zum Code. Wer den Link kennt, kann die Familiendaten ansehen. Nicht weitergeben.</p>
+      <input id="wallurl" readonly value="${esc(wallUrl())}" onclick="this.select()" style="font-size:13px">
+      <button class="btn small" data-act="wallCopy" style="margin-top:8px">Link kopieren</button></details>` : ""}`;
 }
 const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
 async function setWall(tok) {
@@ -540,9 +542,8 @@ async function setWall(tok) {
 }
 
 const ACT = {
-  async wallOn() { await setWall(newToken()); },
-  async wallNew() { if (confirm("Die alte Adresse wird ungültig. Das Display muss dann mit der neuen Adresse neu geöffnet werden. Fortfahren?")) await setWall(newToken()); },
-  async wallOff() { if (confirm("Wandanzeige ausschalten? Die Adresse funktioniert dann nicht mehr.")) await setWall(null); },
+    async wallNew() { if (confirm("Alle gekoppelten Displays werden abgemeldet und müssen neu gekoppelt werden. Fortfahren?")) await setWall(newToken()); },
+  async wallOff() { if (confirm("Wandanzeige ausschalten? Alle Displays zeigen dann nichts mehr an.")) await setWall(null); },
   async wallCopy() {
     try { await navigator.clipboard.writeText(wallUrl()); toast("Adresse kopiert"); }
     catch (_) { const i = document.getElementById("wallurl"); if (i) { i.select(); toast("Bitte lange drücken und kopieren"); } }
@@ -632,6 +633,11 @@ const ACT = {
 };
 
 const FORMS = {
+  async wallpair(f) {
+    await q(sb.rpc("wall_pair", { p_code: String(f.get("code") || "") }));
+    S.family = await q(sb.from("families").select("*").eq("id", S.family.id).single());
+    toast("Display gekoppelt ✔"); render();
+  },
   async auth(f) {
     S.err = "";
     const email = f.get("email"), password = f.get("password");

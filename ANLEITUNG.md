@@ -87,8 +87,11 @@ Admin-Rechte:
 
 Für ein Display in der Wohnung gibt es die Seite `wand.html`: Wochenkalender mit den Personen links, oben Schalter für To-Do, Einkauf, Essen und Chat. Sie kann nichts eintragen.
 
-1. Ein Admin geht in der App auf **Familie → Wandanzeige → einschalten** und kopiert die Adresse.
-2. Die Adresse im Browser des Displays öffnen und als Lesezeichen speichern.
-3. Geht die Adresse verloren oder in falsche Hände: **Neue Adresse** erzeugen (die alte wird sofort ungültig) oder **Ausschalten**.
+Koppeln (ohne Tastatur, wie beim Fernseher):
+1. Auf dem Display die kurze Adresse `https://<deine-seite>/wand.html` öffnen. Es erscheint ein 6-stelliger Code.
+2. In der App als Admin: **Familie → Wandanzeige**, Code eingeben, **Koppeln**.
+3. Das Display schaltet sich frei und merkt sich das dauerhaft.
 
-Technik: Edge Function `wall-data` (ohne Login, geschützt durch die geheime Adresse). Die privaten Kalender-Links der Personen verlassen den Server nie.
+Abmelden: **Alle Displays abmelden** (sie zeigen dann wieder einen Code) oder **Wandanzeige ausschalten**.
+
+Technik: Edge Function `wall-data` (ohne Login, geschützt durch ein geheimes Zugangs-Token), Tabelle `wall_pairings`, Funktion `wall_pair`. Die privaten Kalender-Links verlassen den Server nie.

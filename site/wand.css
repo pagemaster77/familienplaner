@@ -76,3 +76,7 @@ button{font:inherit;color:inherit;cursor:none}
 /* Kleine/niedrige Bildschirme (z. B. Handy quer): Datum und Wochenangabe weglassen, Tasten nur mit Symbol */
 @media (max-width:1100px){.head .range,.clock span{display:none}}
 @media (max-width:820px){.btn .lbl{display:none}.btn{padding:.45em .6em}}
+
+.center.pair .code{font-size:5em;font-weight:700;letter-spacing:.08em;color:var(--text);margin:.1em 0}
+.center.pair p{font-size:.9em;color:var(--text)}
+.center.pair p.muted{color:var(--muted);font-size:.7em}

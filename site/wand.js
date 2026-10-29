@@ -3,8 +3,14 @@
 
 const VERSION = "1 (29.10.)";
 const $w = document.getElementById("wall");
-const TOKEN = (location.hash.match(/k=([0-9a-f]{32})/) || [])[1] || "";
-const W = { data: null, ical: [], view: "cal", wo: 0, touch: Date.now(), stale: false, bad: false };
+const store = {
+  get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ohne Speicher: nach Neustart neu koppeln */ } },
+  del: k => { try { localStorage.removeItem(k); } catch (e) { /* egal */ } },
+};
+let TOKEN = (location.hash.match(/k=([0-9a-f]{32})/) || [])[1] || store.get("wallToken");
+if (/^[0-9a-f]{32}$/.test(TOKEN)) store.set("wallToken", TOKEN); else TOKEN = "";
+const W = { data: null, ical: [], view: "cal", wo: 0, touch: Date.now(), stale: false, pair: null };
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pad = n => String(n).padStart(2, "0");
@@ -103,24 +109,48 @@ function byDay(list) {
 }
 
 /* ---------- Daten holen ---------- */
-async function call(what) {
+async function post(body) {
   const r = await fetch(CONFIG.SUPABASE_URL + "/functions/v1/wall-data", {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_ANON_KEY },
-    body: JSON.stringify({ token: TOKEN, what }),
+    body: JSON.stringify(body),
   });
-  if (r.status === 403) { W.bad = true; throw new Error("invalid"); }
+  if (r.status === 403) throw new Error("invalid");
   const j = await r.json();
   if (!j.ok) throw new Error(j.error || "Fehler");
   return j;
 }
+const call = what => post({ token: TOKEN, what });
+/* Die Adresse wurde ungültig gemacht (neue Adresse / ausgeschaltet): neu koppeln */
+function lostAccess() { store.del("wallToken"); TOKEN = ""; W.data = null; W.ical = []; if (location.hash) history.replaceState(null, "", location.pathname); startPairing(); }
 async function loadCore() {
+  if (!TOKEN) return;
   try { W.data = await call("core"); W.stale = false; }
-  catch (e) { W.stale = true; }
+  catch (e) { if (e.message === "invalid") return lostAccess(); W.stale = true; }
   render();
 }
+
+/* Kopplung per Code: Display zeigt einen 6-stelligen Code, der Admin gibt ihn in der App ein */
+function startPairing() {
+  let nonce = store.get("wallNonce");
+  if (!/^[0-9a-f]{32}$/.test(nonce)) { nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join(""); store.set("wallNonce", nonce); }
+  W.pair = { code: "", msg: "" };
+  clearInterval(startPairing.t);
+  let first = true;
+  const step = async () => {
+    try {
+      const r = await post({ what: first ? "pair_start" : "pair_poll", nonce }); first = false;
+      if (r.status === "ok") { clearInterval(startPairing.t); TOKEN = r.token; store.set("wallToken", TOKEN); store.del("wallNonce"); W.pair = null; init(); return; }
+      if (r.status === "expired") first = true; // abgelaufen: nächster Durchgang holt einen neuen Code
+      W.pair.code = r.code || W.pair.code; W.pair.msg = "";
+    } catch (e) { W.pair.msg = "Keine Verbindung – es wird weiter versucht …"; }
+    render();
+  };
+  step(); startPairing.t = setInterval(step, 3000);
+}
 async function loadIcal() {
-  try { W.ical = (await call("ical")).ical || []; } catch (e) { /* alte Termine bleiben stehen */ }
+  if (!TOKEN) return;
+  try { W.ical = (await call("ical")).ical || []; } catch (e) { if (e.message === "invalid") return lostAccess(); }
   render();
 }
 
@@ -204,7 +234,14 @@ function viewChat() {
 const VIEWS = [["cal", "📅", "Kalender", viewCal], ["todo", "✅", "To-Do", viewTodo], ["shop", "🛒", "Einkauf", viewShop], ["meals", "🍽️", "Essen", viewMeals], ["chat", "💬", "Chat", viewChat]];
 
 function render() {
-  if (!TOKEN || W.bad) { $w.innerHTML = `<div class="center">Dieser Link ist nicht (mehr) gültig.<br>Bitte in der Familien-App unter „Familie → Wandanzeige“ einen neuen Link holen.</div>`; return; }
+  if (!TOKEN) {
+    const c = W.pair?.code || "";
+    $w.innerHTML = `<div class="center pair"><div><div class="muted">Wandkalender koppeln</div>
+      <div class="code">${c ? esc(c.slice(0, 3) + " " + c.slice(3)) : "…"}</div>
+      <p>In der Familien-App öffnen: <b>Familie → Wandanzeige</b><br>und diesen Code eingeben.</p>
+      <p class="muted">${esc(W.pair?.msg || "Der Code ist 15 Minuten gültig und erneuert sich selbst.")}</p></div></div>`;
+    return;
+  }
   if (!W.data) { $w.innerHTML = `<div class="center">Lade …</div>`; return; }
   const now = new Date();
   const mon = weekStart(); const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
@@ -233,11 +270,13 @@ setInterval(() => {
   render();
 }, 30000);
 
-if (TOKEN) {
+function init() {
   loadCore().then(loadIcal);
-  setInterval(loadCore, 30000);
-  setInterval(loadIcal, 10 * 60 * 1000);
+  clearInterval(init.a); clearInterval(init.b);
+  init.a = setInterval(loadCore, 30000);
+  init.b = setInterval(loadIcal, 10 * 60 * 1000);
 }
+if (TOKEN) init(); else startPairing();
 render();
 
 /* Bildschirm anlassen */
