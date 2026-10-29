@@ -150,7 +150,7 @@ function viewCal() {
   const hasShared = Object.values(map).some(l => l.some(e => !known.has(e.owner)));
   const rows = hasShared ? [...people, { id: null, name: "Alle", color: "#6b7488", avatar: "👪" }] : people;
   const todayK = dkey(new Date());
-  let html = `<div class="grid" style="grid-template-columns:minmax(7em,13%) repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(${Math.max(rows.length, 1)},minmax(0,1fr))">`;
+  let html = `<div class="grid" style="grid-template-columns:minmax(7em,13%) repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(${Math.max(rows.length, 1)},minmax(3.6em,1fr))">`;
   html += `<div class="corner"></div>`;
   days.forEach((d, i) => {
     html += `<div class="dayh${dkey(d) === todayK ? " today" : ""}${i > 4 ? " we" : ""}">${DAYS[i]}<small>${d.getDate()}.${d.getMonth() + 1}.</small></div>`;
@@ -216,9 +216,9 @@ function render() {
       ${W.view === "cal" ? `<div class="range">${range}</div>` : ""}${nav}
       ${W.stale ? `<span class="stale">keine Verbindung</span>` : ""}
       <div class="grow"></div>
-      <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}" data-view="${v[0]}">${v[1]} ${v[2]}</button>`).join("")}</div>
+      <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span></button>`).join("")}</div>
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
-    </div><div class="view">${cur[3]()}</div>`;
+    </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr</div>`;
 }
 
 /* Nur Umschalten der Ansicht (kein Eintragen). Nach 90 s ohne Berührung zurück zum Wochenkalender. */
