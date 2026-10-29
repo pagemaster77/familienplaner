@@ -1,0 +1,35 @@
+# Familienplaner – Stand 29.10.2026 (Version 9)
+
+Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
+
+## Was die App kann
+- Profile (Name, Farbe, kleines Foto oder Symbol), Familie per Einladungscode, Familienname änderbar (Admin)
+- Admin-Rechte: wer die Familie anlegt, ist Admin; Admins vergeben Admin-Titel, ändern den Familiennamen, löschen Chat-Nachrichten, vergeben Punkte
+- To-Do mit Punkten (Punkte nur durch Admins; selbst angelegte Aufgaben der Kinder zählen 0 Punkte)
+- Einkaufsliste, Chat, Essensplan und -wünsche (Bild, Rezept, Zutaten → Einkaufsliste, Chefkoch-Link-Import)
+- Kalender: eigene Termine plus Import per iCal-Link (Google/iCloud, nur lesend)
+- Tablet-Ansicht `#display` (mit Anmeldung) mit großem Monats-/Wochenkalender
+- Push-Meldungen (pro Gerät aktivieren; pro Art einstellbar: Einkauf, Aufgaben, Chat, Termine). iPhone nur mit App auf dem Home-Bildschirm. Importierte Google-Termine lösen keine Meldung aus.
+- Wandanzeige `wand.html`: nur ansehen, ohne Anmeldung, Kopplung per 6-stelligem Code (Familie → Wandanzeige)
+
+## Wo was liegt
+- Seite: https://family-kleiner-peters-siuda.netlify.app (Netlify, baut automatisch aus GitHub `pagemaster77/familienplaner`, Zweig `main`, Ordner `site/`)
+- Datenbank/Funktionen: Supabase-Projekt `wpiqwoprnoasuckrdwlr`
+- Edge Functions: `ical-proxy`, `recipe-import`, `push-send` (nur von der Datenbank aufgerufen), `wall-data` (Wandanzeige, ohne Login, geschützt durch Zugangs-Token)
+- SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`
+- Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt)
+
+## Update einspielen (Ablauf)
+1. Änderung im Ordner `site/` bzw. `supabase/functions/`, Datenbank per Supabase-Migration
+2. Commit mit Autor `pagemaster77 <pagemaster77@users.noreply.github.com>` und Push auf `main` (sonst blockiert Netlify: „Unrecognized Git contributor“)
+3. Netlify veröffentlicht nach ca. 1 Minute. Version steht unter Familie ganz unten; `VERSION` in `site/app.js` und Cache-Name in `site/sw.js` bei jedem Update erhöhen
+4. Edge Functions separat über Supabase deployen (nicht Teil des Netlify-Baus)
+
+## Bekannte Grenzen
+- Kalender nur lesend (kein Zurückschreiben nach Google/iCloud)
+- Netlify-Schild „Powered by Netlify“ kann unten rechts erscheinen (in Netlify abschaltbar)
+- Nur ein Git-Nutzer im Netlify-Gratis-Tarif bei privaten Repos (Repo ist aktuell öffentlich)
+- Push auf iPhone nur über Home-Bildschirm-App; Zustellung nicht von hier testbar
+
+## Ideen für später
+- Kalender zurückschreiben, Wandanzeige: Wetter / Schriftgrößen für das echte Tablet, Chat auf der Wand ausblendbar
