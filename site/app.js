@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "6 (29.10.)";
+const VERSION = "7 (29.10.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -222,6 +222,7 @@ async function loadAll() {
   S.family = (await q(sb.from("families").select("*").eq("id", me.family_id).single()));
   await Promise.all(Object.values(LOAD).map(f => f()));
   S.pe = { color: me.color, avatar: me.avatar, photo: me.photo || null };
+  await pushLoad();
   render();
   loadIcal(true);
   listen();
@@ -419,6 +420,7 @@ function viewFamily() {
       <label class="field"><span>Mein Kalender (iCal-Link)</span><input id="pi" name="ical" value="${esc(S.me.ical_url || "")}" placeholder="https://… oder webcal://…"></label>
       <p class="sub">Google: Kalender-Einstellungen → „Geheime Adresse im iCal-Format“. iCloud: Kalender teilen → „Öffentlicher Kalender“ → Link kopieren.</p>
       <button class="btn block">Speichern</button></form></div>
+    <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
     <div class="card"><h2>Anzeige</h2>
       <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
       <a class="btn block" href="#display">📺 Tablet-Ansicht starten</a></div>
@@ -487,7 +489,61 @@ function viewBoard() {
 }
 
 /* ---------- Aktionen (Klicks) ---------- */
+/* Push-Benachrichtigungen */
+const VAPID_PUBLIC = "BDw5wyK1SkHw5bdt8PhS0GhOHrbhb2zzeTVnJRDdj_idFXdhY7kMLLMMp3B_tWXkxgAJcVCWF1AaSGZU8Gfg4_w";
+const PUSH_KINDS = [["shop", "🛒 Einkaufsliste"], ["task", "✅ Neue Aufgaben"], ["msg", "💬 Chat-Nachrichten"], ["event", "📅 Neue Termine"]];
+function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+function b64ToBytes(b) { const p = "=".repeat((4 - b.length % 4) % 4); const r = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(r, c => c.charCodeAt(0)); }
+function pushCard() {
+  if (!pushSupported()) {
+    const ios = /iphone|ipad/i.test(navigator.userAgent);
+    return `<p class="sub">${ios ? "Auf dem iPhone geht das nur, wenn die App auf dem Home-Bildschirm liegt (Safari → Teilen → „Zum Home-Bildschirm“) und dort geöffnet wird." : "Dieses Gerät oder dieser Browser unterstützt keine Benachrichtigungen."}</p>`;
+  }
+  if (Notification.permission === "denied") return `<p class="sub">Benachrichtigungen sind in den Einstellungen des Handys für diese App blockiert. Dort bitte wieder erlauben.</p>`;
+  if (!S.push) return `<p class="sub">Du bekommst eine Meldung aufs Handy, wenn jemand anderes etwas einträgt.</p><button class="btn block" data-act="pushOn">🔔 Benachrichtigungen aktivieren</button>`;
+  const pr = S.push.prefs || {};
+  return `<p class="sub">Auf diesem Gerät aktiv. Melden bei:</p>
+    ${PUSH_KINDS.map(([k, l]) => `<label class="row" style="cursor:pointer"><input type="checkbox" data-act="pushPref" data-k="${k}" ${pr[k] !== false ? "checked" : ""}><span class="grow" style="margin-left:10px">${l}</span></label>`).join("")}
+    <button class="btn small ghost" data-act="pushOff" style="margin-top:10px">Auf diesem Gerät ausschalten</button>`;
+}
+async function pushLoad() {
+  if (!pushSupported() || !S.user) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) { S.push = null; return; }
+    const { data } = await sb.from("push_subs").select("*").eq("endpoint", sub.endpoint).maybeSingle();
+    S.push = data || null;
+  } catch (_) { S.push = null; }
+}
+
 const ACT = {
+  async pushOn() {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { render(); return; }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
+      const j = sub.toJSON();
+      await q(sb.from("push_subs").upsert({ user_id: S.me.id, family_id: S.me.family_id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }, { onConflict: "endpoint" }));
+      await pushLoad(); render();
+    } catch (e) { alert("Das hat nicht geklappt: " + e.message); }
+  },
+  async pushOff() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { await sb.from("push_subs").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); }
+    } catch (_) {}
+    S.push = null; render();
+  },
+  async pushPref(d, el) {
+    if (!S.push) return;
+    const prefs = { ...(S.push.prefs || {}), [d.k]: el.checked };
+    S.push.prefs = prefs;
+    await q(sb.from("push_subs").update({ prefs }).eq("id", S.push.id));
+  },
   async switchAuth() { S.authMode = S.authMode === "login" ? "signup" : "login"; S.err = ""; render(); },
   async logout() { await sb.auth.signOut(); },
   tab(d) { S.tab = d.v; render(); window.scrollTo(0, 0); },

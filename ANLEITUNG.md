@@ -60,7 +60,7 @@ Das ist eine **Leseverbindung**: Termine erscheinen in der App, werden aber nich
 
 - Kalender werden alle paar Minuten neu geladen, nicht sofort.
 - Sehr komplizierte Wiederholungen („jeden 2. Dienstag im Monat“) werden eventuell nicht richtig angezeigt.
-- Es gibt keine Push-Benachrichtigungen. Nachrichten sieht man beim Öffnen der App.
+- Push-Benachrichtigungen: unter „Familie → Benachrichtigungen“ pro Gerät aktivieren (iPhone: App muss auf dem Home-Bildschirm liegen). Importierte Google-/iCloud-Termine lösen keine Meldung aus.
 - Echte Zwei-Wege-Synchronisation mit Google/iCloud wäre ein späterer Ausbau.
 
 ---
