@@ -12,13 +12,13 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Push-Meldungen (pro Gerät aktivieren; pro Art einstellbar: Einkauf, Aufgaben, Chat, Termine). iPhone nur mit App auf dem Home-Bildschirm. Importierte Google-Termine lösen keine Meldung aus.
 - Wandanzeige `wand.html`: nur ansehen, ohne Anmeldung, Kopplung per 6-stelligem Code (Familie → Wandanzeige)
 
-- Alexa-Skill „Familien Planer“: Einkaufsliste per Sprache (Artikel hinzufügen, vorlesen). Jede Familie legt ihn selbst in der Alexa-Entwicklerkonsole an (Entwicklungsphase, keine Veröffentlichung). Anleitung und Text: Ordner `alexa/`. Kopplung per Code (Familie → Alexa). Stand: Backend fertig und getestet, Skill bei Amazon noch nicht angelegt.
+- Alexa-Skill „Familien Planer“: Einkaufsliste per Sprache (Artikel hinzufügen, vorlesen). Jede Familie legt ihn selbst in der Alexa-Entwicklerkonsole an (Entwicklungsphase, keine Veröffentlichung). Anleitung und Text: Ordner `alexa/`. Kopplung per Code (Familie → Alexa). Stand 30.10.: läuft und getestet im Alexa-Simulator (Skill „Familien Planer“, Entwicklungsphase, Konto des Nutzers; Kopplung klappt, Artikel landen in der App). Sprechen: „Alexa, sag Familien Planer, setze Kaffee auf die Einkaufsliste“ (Name muss immer mit). Echtheitsprüfung der Anfragen (verify.ts) liest Zertifikat selbst aus, weil die Supabase-Laufzeit X509-Felder nicht liefert. Noch offen: Test am echten Echo; zweite Familie legt eigenen Skill an (Anleitung im Ordner alexa/).
 
 ## Wo was liegt
 - Seite: https://family-kleiner-peters-siuda.netlify.app (Netlify, baut automatisch aus GitHub `pagemaster77/familienplaner`, Zweig `main`, Ordner `site/`)
 - Datenbank/Funktionen: Supabase-Projekt `wpiqwoprnoasuckrdwlr`
 - Edge Functions: `ical-proxy`, `recipe-import`, `push-send` (nur von der Datenbank aufgerufen), `wall-data` (Wandanzeige, ohne Login, geschützt durch Zugangs-Token), `alexa-skill` (ohne Login, prüft Amazon-Signatur)
-- SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`
+- SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`, `alexa_skill`
 - Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt), alexa_links und alexa_pairings (gesperrt)
 
 ## Update einspielen (Ablauf)
