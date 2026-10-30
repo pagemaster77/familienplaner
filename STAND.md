@@ -24,7 +24,7 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Update einspielen (Ablauf)
 1. Änderung im Ordner `site/` bzw. `supabase/functions/`, Datenbank per Supabase-Migration
 2. Commit mit Autor `pagemaster77 <pagemaster77@users.noreply.github.com>` und Push auf `main` (sonst blockiert Netlify: „Unrecognized Git contributor“)
-3. Netlify veröffentlicht nach ca. 1 Minute. Version steht unter Familie ganz unten; `VERSION` in `site/app.js` und Cache-Name in `site/sw.js` bei jedem Update erhöhen
+3. Netlify veröffentlicht nach ca. 1 Minute, aber nur bei Änderungen in `site/` oder `netlify.toml` (spart Credits; Gratis-Tarif hat 300 Credits pro Monat, jede Veröffentlichung kostet welche). Am 30.10. waren 75 % verbraucht. Version steht unter Familie ganz unten; `VERSION` in `site/app.js` und Cache-Name in `site/sw.js` bei jedem Update erhöhen
 4. Edge Functions separat über Supabase deployen (nicht Teil des Netlify-Baus)
 
 ## Bekannte Grenzen
