@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "9 (29.10.)"; 
+const VERSION = "10 (30.10.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -223,6 +223,7 @@ async function loadAll() {
   await Promise.all(Object.values(LOAD).map(f => f()));
   S.pe = { color: me.color, avatar: me.avatar, photo: me.photo || null };
   await pushLoad();
+  if (S.me.is_admin) await alexaLoad();
   render();
   loadIcal(true);
   listen();
@@ -422,6 +423,7 @@ function viewFamily() {
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
     ${S.me.is_admin ? `<div class="card"><h2>Wandanzeige</h2>${wallCard()}</div>` : ""}
+    ${S.me.is_admin ? `<div class="card"><h2>Alexa</h2>${alexaCard()}</div>` : ""}
     <div class="card"><h2>Anzeige</h2>
       <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
       <a class="btn block" href="#display">📺 Tablet-Ansicht starten</a></div>
@@ -541,7 +543,19 @@ async function setWall(tok) {
   S.family.wall_token = tok; render();
 }
 
+/* Alexa-Skill: Einkaufsliste per Sprache */
+function alexaCard() {
+  const n = S.alexaN || 0;
+  return `<p class="sub">Mit dem Alexa-Skill „Familien Planer“ setzen alle per Sprache Artikel auf die Einkaufsliste: „Alexa, sag Familien Planer, setze Kaffee auf die Einkaufsliste.“</p>
+    <p class="sub"><b>Alexa koppeln:</b> „Alexa, öffne Familien Planer“ sagen, Alexa nennt einen Code, der hier eingegeben wird.</p>
+    <form class="add" data-form="alexapair" style="margin:6px 0 10px"><input name="code" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="Code von Alexa, z. B. 123 456" required aria-label="Code von Alexa"><button class="btn">Koppeln</button></form>
+    <p class="sub">${n ? `${n} Alexa-Gerät${n > 1 ? "e" : ""} gekoppelt.` : "Noch kein Alexa-Gerät gekoppelt."}</p>
+    ${n ? `<button class="btn small ghost" data-act="alexaOff">Alle Alexa-Geräte abmelden</button>` : ""}`;
+}
+async function alexaLoad() { try { const { data } = await sb.rpc("alexa_count"); S.alexaN = data || 0; } catch (_) {} }
+
 const ACT = {
+  async alexaOff() { if (confirm("Alle Alexa-Geräte abmelden? Sie müssen danach neu gekoppelt werden.")) { await q(sb.rpc("alexa_unlink_all")); S.alexaN = 0; render(); } },
     async wallNew() { if (confirm("Alle gekoppelten Displays werden abgemeldet und müssen neu gekoppelt werden. Fortfahren?")) await setWall(newToken()); },
   async wallOff() { if (confirm("Wandanzeige ausschalten? Alle Displays zeigen dann nichts mehr an.")) await setWall(null); },
   async wallCopy() {
@@ -633,6 +647,10 @@ const ACT = {
 };
 
 const FORMS = {
+  async alexapair(f) {
+    await q(sb.rpc("alexa_pair", { p_code: String(f.get("code") || "") }));
+    await alexaLoad(); toast("Alexa gekoppelt ✔"); render();
+  },
   async wallpair(f) {
     await q(sb.rpc("wall_pair", { p_code: String(f.get("code") || "") }));
     S.family = await q(sb.from("families").select("*").eq("id", S.family.id).single());

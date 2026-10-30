@@ -1,0 +1,67 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "familien planer",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AddItemIntent",
+          "slots": [
+            {
+              "name": "item",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "setze {item} auf die einkaufsliste",
+            "setz {item} auf die einkaufsliste",
+            "schreibe {item} auf die einkaufsliste",
+            "schreib {item} auf die einkaufsliste",
+            "füge {item} zur einkaufsliste hinzu",
+            "füg {item} zur einkaufsliste hinzu",
+            "packe {item} auf die einkaufsliste",
+            "pack {item} auf die einkaufsliste",
+            "{item} auf die einkaufsliste",
+            "wir brauchen {item}",
+            "ich brauche {item}",
+            "ich will {item}",
+            "ich möchte {item}",
+            "setze {item} auf die liste",
+            "{item} auf die liste"
+          ]
+        },
+        {
+          "name": "ReadListIntent",
+          "samples": [
+            "was steht auf der einkaufsliste",
+            "was steht auf der liste",
+            "lies die einkaufsliste vor",
+            "lies die liste vor",
+            "was müssen wir einkaufen",
+            "was brauchen wir"
+          ]
+        }
+      ],
+      "types": []
+    }
+  }
+}

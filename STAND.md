@@ -1,4 +1,4 @@
-# Familienplaner – Stand 29.10.2026 (Version 9)
+# Familienplaner – Stand 30.10.2026 (Version 10)
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
@@ -12,12 +12,14 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Push-Meldungen (pro Gerät aktivieren; pro Art einstellbar: Einkauf, Aufgaben, Chat, Termine). iPhone nur mit App auf dem Home-Bildschirm. Importierte Google-Termine lösen keine Meldung aus.
 - Wandanzeige `wand.html`: nur ansehen, ohne Anmeldung, Kopplung per 6-stelligem Code (Familie → Wandanzeige)
 
+- Alexa-Skill „Familien Planer“: Einkaufsliste per Sprache (Artikel hinzufügen, vorlesen). Jede Familie legt ihn selbst in der Alexa-Entwicklerkonsole an (Entwicklungsphase, keine Veröffentlichung). Anleitung und Text: Ordner `alexa/`. Kopplung per Code (Familie → Alexa). Stand: Backend fertig und getestet, Skill bei Amazon noch nicht angelegt.
+
 ## Wo was liegt
 - Seite: https://family-kleiner-peters-siuda.netlify.app (Netlify, baut automatisch aus GitHub `pagemaster77/familienplaner`, Zweig `main`, Ordner `site/`)
 - Datenbank/Funktionen: Supabase-Projekt `wpiqwoprnoasuckrdwlr`
-- Edge Functions: `ical-proxy`, `recipe-import`, `push-send` (nur von der Datenbank aufgerufen), `wall-data` (Wandanzeige, ohne Login, geschützt durch Zugangs-Token)
+- Edge Functions: `ical-proxy`, `recipe-import`, `push-send` (nur von der Datenbank aufgerufen), `wall-data` (Wandanzeige, ohne Login, geschützt durch Zugangs-Token), `alexa-skill` (ohne Login, prüft Amazon-Signatur)
 - SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`
-- Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt)
+- Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt), alexa_links und alexa_pairings (gesperrt)
 
 ## Update einspielen (Ablauf)
 1. Änderung im Ordner `site/` bzw. `supabase/functions/`, Datenbank per Supabase-Migration
