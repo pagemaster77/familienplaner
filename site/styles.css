@@ -161,3 +161,12 @@ input[type=checkbox]{width:auto;padding:0;margin:0 8px 0 0;flex:none;accent-colo
 .photo-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .photo-row input[type=file]{padding:8px}
 button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;color:var(--warn);padding:2px 6px;border-radius:8px;text-decoration:underline dotted}
+
+/* Aufgaben für mehrere / Belohnungen */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.wchip input{position:absolute;opacity:0;pointer-events:none}
+.wchip span{display:inline-block;padding:6px 12px;border-radius:99px;background:var(--bg);border:1px solid var(--line);cursor:pointer;font-size:14px;user-select:none}
+.wchip input:checked+span{background:var(--primary);border-color:var(--primary);color:#fff}
+.wchip input:focus-visible+span{outline:2px solid var(--primary);outline-offset:2px}
+.rw{margin-bottom:12px}
+.rwh{display:flex;align-items:center;gap:8px;margin-bottom:2px}

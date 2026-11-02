@@ -1,4 +1,4 @@
-# Familienplaner – Stand 30.10.2026 (Version 10)
+# Familienplaner – Stand 2.11.2026 (Version 11)
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
@@ -6,6 +6,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Profile (Name, Farbe, kleines Foto oder Symbol), Familie per Einladungscode, Familienname änderbar (Admin)
 - Admin-Rechte: wer die Familie anlegt, ist Admin; Admins vergeben Admin-Titel, ändern den Familiennamen, löschen Chat-Nachrichten, vergeben Punkte
 - To-Do mit Punkten (Punkte nur durch Admins; selbst angelegte Aufgaben der Kinder zählen 0 Punkte)
+- Aufgaben können mehreren ausgewählten Mitgliedern zugewiesen werden (nichts gewählt = für alle); Aufgaben, Einkaufseinträge und Gerichte sind über ✎ änderbar (abgehakte Einkaufseinträge: ✎ → „Wieder auf die Liste“ mit neuer Menge)
+- Belohnungen: Admins legen pro Mitglied fest, was es bei X Punkten bekommt (Karte „Belohnungen“ im To-Do-Tab); „Übergeben“ hakt sie ab
 - Einkaufsliste, Chat, Essensplan und -wünsche (Bild, Rezept, Zutaten → Einkaufsliste, Chefkoch-Link-Import)
 - Kalender: eigene Termine plus Import per iCal-Link (Google/iCloud, nur lesend)
 - Tablet-Ansicht `#display` (mit Anmeldung) mit großem Monats-/Wochenkalender
@@ -18,8 +20,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Seite: https://family-kleiner-peters-siuda.netlify.app (Netlify, baut automatisch aus GitHub `pagemaster77/familienplaner`, Zweig `main`, Ordner `site/`)
 - Datenbank/Funktionen: Supabase-Projekt `wpiqwoprnoasuckrdwlr`
 - Edge Functions: `ical-proxy`, `recipe-import`, `push-send` (nur von der Datenbank aufgerufen), `wall-data` (Wandanzeige, ohne Login, geschützt durch Zugangs-Token), `alexa-skill` (ohne Login, prüft Amazon-Signatur)
-- SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`, `alexa_skill`
-- Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt), alexa_links und alexa_pairings (gesperrt)
+- SQL-Änderungen: Ordner `sql/` (ältere Stände) plus Migrationen direkt in Supabase: `push_notifications`, `wall_token`, `wall_pairing`, `alexa_skill`, `tasks_assignees_rewards`
+- Tabellen: families (mit `wall_token`), profiles, tasks, shopping_items, messages, meals, events, push_subs, push_config (gesperrt, enthält Push-Schlüssel), wall_pairings (gesperrt), alexa_links und alexa_pairings (gesperrt), rewards (Belohnungen; tasks hat zusätzlich `assignees`)
 
 ## Update einspielen (Ablauf)
 1. Änderung im Ordner `site/` bzw. `supabase/functions/`, Datenbank per Supabase-Migration

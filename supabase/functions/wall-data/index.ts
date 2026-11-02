@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
     const today = new Date(now - 864e5).toISOString().slice(0, 10);
     const [pr, tk, sh, ev, ml, ms] = await Promise.all([
       db.from("profiles").select("id,name,color,avatar,photo,is_admin").eq("family_id", fam.id).order("created_at"),
-      db.from("tasks").select("id,title,points,assigned_to,done,done_by,done_at,created_at").eq("family_id", fam.id).limit(2000),
+      db.from("tasks").select("id,title,points,assigned_to,assignees,done,done_by,done_at,created_at").eq("family_id", fam.id).limit(2000),
       db.from("shopping_items").select("id,title,amount,checked").eq("family_id", fam.id).order("created_at").limit(300),
       db.from("events").select("id,title,starts_at,ends_at,owner").eq("family_id", fam.id).gte("starts_at", from).lte("starts_at", to).order("starts_at").limit(500),
       db.from("meals").select("id,title,plan_date,image_url,wished_by").eq("family_id", fam.id).or(`plan_date.gte.${today},plan_date.is.null`).order("plan_date", { nullsFirst: false }).limit(60),

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "10 (30.10.)";
+const VERSION = "11 (2.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,8 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [],
+  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [],
+  editTask: null, editShop: null, editMeal: null, editReward: null, // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
   pe: null, mealOpen: false,
@@ -208,6 +209,7 @@ const LOAD = {
   },
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
+  rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
   messages: async () => (S.msgs = (await q(sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100))).reverse()),
   meals: async () => (S.meals = await q(sb.from("meals").select("*").order("plan_date", { ascending: true, nullsFirst: false }))),
   events: async () => {
@@ -286,28 +288,69 @@ function viewShell() {
   </div>`;
 }
 
+const ptsOf = p => S.tasks.filter(t => t.done && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
+// Für wen gilt die Aufgabe? (leer = für alle)
+const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
+const whoChips = (sel = []) => `<div class="who"><span class="sub">Für wen? (nichts gewählt = für alle)</span><div class="chips">${S.profiles.map(p =>
+  `<label class="wchip"><input type="checkbox" name="who" value="${p.id}" ${sel.includes(p.id) ? "checked" : ""}><span>${esc(p.name)}</span></label>`).join("")}</div></div>`;
+
 function cardRank() {
-  const pts = p => S.tasks.filter(t => t.done && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
-  const list = [...S.profiles].map(p => ({ p, n: pts(p) })).sort((a, b) => b.n - a.n);
+  const list = [...S.profiles].map(p => ({ p, n: ptsOf(p) })).sort((a, b) => b.n - a.n);
   return `<div class="card"><h2>🏆 Punktestand</h2><div class="rank">${list.map(({ p, n }) =>
     `<div class="p">${avatar(p)}<b>${n}</b><small>${esc(p.name)}</small></div>`).join("")}</div></div>`;
+}
+
+function cardRewards() {
+  const adm = S.me.is_admin && !isDisplay();
+  const by = p => S.rewards.filter(r => r.profile_id === p.id).sort((a, b) => a.points - b.points);
+  const people = S.profiles.filter(p => by(p).length);
+  if (!people.length && !adm) return "";
+  const row = (r, n) => {
+    if (adm && S.editReward === r.id) return `<form class="add" data-form="rewardedit" style="margin:6px 0">
+      <input id="rwt-${r.id}" name="title" value="${esc(r.title)}" required maxlength="120">
+      <input id="rwn-${r.id}" class="pt" name="points" type="number" min="1" max="100000" value="${r.points}" required>
+      <button class="btn">OK</button><button type="button" class="btn ghost" data-act="cancelEdit">×</button></form>`;
+    const ok = n >= r.points;
+    const st = r.claimed ? `<span class="tag">✔ erhalten</span>` : ok ? `<span class="pts">🎉 erreicht</span>` : `<span class="sub">noch ${r.points - n} ⭐</span>`;
+    return `<div class="row ${r.claimed ? "done" : ""}"><div class="grow"><div class="t">🎁 ${esc(r.title)}</div><div class="sub">bei ${r.points} ⭐</div></div>${st}
+      ${adm && ok && !r.claimed ? `<button class="btn small" data-act="claimReward" data-id="${r.id}">✔ Übergeben</button>` : ""}
+      ${adm ? `<button class="x" data-act="editReward" data-id="${r.id}" title="Ändern">✎</button><button class="x" data-act="delReward" data-id="${r.id}" title="Löschen">×</button>` : ""}</div>`;
+  };
+  const form = adm ? `<form class="add" data-form="reward" style="margin-top:12px">
+      <select id="rwp" name="who" required style="max-width:140px"><option value="">Wer?</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>
+      <input id="rwx" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
+      <input id="rwy" name="title" placeholder="Belohnung, z. B. Eis essen gehen" required maxlength="120">
+      <button class="btn">+</button></form>
+      <div class="sub" style="margin-top:6px">Wer die Punktezahl erreicht, bekommt die Belohnung. Ein Admin hakt sie mit „Übergeben“ ab.</div>` : "";
+  return `<div class="card"><h2>🎁 Belohnungen</h2>
+    ${people.map(p => { const n = ptsOf(p);
+      return `<div class="rw"><div class="rwh">${avatar(p, 28)}<b>${esc(p.name)}</b><span class="sub">${n} ⭐</span></div>${by(p).map(r => row(r, n)).join("")}</div>`; }).join("") || `<div class="empty">Noch keine Belohnungen festgelegt</div>`}
+    ${form}</div>`;
 }
 
 function cardTodo(limit) {
   const open = S.tasks.filter(t => !t.done); const done = S.tasks.filter(t => t.done).slice(0, 8);
   const shown = limit ? open.slice(0, limit) : open;
-  const row = t => `<div class="row ${t.done ? "done" : ""}">
+  const canEdit = !limit && !isDisplay();
+  const row = t => {
+    if (canEdit && S.editTask === t.id) return `<div class="row"><form class="grow" data-form="taskedit">
+      <input id="tet-${t.id}" name="title" value="${esc(t.title)}" required style="width:100%">
+      ${whoChips(whoIds(t))}
+      <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
+    const ids = whoIds(t);
+    return `<div class="row ${t.done ? "done" : ""}">
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="sub">${t.assigned_to ? "für " + esc(prof(t.assigned_to)?.name || "?") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
+      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
     ${S.me.is_admin && !limit && !isDisplay() ? `<button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button>` : `<span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>`}
-    ${limit || isDisplay() ? "" : `<button class="x" data-act="delTask" data-id="${t.id}">×</button>`}</div>`;
+    ${canEdit ? `<button class="x" data-act="editTask" data-id="${t.id}" title="Ändern">✎</button><button class="x" data-act="delTask" data-id="${t.id}">×</button>` : ""}</div>`;
+  };
   const form = limit || isDisplay() ? "" : `<form class="add" data-form="task">
       <input id="tt" name="title" placeholder="Neue Aufgabe" required>
       ${S.me.is_admin ? `<input id="tp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte">` : ""}
-      <select id="ta" name="who" style="max-width:130px"><option value="">Für alle</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>
-      <button class="btn">+</button></form>`;
-  return `${limit ? "" : cardRank()}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
+      <button class="btn">+</button>
+      <div style="flex-basis:100%">${whoChips([])}</div></form>`;
+  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
     ${form}${!S.me.is_admin && !limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
@@ -316,10 +359,16 @@ function cardTodo(limit) {
 
 function cardShop(compact) {
   const open = S.shop.filter(i => !i.checked); const got = S.shop.filter(i => i.checked);
-  const row = i => `<div class="row ${i.checked ? "done" : ""}">
+  const row = i => {
+    if (!compact && S.editShop === i.id) return `<div class="row"><form class="add grow" data-form="shopedit" style="margin:0">
+      <input id="set-${i.id}" name="title" value="${esc(i.title)}" required>
+      <input id="sea-${i.id}" class="pt" name="amount" value="${esc(i.amount || "")}" placeholder="Menge">
+      <button class="btn">${i.checked ? "Wieder auf die Liste" : "Speichern"}</button><button type="button" class="btn ghost" data-act="cancelEdit">×</button></form></div>`;
+    return `<div class="row ${i.checked ? "done" : ""}">
     <button class="chk ${i.checked ? "on" : ""}" data-act="toggleShop" data-id="${i.id}">${i.checked ? "✓" : ""}</button>
     <div class="grow t">${esc(i.title)}${i.amount ? ` <span class="tag">${esc(i.amount)}</span>` : ""}</div>
-    ${compact ? "" : `<button class="x" data-act="delShop" data-id="${i.id}">×</button>`}</div>`;
+    ${compact ? "" : `<button class="x" data-act="editShop" data-id="${i.id}" title="${i.checked ? "Wieder auf die Liste / ändern" : "Ändern"}">✎</button><button class="x" data-act="delShop" data-id="${i.id}">×</button>`}</div>`;
+  };
   const list = compact ? open.slice(0, 12) : [...open, ...got];
   return `<div class="card"><h2>🛒 Einkaufsliste ${got.length && !compact ? `<button class="btn small ghost" data-act="clearShop">Erledigte löschen</button>` : ""}</h2>
     ${list.map(row).join("") || `<div class="empty">Die Liste ist leer</div>`}
@@ -372,13 +421,21 @@ function viewMeals() {
   const planned = S.meals.filter(m => m.plan_date && new Date(m.plan_date + "T00:00") >= today);
   const wishes = S.meals.filter(m => !m.plan_date);
   const card = m => { const w = prof(m.wished_by);
+    if (S.editMeal === m.id) return `<div class="card"><h2>✎ Gericht ändern</h2><form data-form="mealedit">
+      <label class="field"><span>Gericht</span><input id="met-${m.id}" name="title" value="${esc(m.title)}" required></label>
+      <label class="field"><span>Datum (leer lassen = nur Wunsch)</span><input id="med-${m.id}" name="date" type="date" value="${esc(m.plan_date || "")}"></label>
+      <label class="field"><span>Neues Foto (leer lassen = Foto behalten)</span><input name="img" type="file" accept="image/*"></label>
+      <label class="field"><span>Link zum Rezept</span><input id="mes-${m.id}" name="source_url" type="url" value="${esc(m.source_url || "")}"></label>
+      <label class="field"><span>Zutaten (eine pro Zeile)</span><textarea id="mez-${m.id}" name="ingredients">${esc(m.ingredients || "")}</textarea></label>
+      <label class="field"><span>Rezept</span><textarea id="mer-${m.id}" name="recipe">${esc(m.recipe || "")}</textarea></label>
+      <div class="add" style="margin:0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
     const ings = (m.ingredients || "").split("\n").map(x => x.trim()).filter(Boolean);
     const link = safeUrl(m.source_url);
     return `<div class="card"><div class="meal">${m.image_url ? `<img src="${esc(m.image_url)}" alt="" referrerpolicy="no-referrer">` : `<div class="ph">🍲</div>`}
       <div class="grow"><b>${esc(m.title)}</b><div class="sub">${m.plan_date ? fmtDay(new Date(m.plan_date + "T00:00")) : "Wunsch"}${w ? " · von " + esc(w.name) : ""}</div>
       ${link ? `<a class="lnk" href="${esc(link)}" target="_blank" rel="noopener">🔗 Rezept ansehen</a>` : ""}
       ${m.plan_date ? "" : `<div class="add" style="margin-top:6px"><input id="pd-${m.id}" type="date" style="max-width:150px"><button class="btn small" data-act="planMeal" data-id="${m.id}">Einplanen</button></div>`}</div>
-      <button class="x" data-act="delMeal" data-id="${m.id}">×</button></div>
+      <button class="x" data-act="editMeal" data-id="${m.id}" title="Ändern">✎</button><button class="x" data-act="delMeal" data-id="${m.id}">×</button></div>
       ${m.recipe || ings.length ? `<details class="recipe" data-id="${m.id}" ${S.open[m.id] ? "open" : ""}><summary>Zutaten${m.recipe ? " & Rezept" : ""}</summary>
         ${ings.length ? `<div class="ings">${ings.map((t, i) => `<label class="ing"><input type="checkbox" data-meal="${m.id}" data-i="${i}" ${S.uncheck[m.id + ":" + i] ? "" : "checked"}> <span>${esc(t)}</span></label>`).join("")}</div>
           <button class="btn small" data-act="mealToShop" data-id="${m.id}">🛒 Ausgewählte auf die Einkaufsliste</button>` : ""}
@@ -623,6 +680,13 @@ const ACT = {
     await LOAD.profiles();
     toast(make ? "Admin-Rechte vergeben" : "Admin-Rechte entzogen"); render();
   },
+  editTask(d) { S.editTask = d.id; render(); },
+  editShop(d) { S.editShop = d.id; render(); },
+  editMeal(d) { S.editMeal = d.id; render(); },
+  editReward(d) { S.editReward = d.id; render(); },
+  cancelEdit() { S.editTask = S.editShop = S.editMeal = S.editReward = null; render(); },
+  async claimReward(d) { await q(sb.from("rewards").update({ claimed: true, claimed_at: new Date().toISOString() }).eq("id", d.id)); toast("Als übergeben markiert ✔"); },
+  async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },
   async delTask(d) { await q(sb.from("tasks").delete().eq("id", d.id)); },
   async toggleShop(d) { const i = S.shop.find(x => x.id === d.id); i.checked = !i.checked; render(); await q(sb.from("shopping_items").update({ checked: i.checked }).eq("id", d.id)); },
   async delShop(d) { await q(sb.from("shopping_items").delete().eq("id", d.id)); },
@@ -671,7 +735,46 @@ const FORMS = {
     await loadAll();
   },
   async task(f) {
-    await q(sb.from("tasks").insert({ family_id: S.me.family_id, title: f.get("title"), points: S.me.is_admin ? Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)) : 0, assigned_to: f.get("who") || null }));
+    await q(sb.from("tasks").insert({ family_id: S.me.family_id, title: f.get("title"), points: S.me.is_admin ? Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)) : 0, assignees: f.getAll("who"), assigned_to: f.getAll("who").length === 1 ? f.getAll("who")[0] : null }));
+  },
+  async taskedit(f) {
+    const ids = f.getAll("who"); const title = (f.get("title") || "").trim(); if (!title) return;
+    await q(sb.from("tasks").update({ title, assignees: ids, assigned_to: ids.length === 1 ? ids[0] : null }).eq("id", S.editTask));
+    S.editTask = null; await LOAD.tasks(); render();
+  },
+  async shopedit(f) {
+    const title = (f.get("title") || "").trim(); if (!title) return;
+    const i = S.shop.find(x => x.id === S.editShop);
+    const patch = { title, amount: (f.get("amount") || "").trim() || null };
+    if (i && i.checked) patch.checked = false; // abgehakt -> wieder auf die Liste, mit neuer Menge
+    await q(sb.from("shopping_items").update(patch).eq("id", S.editShop));
+    S.editShop = null; await LOAD.shopping_items(); render();
+  },
+  async mealedit(f) {
+    const title = (f.get("title") || "").trim(); if (!title) return;
+    const patch = { title, plan_date: f.get("date") || null, source_url: f.get("source_url") || null, ingredients: f.get("ingredients") || null, recipe: f.get("recipe") || null };
+    const file = f.get("img");
+    if (file && file.size) {
+      const blob = await shrink(file);
+      const path = `${S.me.family_id}/${crypto.randomUUID()}.jpg`;
+      const { error } = await sb.storage.from("meal-images").upload(path, blob, { contentType: "image/jpeg" });
+      if (error) return toast("Bild-Upload fehlgeschlagen: " + error.message);
+      patch.image_url = sb.storage.from("meal-images").getPublicUrl(path).data.publicUrl;
+    }
+    await q(sb.from("meals").update(patch).eq("id", S.editMeal));
+    S.editMeal = null; await LOAD.meals(); render();
+  },
+  async reward(f) {
+    const points = parseInt(f.get("points"), 10); const title = (f.get("title") || "").trim();
+    if (!f.get("who") || !title || !(points >= 1)) return toast("Bitte Mitglied, Punkte und Belohnung ausfüllen");
+    await q(sb.from("rewards").insert({ family_id: S.me.family_id, profile_id: f.get("who"), points, title }));
+    await LOAD.rewards(); render();
+  },
+  async rewardedit(f) {
+    const points = parseInt(f.get("points"), 10); const title = (f.get("title") || "").trim();
+    if (!title || !(points >= 1)) return;
+    await q(sb.from("rewards").update({ title, points }).eq("id", S.editReward));
+    S.editReward = null; await LOAD.rewards(); render();
   },
   async shop(f) { await q(sb.from("shopping_items").insert({ family_id: S.me.family_id, title: f.get("title"), amount: f.get("amount") || null })); },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },

@@ -200,8 +200,10 @@ function viewTodo() {
   const col = (title, p, list) => `<div class="card"><h2>${p ? avatar(p, true) : "👪"} ${esc(title)}${p ? ` <span class="pts">⭐ ${p.points}</span>` : ""}</h2>
     ${list.length ? list.map(t => `<div class="row"><span class="grow${t.done ? " done" : ""}">${esc(t.title)}</span>${t.points ? `<span class="pts">+${t.points}</span>` : ""}</div>`).join("") : `<span class="muted">Nichts offen 🎉</span>`}</div>`;
   const known = new Set(people.map(p => p.id));
-  const shared = tasks.filter(t => !known.has(t.assigned_to));
-  const cols = people.map(p => col(p.name, p, tasks.filter(t => t.assigned_to === p.id)));
+  // Eine Aufgabe kann mehreren Mitgliedern gehören (assignees); ältere Einträge nutzen assigned_to.
+  const ids = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
+  const shared = tasks.filter(t => !ids(t).some(id => known.has(id)));
+  const cols = people.map(p => col(p.name, p, tasks.filter(t => ids(t).includes(p.id))));
   if (shared.length || !people.length) cols.push(col("Für alle", null, shared));
   return `<div class="cards">${cols.join("")}</div>`;
 }
