@@ -39,6 +39,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Kalender zurückschreiben, Wandanzeige: Wetter / Schriftgrößen für das echte Tablet, Chat auf der Wand ausblendbar
 
 
+## Version 12.2: Termine ganztägig (events.all_day), Geburtstage ohne Uhrzeit
+
 ## Version 12.1 (3.11.2026): Termine lange gedrückt halten = ändern oder löschen, Wiederholungs-Text entfernt
 
 ## Version 12 (3.11.2026)

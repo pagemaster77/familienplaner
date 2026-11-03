@@ -95,7 +95,7 @@ function eventsInRange(from, to) {
   const own = [];
   for (const e of W.data?.events || []) {
     const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null; const rec = e.recurrence || "none";
-    const mk = st => ({ title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, allDay: false });
+    const mk = st => ({ title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, allDay: !!e.all_day });
     if (rec === "none") { own.push(mk(s0)); continue; }
     for (let n = 0; n < 1200; n++) {
       let d;

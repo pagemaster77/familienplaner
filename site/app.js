@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "12.1 (3.11.)";
+const VERSION = "12.2 (3.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -180,7 +180,7 @@ function expandOwn(list, from, to) {
   const out = [];
   for (const e of list) {
     const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null;
-    const mk = st => ({ id: e.id, title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, src: "own", rec: e.recurrence || "none" });
+    const mk = st => ({ id: e.id, title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, src: "own", rec: e.recurrence || "none", allDay: !!e.all_day });
     const rec = e.recurrence || "none";
     if (rec === "none") { out.push(mk(s0)); continue; }
     for (let n = 0; n < 1200; n++) {
@@ -201,7 +201,7 @@ function expandOwn(list, from, to) {
 function allEvents(days = 14) {
   const from = startOfDay(new Date()); const to = new Date(+from + days * 864e5 - 1);
   const own = expandOwn(S.events, from, to).filter(e => e.start >= from && e.start <= to);
-  return [...own, ...expandIcal(S.ical, from, to).filter(e => e.start >= from && e.start <= to)].sort((a, b) => a.start - b.start);
+  return [...own, ...expandIcal(S.ical, from, to).filter(e => e.start >= from && e.start <= to)].sort((a, b) => (dkey(a.start) === dkey(b.start) ? (!!b.allDay - !!a.allDay) : 0) || a.start - b.start);
 }
 /* Alle Termine, die in einen Zeitraum fallen (auch mehrtägige) */
 function allEventsRange(from, to) {
@@ -209,7 +209,7 @@ function allEventsRange(from, to) {
   return [...own, ...expandIcal(S.ical, from, to)].filter(e => {
     const endEff = e.end && e.end > e.start ? e.end : null;
     return (endEff ? endEff > from : e.start >= from) && e.start <= to;
-  }).sort((a, b) => a.start - b.start);
+  }).sort((a, b) => (dkey(a.start) === dkey(b.start) ? (!!b.allDay - !!a.allDay) : 0) || a.start - b.start);
 }
 /* Termine nach Tag sortieren: mehrtägige Termine erscheinen an jedem ihrer Tage */
 function byDay(list) {
@@ -301,12 +301,13 @@ function viewOnboarding() {
 
 function evModal() {
   const e = S.events.find(x => x.id === S.editEv); if (!e) return "";
-  const d = new Date(e.starts_at); const two = n => String(n).padStart(2, "0");
+  const d = new Date(e.starts_at); const two = n => String(n).padStart(2, "0"); const ad = !!e.all_day;
   const rec = e.recurrence || "none";
   const opt = (v, l) => `<option value="${v}" ${rec === v ? "selected" : ""}>${l}</option>`;
   return `<div class="ovl"><div class="card"><h2>✎ Termin ändern</h2><form data-form="eventedit">
     <label class="field"><span>Titel</span><input id="eev-t" name="title" value="${esc(e.title)}" required></label>
-    <div class="add" style="margin:0 0 10px"><input id="eev-d" name="date" type="date" required value="${dkey(d)}"><input id="eev-h" name="time" type="time" value="${two(d.getHours())}:${two(d.getMinutes())}"></div>
+    <div class="add" style="margin:0 0 10px"><input id="eev-d" name="date" type="date" required value="${dkey(d)}"><input id="eev-h" name="time" type="time" value="${ad ? "12:00" : two(d.getHours()) + ":" + two(d.getMinutes())}" ${ad ? "disabled" : ""}></div>
+    <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="eev-a" ${ad ? "checked" : ""}><span>Ganztägig (ohne Uhrzeit)</span></label>
     <label class="field"><span>Wiederholen</span><select id="eev-r" name="recurrence">${opt("none", "Nein, nur einmal")}${opt("weekly", "Jede Woche")}${opt("monthly", "Jeden Monat")}${opt("yearly", "Jedes Jahr")}</select></label>
     ${rec !== "none" ? `<p class="sub">Änderungen gelten für alle Wiederholungen.</p>` : ""}
     <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEvEdit">Abbrechen</button><button type="button" class="btn danger" data-act="delEvent" data-id="${e.id}">Löschen</button></div></form></div></div>`;
@@ -450,6 +451,7 @@ function viewCal() {
     <div class="card"><h2>Termin eintragen</h2><form data-form="event">
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
+      <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="ead"><span>Ganztägig (z. B. Geburtstag, ohne Uhrzeit)</span></label>
       <label class="field"><span>Wiederholen</span><select id="er" name="recurrence"><option value="none">Nein, nur einmal</option><option value="weekly">Jede Woche</option><option value="monthly">Jeden Monat</option><option value="yearly">Jedes Jahr</option></select></label>
       <button class="btn block">Speichern</button></form>
       <p class="sub">Eigene Google- oder iCloud-Kalender hängst du unter „Familie“ an.</p></div>`;
@@ -838,15 +840,17 @@ const FORMS = {
   async shop(f) { await q(sb.from("shopping_items").insert({ family_id: S.me.family_id, title: f.get("title"), amount: f.get("amount") || null })); },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {
-    const starts = new Date(`${f.get("date")}T${f.get("time") || "12:00"}`);
-    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
+    const allDay = f.get("allday") === "on";
+    const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
+    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, all_day: allDay, recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
   },
   async eventedit(f) {
     const e = S.events.find(x => x.id === S.editEv); if (!e) return;
     const title = (f.get("title") || "").trim(); if (!title) return;
-    const starts = new Date(`${f.get("date")}T${f.get("time") || "12:00"}`);
+    const allDay = f.get("allday") === "on";
+    const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
     const len = e.ends_at ? new Date(e.ends_at) - new Date(e.starts_at) : null;
-    const patch = { title, starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
+    const patch = { title, all_day: allDay, starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
     if (len !== null) patch.ends_at = new Date(+starts + len).toISOString();
     await q(sb.from("events").update(patch).eq("id", S.editEv));
     S.editEv = null; await LOAD.events(); render();
@@ -930,6 +934,7 @@ window.addEventListener("hashchange", render);
 document.addEventListener("toggle", e => { const d = e.target; if (d.matches && d.matches("details.recipe")) S.open[d.dataset.id] = d.open; }, true);
 document.addEventListener("change", async e => {
   const c = e.target;
+  if (c.name === "allday" && c.form) { const t = c.form.querySelector('input[name="time"]'); if (t) t.disabled = c.checked; }
   if (c.dataset && c.dataset.meal) S.uncheck[c.dataset.meal + ":" + c.dataset.i] = !c.checked;
   if (c.id === "pphoto" && c.files && c.files[0]) {
     try { S.pe.photo = await avatarFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
