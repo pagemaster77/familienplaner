@@ -92,7 +92,23 @@ function expandIcal(list, from, to) {
   return out;
 }
 function eventsInRange(from, to) {
-  const own = (W.data?.events || []).map(e => ({ title: e.title, start: new Date(e.starts_at), end: e.ends_at ? new Date(e.ends_at) : null, owner: e.owner, allDay: false }));
+  const own = [];
+  for (const e of W.data?.events || []) {
+    const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null; const rec = e.recurrence || "none";
+    const mk = st => ({ title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, allDay: false });
+    if (rec === "none") { own.push(mk(s0)); continue; }
+    for (let n = 0; n < 1200; n++) {
+      let d;
+      if (rec === "weekly") { d = new Date(s0); d.setDate(d.getDate() + 7 * n); }
+      else {
+        const months = rec === "monthly" ? n : 12 * n;
+        const y = s0.getFullYear() + Math.floor((s0.getMonth() + months) / 12); const m = (s0.getMonth() + months) % 12;
+        d = new Date(y, m, Math.min(s0.getDate(), new Date(y, m + 1, 0).getDate()), s0.getHours(), s0.getMinutes());
+      }
+      if (d > to) break;
+      if ((len ? new Date(+d + len) : d) >= from) own.push(mk(d));
+    }
+  }
   const ical = expandIcal(W.ical.flatMap(c => parseIcal(c.text, c.owner)), from, to);
   return [...own, ...ical].filter(e => {
     const endEff = e.end && e.end > e.start ? e.end : null;
@@ -198,7 +214,7 @@ function viewCal() {
 function viewTodo() {
   const people = W.data.profiles; const tasks = W.data.tasks;
   const col = (title, p, list) => `<div class="card"><h2>${p ? avatar(p, true) : "👪"} ${esc(title)}${p ? ` <span class="pts">⭐ ${p.points}</span>` : ""}</h2>
-    ${list.length ? list.map(t => `<div class="row"><span class="grow${t.done ? " done" : ""}">${esc(t.title)}</span>${t.points ? `<span class="pts">+${t.points}</span>` : ""}</div>`).join("") : `<span class="muted">Nichts offen 🎉</span>`}</div>`;
+    ${list.length ? list.map(t => `<div class="row"><span class="grow${t.done ? " done" : ""}">${esc(t.title)}</span>${t.done && !t.approved ? `<span class="pts">⏳</span>` : t.points ? `<span class="pts">+${t.points}</span>` : ""}</div>`).join("") : `<span class="muted">Nichts offen 🎉</span>`}</div>`;
   const known = new Set(people.map(p => p.id));
   // Eine Aufgabe kann mehreren Mitgliedern gehören (assignees); ältere Einträge nutzen assigned_to.
   const ids = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);

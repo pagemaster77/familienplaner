@@ -1,0 +1,7 @@
+-- Update 5 (3.11.2026): Punkte nur nach Admin-Freigabe, Termine mit Wiederholung.
+-- Bereits in der Datenbank eingespielt (Migration "punkte_freigabe_termine_wiederholung").
+-- tasks.approved / approved_by / approved_at: Punkte zaehlen nur, wenn approved = true.
+-- guard_tasks(): Nicht-Admins koennen Punkte und Freigabe nicht setzen und freigegebene Aufgaben nicht zuruecknehmen;
+--   hakt ein Admin selbst ab, ist die Aufgabe sofort freigegeben.
+-- events.recurrence: 'none' | 'weekly' | 'monthly' | 'yearly'
+-- Alte erledigte Aufgaben wurden als freigegeben markiert (Punktestand blieb gleich).

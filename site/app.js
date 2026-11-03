@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "11 (2.11.)";
+const VERSION = "12 (3.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -175,15 +175,37 @@ async function loadIcal(force) {
   S.ical = all;
   render();
 }
+/* Eigene Termine, auch mit Wiederholung (wöchentlich / monatlich / jährlich) */
+function expandOwn(list, from, to) {
+  const out = [];
+  for (const e of list) {
+    const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null;
+    const mk = st => ({ id: e.id, title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, src: "own", rec: e.recurrence || "none" });
+    const rec = e.recurrence || "none";
+    if (rec === "none") { out.push(mk(s0)); continue; }
+    for (let n = 0; n < 1200; n++) {
+      let d;
+      if (rec === "weekly") { d = new Date(s0); d.setDate(d.getDate() + 7 * n); }
+      else {
+        const months = rec === "monthly" ? n : 12 * n;
+        const y = s0.getFullYear() + Math.floor((s0.getMonth() + months) / 12); const m = (s0.getMonth() + months) % 12;
+        const last = new Date(y, m + 1, 0).getDate();
+        d = new Date(y, m, Math.min(s0.getDate(), last), s0.getHours(), s0.getMinutes());
+      }
+      if (d > to) break;
+      if ((len ? new Date(+d + len) : d) >= from) out.push(mk(d));
+    }
+  }
+  return out;
+}
 function allEvents(days = 14) {
   const from = startOfDay(new Date()); const to = new Date(+from + days * 864e5 - 1);
-  const own = S.events.map(e => ({ id: e.id, title: e.title, start: new Date(e.starts_at), end: e.ends_at ? new Date(e.ends_at) : null, owner: e.owner, src: "own" }))
-    .filter(e => e.start >= from && e.start <= to);
+  const own = expandOwn(S.events, from, to).filter(e => e.start >= from && e.start <= to);
   return [...own, ...expandIcal(S.ical, from, to).filter(e => e.start >= from && e.start <= to)].sort((a, b) => a.start - b.start);
 }
 /* Alle Termine, die in einen Zeitraum fallen (auch mehrtägige) */
 function allEventsRange(from, to) {
-  const own = S.events.map(e => ({ id: e.id, title: e.title, start: new Date(e.starts_at), end: e.ends_at ? new Date(e.ends_at) : null, owner: e.owner, src: "own" }));
+  const own = expandOwn(S.events, from, to);
   return [...own, ...expandIcal(S.ical, from, to)].filter(e => {
     const endEff = e.end && e.end > e.start ? e.end : null;
     return (endEff ? endEff > from : e.start >= from) && e.start <= to;
@@ -214,7 +236,7 @@ const LOAD = {
   meals: async () => (S.meals = await q(sb.from("meals").select("*").order("plan_date", { ascending: true, nullsFirst: false }))),
   events: async () => {
     const from = new Date(Date.now() - 62 * 864e5).toISOString();
-    S.events = await q(sb.from("events").select("*").gte("starts_at", from).order("starts_at"));
+    S.events = await q(sb.from("events").select("*").or(`starts_at.gte.${from},recurrence.neq.none`).order("starts_at"));
   },
 };
 async function loadAll() {
@@ -288,7 +310,7 @@ function viewShell() {
   </div>`;
 }
 
-const ptsOf = p => S.tasks.filter(t => t.done && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
+const ptsOf = p => S.tasks.filter(t => t.done && t.approved && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
 // Für wen gilt die Aufgabe? (leer = für alle)
 const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
 const whoChips = (sel = []) => `<div class="who"><span class="sub">Für wen? (nichts gewählt = für alle)</span><div class="chips">${S.profiles.map(p =>
@@ -329,19 +351,23 @@ function cardRewards() {
 }
 
 function cardTodo(limit) {
-  const open = S.tasks.filter(t => !t.done); const done = S.tasks.filter(t => t.done).slice(0, 8);
+  const open = S.tasks.filter(t => !t.done); const done = S.tasks.filter(t => t.done && t.approved).slice(0, 8);
+  const wait = S.tasks.filter(t => t.done && !t.approved);
+  const adm = !!S.me.is_admin && !isDisplay();
   const shown = limit ? open.slice(0, limit) : open;
   const canEdit = !limit && !isDisplay();
   const row = t => {
     if (canEdit && S.editTask === t.id) return `<div class="row"><form class="grow" data-form="taskedit">
       <input id="tet-${t.id}" name="title" value="${esc(t.title)}" required style="width:100%">
+      ${S.me.is_admin ? `<label class="field"><span>Punkte</span><input name="points" class="pt" type="number" min="0" max="1000" value="${t.points}"></label>` : ""}
       ${whoChips(whoIds(t))}
       <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
     const ids = whoIds(t);
     return `<div class="row ${t.done ? "done" : ""}">
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
+      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}</div></div>
+    ${t.done && !t.approved && adm ? `<button class="btn" data-act="approveTask" data-id="${t.id}">✔ Freigeben</button>` : ""}
     ${S.me.is_admin && !limit && !isDisplay() ? `<button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button>` : `<span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>`}
     ${canEdit ? `<button class="x" data-act="editTask" data-id="${t.id}" title="Ändern">✎</button><button class="x" data-act="delTask" data-id="${t.id}">×</button>` : ""}</div>`;
   };
@@ -350,7 +376,8 @@ function cardTodo(limit) {
       ${S.me.is_admin ? `<input id="tp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte">` : ""}
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
-  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
+  const waitCard = wait.length && (!limit || adm) ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">${adm ? "Erst nach „Freigeben“ gibt es die Punkte. Mit dem Haken geht die Aufgabe wieder auf offen." : "Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte."}</div></div>` : "";
+  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
     ${form}${!S.me.is_admin && !limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
@@ -397,7 +424,7 @@ function cardToday() {
 function evRow(e) {
   const p = prof(e.owner);
   return `<div class="ev"><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
-    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}</div></div>
+    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${e.rec && e.rec !== "none" ? " · 🔁 " + ({ weekly: "jede Woche", monthly: "jeden Monat", yearly: "jedes Jahr" }[e.rec]) : ""}</div></div>
     ${e.src === "own" && !isDisplay() ? `<button class="x" data-act="delEvent" data-id="${e.id}">×</button>` : ""}</div>`;
 }
 
@@ -410,6 +437,7 @@ function viewCal() {
     <div class="card"><h2>Termin eintragen</h2><form data-form="event">
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
+      <label class="field"><span>Wiederholen</span><select id="er" name="recurrence"><option value="none">Nein, nur einmal</option><option value="weekly">Jede Woche</option><option value="monthly">Jeden Monat</option><option value="yearly">Jedes Jahr</option></select></label>
       <button class="btn block">Speichern</button></form>
       <p class="sub">Eigene Google- oder iCloud-Kalender hängst du unter „Familie“ an.</p></div>`;
 }
@@ -656,9 +684,17 @@ const ACT = {
   bView(d) { S.bv = d.v; S.bo = 0; render(); },
   async toggleTask(d) {
     const t = S.tasks.find(x => x.id === d.id); const done = !t.done;
-    t.done = done; render();
-    await q(sb.from("tasks").update({ done, done_by: done ? S.me.id : null, done_at: done ? new Date().toISOString() : null }).eq("id", d.id));
-    if (done && t.points) toast(`+${t.points} Punkte für ${S.me.name} ⭐`);
+    if (!S.me.is_admin && t.approved) return toast("Freigegebene Aufgaben kann nur ein Admin zurücknehmen");
+    await q(sb.from("tasks").update({ done }).eq("id", d.id)); // Datenbank setzt Erledigt-von und Freigabe
+    await LOAD.tasks(); render();
+    if (done) toast(S.me.is_admin ? (t.points ? `+${t.points} Punkte für ${S.me.name} ⭐` : "Erledigt ✔") : "Erledigt – ein Admin muss noch die Punkte freigeben ⏳");
+  },
+  async approveTask(d) {
+    if (!S.me.is_admin) return;
+    const t = S.tasks.find(x => x.id === d.id);
+    await q(sb.from("tasks").update({ approved: true }).eq("id", d.id));
+    await LOAD.tasks(); render();
+    toast(`Freigegeben: +${t?.points || 0} Punkte für ${esc(prof(t?.done_by)?.name || "?")} ⭐`);
   },
   async editPts(d) {
     const t = S.tasks.find(x => x.id === d.id);
@@ -691,7 +727,11 @@ const ACT = {
   async toggleShop(d) { const i = S.shop.find(x => x.id === d.id); i.checked = !i.checked; render(); await q(sb.from("shopping_items").update({ checked: i.checked }).eq("id", d.id)); },
   async delShop(d) { await q(sb.from("shopping_items").delete().eq("id", d.id)); },
   async clearShop() { await q(sb.from("shopping_items").delete().eq("checked", true)); },
-  async delEvent(d) { await q(sb.from("events").delete().eq("id", d.id)); },
+  async delEvent(d) {
+    const e = S.events.find(x => x.id === d.id);
+    if (e && e.recurrence && e.recurrence !== "none" && !confirm("Dieser Termin wiederholt sich. Alle Wiederholungen löschen?")) return;
+    await q(sb.from("events").delete().eq("id", d.id));
+  },
   toggleMealForm() { S.mealOpen = !S.mealOpen; render(); },
   async delMeal(d) { if (confirm("Wirklich löschen?")) await q(sb.from("meals").delete().eq("id", d.id)); },
   async planMeal(d) {
@@ -739,7 +779,9 @@ const FORMS = {
   },
   async taskedit(f) {
     const ids = f.getAll("who"); const title = (f.get("title") || "").trim(); if (!title) return;
-    await q(sb.from("tasks").update({ title, assignees: ids, assigned_to: ids.length === 1 ? ids[0] : null }).eq("id", S.editTask));
+    const patch = { title, assignees: ids, assigned_to: ids.length === 1 ? ids[0] : null };
+    if (S.me.is_admin && f.get("points") !== null) patch.points = Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0));
+    await q(sb.from("tasks").update(patch).eq("id", S.editTask));
     S.editTask = null; await LOAD.tasks(); render();
   },
   async shopedit(f) {
@@ -780,7 +822,7 @@ const FORMS = {
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {
     const starts = new Date(`${f.get("date")}T${f.get("time") || "12:00"}`);
-    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id }));
+    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
   },
   async meal(f) {
     let image_url = null; const file = f.get("img");
