@@ -39,6 +39,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 - Kalender zurückschreiben, Wandanzeige: Wetter / Schriftgrößen für das echte Tablet, Chat auf der Wand ausblendbar
 
 
+## Version 12.1 (3.11.2026): Termine lange gedrückt halten = ändern oder löschen, Wiederholungs-Text entfernt
+
 ## Version 12 (3.11.2026)
 - Erledigte Aufgaben warten auf Freigabe ("Wartet auf Freigabe"). Punkte zaehlen erst, wenn ein Admin "Freigeben" drueckt (tasks.approved). Admin-Haken = sofort freigegeben. Kinder koennen Freigegebenes nicht zuruecknehmen.
 - Beim Aendern einer Aufgabe (Stift) koennen Admins die Punkte aendern.

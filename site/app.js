@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "12 (3.11.)";
+const VERSION = "12.1 (3.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -15,7 +15,7 @@ const TABS = [
 const S = {
   user: null, me: null, family: null,
   profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [],
-  editTask: null, editShop: null, editMeal: null, editReward: null, // gerade bearbeiteter Eintrag
+  editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
   pe: null, mealOpen: false,
@@ -299,6 +299,19 @@ function viewOnboarding() {
   </div>`;
 }
 
+function evModal() {
+  const e = S.events.find(x => x.id === S.editEv); if (!e) return "";
+  const d = new Date(e.starts_at); const two = n => String(n).padStart(2, "0");
+  const rec = e.recurrence || "none";
+  const opt = (v, l) => `<option value="${v}" ${rec === v ? "selected" : ""}>${l}</option>`;
+  return `<div class="ovl"><div class="card"><h2>✎ Termin ändern</h2><form data-form="eventedit">
+    <label class="field"><span>Titel</span><input id="eev-t" name="title" value="${esc(e.title)}" required></label>
+    <div class="add" style="margin:0 0 10px"><input id="eev-d" name="date" type="date" required value="${dkey(d)}"><input id="eev-h" name="time" type="time" value="${two(d.getHours())}:${two(d.getMinutes())}"></div>
+    <label class="field"><span>Wiederholen</span><select id="eev-r" name="recurrence">${opt("none", "Nein, nur einmal")}${opt("weekly", "Jede Woche")}${opt("monthly", "Jeden Monat")}${opt("yearly", "Jedes Jahr")}</select></label>
+    ${rec !== "none" ? `<p class="sub">Änderungen gelten für alle Wiederholungen.</p>` : ""}
+    <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEvEdit">Abbrechen</button><button type="button" class="btn danger" data-act="delEvent" data-id="${e.id}">Löschen</button></div></form></div></div>`;
+}
+
 function viewShell() {
   const body = { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, chat: cardChat, family: viewFamily }[S.tab]();
   return `<div class="shell">
@@ -307,7 +320,7 @@ function viewShell() {
       <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}</button>`).join("")}</nav>
     </div>
     <div class="main">${body}</div>
-  </div>`;
+  </div>${evModal()}`;
 }
 
 const ptsOf = p => S.tasks.filter(t => t.done && t.approved && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
@@ -423,9 +436,9 @@ function cardToday() {
 }
 function evRow(e) {
   const p = prof(e.owner);
-  return `<div class="ev"><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
-    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${e.rec && e.rec !== "none" ? " · 🔁 " + ({ weekly: "jede Woche", monthly: "jeden Monat", yearly: "jedes Jahr" }[e.rec]) : ""}</div></div>
-    ${e.src === "own" && !isDisplay() ? `<button class="x" data-act="delEvent" data-id="${e.id}">×</button>` : ""}</div>`;
+  const lp = e.src === "own" && !isDisplay();
+  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""}><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
+    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}</div></div></div>`;
 }
 
 function viewHome() { return cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
@@ -433,7 +446,7 @@ function viewHome() { return cardRank() + cardToday() + cardTodo(5) + cardShop(t
 function viewCal() {
   const evs = allEvents(14); let last = "";
   const list = evs.map(e => { const k = dkey(e.start); const head = k !== last ? `<div class="day">${fmtDay(e.start)}</div>` : ""; last = k; return head + evRow(e); }).join("");
-  return `<div class="card"><h2>📅 Nächste 14 Tage</h2>${list || `<div class="empty">Keine Termine</div>`}</div>
+  return `<div class="card"><h2>📅 Nächste 14 Tage</h2>${list || `<div class="empty">Keine Termine</div>`}${S.events.length ? `<div class="sub" style="margin-top:8px">Tipp: Eigenen Termin lange gedrückt halten zum Ändern oder Löschen.</div>` : ""}</div>
     <div class="card"><h2>Termin eintragen</h2><form data-form="event">
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
@@ -729,9 +742,13 @@ const ACT = {
   async clearShop() { await q(sb.from("shopping_items").delete().eq("checked", true)); },
   async delEvent(d) {
     const e = S.events.find(x => x.id === d.id);
-    if (e && e.recurrence && e.recurrence !== "none" && !confirm("Dieser Termin wiederholt sich. Alle Wiederholungen löschen?")) return;
+    const rep = e && e.recurrence && e.recurrence !== "none";
+    if (!confirm(rep ? "Dieser Termin wiederholt sich. Alle Wiederholungen löschen?" : "Termin wirklich löschen?")) return;
+    S.editEv = null;
     await q(sb.from("events").delete().eq("id", d.id));
+    await LOAD.events(); render();
   },
+  cancelEvEdit() { S.editEv = null; render(); },
   toggleMealForm() { S.mealOpen = !S.mealOpen; render(); },
   async delMeal(d) { if (confirm("Wirklich löschen?")) await q(sb.from("meals").delete().eq("id", d.id)); },
   async planMeal(d) {
@@ -824,6 +841,16 @@ const FORMS = {
     const starts = new Date(`${f.get("date")}T${f.get("time") || "12:00"}`);
     await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
   },
+  async eventedit(f) {
+    const e = S.events.find(x => x.id === S.editEv); if (!e) return;
+    const title = (f.get("title") || "").trim(); if (!title) return;
+    const starts = new Date(`${f.get("date")}T${f.get("time") || "12:00"}`);
+    const len = e.ends_at ? new Date(e.ends_at) - new Date(e.starts_at) : null;
+    const patch = { title, starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
+    if (len !== null) patch.ends_at = new Date(+starts + len).toISOString();
+    await q(sb.from("events").update(patch).eq("id", S.editEv));
+    S.editEv = null; await LOAD.events(); render();
+  },
   async meal(f) {
     let image_url = null; const file = f.get("img");
     if (file && file.size) {
@@ -889,6 +916,16 @@ document.addEventListener("submit", async e => {
   if (form.dataset.form !== "profile" && form.dataset.form !== "onboard" && form.dataset.form !== "auth") form.reset();
   try { await h(data, form); } catch (err) { console.error(err); }
 });
+/* Termin lange gedrückt halten = ändern oder löschen */
+let lpTimer = null;
+const lpStop = () => { clearTimeout(lpTimer); lpTimer = null; };
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest && e.target.closest("[data-ev]"); if (!el) return;
+  lpStop();
+  lpTimer = setTimeout(() => { lpTimer = null; S.editEv = el.dataset.ev; if (navigator.vibrate) try { navigator.vibrate(30); } catch (_) {} render(); }, 600);
+});
+["pointerup", "pointercancel", "pointerleave", "scroll", "touchmove"].forEach(t => document.addEventListener(t, lpStop, true));
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("[data-ev]")) e.preventDefault(); });
 window.addEventListener("hashchange", render);
 document.addEventListener("toggle", e => { const d = e.target; if (d.matches && d.matches("details.recipe")) S.open[d.dataset.id] = d.open; }, true);
 document.addEventListener("change", async e => {
