@@ -305,13 +305,19 @@ document.addEventListener("click", e => {
   if (v) { W.view = v.dataset.view; render(); }
   if (g) { goCal(g.dataset.go === "today" ? 0 : g.dataset.go === "next" ? 1 : -1); render(); }
 });
-/* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche */
+/* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche.
+   Pointer-Events: funktionieren mit Touch, Stift und Maus – auch bei Touch-Monitoren, die sich wie eine Maus melden. */
 let swp = null;
-document.addEventListener("touchstart", e => { W.touch = Date.now(); swp = W.view === "cal" && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
-document.addEventListener("touchend", e => {
-  if (!swp) return; const t = e.changedTouches[0]; const dx = t.clientX - swp.x, dy = t.clientY - swp.y; swp = null;
-  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) { W.touch = Date.now(); goCal(dx < 0 ? 1 : -1); render(); }
-}, { passive: true });
+document.addEventListener("pointerdown", e => { W.touch = Date.now(); swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
+document.addEventListener("pointermove", e => { if (swp) { swp.lx = e.clientX; swp.ly = e.clientY; } }, true);
+const swipeEnd = e => {
+  if (!swp) return;
+  const x = e.type === "pointercancel" ? swp.lx : e.clientX, y = e.type === "pointercancel" ? swp.ly : e.clientY;
+  const dx = x - swp.x, dy = y - swp.y; swp = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.2) { W.touch = Date.now(); goCal(dx < 0 ? 1 : -1); render(); }
+};
+document.addEventListener("pointerup", swipeEnd, true);
+document.addEventListener("pointercancel", swipeEnd, true);
 /* Nach 90 s ohne Berührung zurück zur Live-Ansicht (Kalender, heute in der Mitte) */
 setInterval(() => {
   if (W.data && (W.view !== "cal" || !W.live) && Date.now() - W.touch > 90000) { W.view = "cal"; W.wo = 0; W.live = true; render(); }

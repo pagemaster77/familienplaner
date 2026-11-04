@@ -82,7 +82,7 @@ button{font:inherit;color:inherit;cursor:none}
 .center.pair p.muted{color:var(--muted);font-size:.7em}
 
 /* ---- Version 2: Kalender hübscher, heutiger Tag mit dickem Rahmen ---- */
-.view{touch-action:pan-y}
+.view,#wall{touch-action:pan-y}
 .head .title{font-size:1.4em;letter-spacing:.01em}
 .head .range{font-size:.95em}
 .btn{box-shadow:0 .1em .3em rgba(30,50,90,.08)}
@@ -104,3 +104,8 @@ button{font:inherit;color:inherit;cursor:none}
   box-shadow:0 0 1em rgba(43,108,176,.35)}
 .head .range{overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 .head .title{flex:none;max-width:40%}
+
+/* heute = grün */
+:root{--green:#2e9d5b}
+.dayh.today{background:var(--green)!important}
+.todaybox{border-color:var(--green);box-shadow:0 0 1em rgba(46,157,91,.4)}
