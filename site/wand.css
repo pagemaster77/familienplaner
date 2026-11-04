@@ -118,3 +118,7 @@ button{font:inherit;color:inherit;cursor:none}
 .dayh .hn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;margin-top:.1em}
 .cell.fer:not(.today){background:#e8f1fc!important}
 .cell.hol:not(.today){background:#fdeaea!important}
+
+/* Vollbild-Knopf unten rechts */
+.foot .grow{flex:1}
+.fsb{font-size:.9em;padding:.25em .8em;opacity:.75;box-shadow:none}

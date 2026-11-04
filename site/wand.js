@@ -287,9 +287,20 @@ function render() {
       <div class="grow"></div>
       <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span></button>`).join("")}</div>
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
-    </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr</div>`;
+    </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr<span class="grow"></span><button class="btn fsb" data-fs>${document.fullscreenElement ? "Vollbild beenden" : "Vollbild"}</button></div>`;
   placeTodayBox();
 }
+
+/* Vollbild: blendet Fenstertitel und Pi-Taskleiste aus. Einschalten und Beenden per Antippen (unten rechts).
+   Nach einem Neustart genügt ein beliebiges Antippen, dann geht es wieder ins Vollbild (der Browser erlaubt es nur nach einer Berührung). */
+const inFs = () => !!document.fullscreenElement;
+async function fsOn() { store.set("wallFs", "1"); try { await document.documentElement.requestFullscreen({ navigationUI: "hide" }); } catch (e) { /* nicht möglich */ } }
+async function fsOff() { store.set("wallFs", "0"); try { if (inFs()) await document.exitFullscreen(); } catch (e) { /* egal */ } render(); }
+document.addEventListener("fullscreenchange", () => { if (!inFs()) store.set("wallFs", "0"); render(); });
+document.addEventListener("click", e => {
+  if (e.target.closest && e.target.closest("[data-fs]")) return;
+  if (store.get("wallFs") === "1" && !inFs()) fsOn();
+}, true);
 
 function placeTodayBox() {
   const box = document.querySelector(".todaybox"), h = document.querySelector(".dayh.today"), g = document.querySelector(".grid");
@@ -301,6 +312,7 @@ window.addEventListener("resize", placeTodayBox);
 /* Nur Umschalten der Ansicht (kein Eintragen). Nach 90 s ohne Berührung zurück zur Live-Ansicht. */
 document.addEventListener("click", e => {
   W.touch = Date.now();
+  if (e.target.closest("[data-fs]")) { inFs() ? fsOff() : fsOn(); return; }
   const v = e.target.closest("[data-view]"), g = e.target.closest("[data-go]");
   if (v) { W.view = v.dataset.view; render(); }
   if (g) { goCal(g.dataset.go === "today" ? 0 : g.dataset.go === "next" ? 1 : -1); render(); }
