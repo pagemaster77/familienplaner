@@ -183,3 +183,7 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .wkt{display:flex;flex-direction:column;align-items:center}
 .wkt b{font-size:18px}
 .day.today{color:var(--brand,#4f8cff)}
+
+/* Feiertage rot, Schulferien NRW blau */
+.day.hol{background:#fde8e8;color:#c0392b;padding:3px 8px;border-radius:8px}
+.day.fer{background:#e3effc;color:#25588f;padding:3px 8px;border-radius:8px}

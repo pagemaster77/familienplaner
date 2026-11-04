@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "12.3 (4.11.)";
+const VERSION = "12.4 (4.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -458,7 +458,8 @@ function viewCal() {
   let days = "";
   for (let i = 0; i < 7; i++) {
     const d = new Date(w.from); d.setDate(d.getDate() + i); const k = dkey(d); const list = map[k] || [];
-    days += `<div class="day${k === todayK ? " today" : ""}">${fmtDay(d)}${k === todayK ? " · heute" : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
+    const di = window.dayInfo ? dayInfo(d) : {};
+    days += `<div class="day${k === todayK ? " today" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}">${fmtDay(d)}${k === todayK ? " · heute" : ""}${di.holiday ? " · " + esc(di.holiday) : di.ferien ? " · " + esc(di.ferien) : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
   }
   return `<div class="card calweek"><div class="wk"><button class="btn small ghost" data-act="calNav" data-v="-1">‹</button>
       <div class="wkt"><b>KW ${w.kw}</b><span class="sub">${esc(w.title)}</span></div>

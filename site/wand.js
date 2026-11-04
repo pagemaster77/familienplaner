@@ -209,16 +209,16 @@ function viewCal() {
   let html = `<div class="grid" style="grid-template-columns:minmax(7em,13%) repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(${Math.max(rows.length, 1)},minmax(3.6em,1fr))">`;
   html += `<div class="corner"></div>`;
   days.forEach(d => {
-    const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6;
-    html += `<div class="dayh${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}"><span class="wd">${DAYS[d.getDay()]}</span><b class="dn">${d.getDate()}</b><small>${d.toLocaleDateString("de-DE", { month: "short" })}</small></div>`;
+    const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6; const di = window.dayInfo ? dayInfo(d) : {};
+    html += `<div class="dayh${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}"><span class="wd">${DAYS[d.getDay()]}</span><b class="dn">${d.getDate()}</b><small>${d.toLocaleDateString("de-DE", { month: "short" })}</small>${di.holiday ? `<small class="hn">${esc(di.holiday)}</small>` : ""}</div>`;
   });
   for (const p of rows) {
     html += `<div class="person">${avatar(p)}<span class="pn">${esc(p.name)}</span></div>`;
     for (const d of days) {
       const list = (map[dkey(d)] || []).filter(e => (p.id ? e.owner === p.id : !known.has(e.owner)));
       const shown = list.slice(0, 6);
-      const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6;
-      html += `<div class="cell${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}">${shown.map(e => chip(e, p)).join("")}${list.length > 6 ? `<div class="more">+${list.length - 6} weitere</div>` : ""}</div>`;
+      const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6; const di = window.dayInfo ? dayInfo(d) : {};
+      html += `<div class="cell${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}">${shown.map(e => chip(e, p)).join("")}${list.length > 6 ? `<div class="more">+${list.length - 6} weitere</div>` : ""}</div>`;
     }
   }
   if (days.some(d => dkey(d) === todayK)) html += `<div class="todaybox"></div>`; // dicker Rahmen um den heutigen Tag (Lage: placeTodayBox)

@@ -109,3 +109,12 @@ button{font:inherit;color:inherit;cursor:none}
 :root{--green:#2e9d5b}
 .dayh.today{background:var(--green)!important}
 .todaybox{border-color:var(--green);box-shadow:0 0 1em rgba(46,157,91,.4)}
+
+/* Feiertage (rot) und Schulferien NRW (blau): Hintergrund von Kopf und Spalte */
+.dayh.fer{background:#cfe3fa!important}
+.dayh.fer.today{background:var(--green)!important}
+.dayh.hol,.dayh.hol.today{background:#d94444!important;color:#fff}
+.dayh.hol .wd,.dayh.hol .dn,.dayh.hol small{color:#fff!important}
+.dayh .hn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;margin-top:.1em}
+.cell.fer:not(.today){background:#e8f1fc!important}
+.cell.hol:not(.today){background:#fdeaea!important}
