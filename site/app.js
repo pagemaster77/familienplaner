@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "12.2 (3.11.)";
+const VERSION = "12.3 (4.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -15,7 +15,7 @@ const TABS = [
 const S = {
   user: null, me: null, family: null,
   profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [],
-  editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, // gerade bearbeiteter Eintrag
+  editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
   pe: null, mealOpen: false,
@@ -444,10 +444,28 @@ function evRow(e) {
 
 function viewHome() { return cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
 
+/* Wochenansicht: immer Montag bis Sonntag, mit Wischen oder Pfeilen zur nächsten/vorherigen Woche */
+function weekInfo(off) {
+  const from = startOfDay(new Date()); from.setDate(from.getDate() - ((from.getDay() + 6) % 7) + off * 7);
+  const to = new Date(from); to.setDate(to.getDate() + 6); to.setHours(23, 59, 59, 999);
+  const th = new Date(from); th.setDate(th.getDate() + 3); // Donnerstag bestimmt die Kalenderwoche
+  const jan4 = new Date(th.getFullYear(), 0, 4); const kw = 1 + Math.round(((th - jan4) / 864e5 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+  const f = d => d.toLocaleDateString("de-DE", { day: "numeric", month: "short" });
+  return { from, to, kw, title: `${f(from)} – ${f(to)}` };
+}
 function viewCal() {
-  const evs = allEvents(14); let last = "";
-  const list = evs.map(e => { const k = dkey(e.start); const head = k !== last ? `<div class="day">${fmtDay(e.start)}</div>` : ""; last = k; return head + evRow(e); }).join("");
-  return `<div class="card"><h2>📅 Nächste 14 Tage</h2>${list || `<div class="empty">Keine Termine</div>`}${S.events.length ? `<div class="sub" style="margin-top:8px">Tipp: Eigenen Termin lange gedrückt halten zum Ändern oder Löschen.</div>` : ""}</div>
+  const w = weekInfo(S.cw); const map = byDay(allEventsRange(w.from, w.to)); const todayK = dkey(new Date());
+  let days = "";
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(w.from); d.setDate(d.getDate() + i); const k = dkey(d); const list = map[k] || [];
+    days += `<div class="day${k === todayK ? " today" : ""}">${fmtDay(d)}${k === todayK ? " · heute" : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
+  }
+  return `<div class="card calweek"><div class="wk"><button class="btn small ghost" data-act="calNav" data-v="-1">‹</button>
+      <div class="wkt"><b>KW ${w.kw}</b><span class="sub">${esc(w.title)}</span></div>
+      <button class="btn small ghost" data-act="calNav" data-v="1">›</button></div>
+    ${S.cw !== 0 ? `<button class="btn small ghost block" data-act="calNav" data-v="0" style="margin-bottom:4px">Zur aktuellen Woche</button>` : ""}
+    ${days}
+    <div class="sub" style="margin-top:10px;text-align:center">← wischen für andere Wochen →${S.events.length ? "<br>Eigenen Termin lange gedrückt halten zum Ändern oder Löschen." : ""}</div></div>
     <div class="card"><h2>Termin eintragen</h2><form data-form="event">
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
@@ -750,6 +768,7 @@ const ACT = {
     await q(sb.from("events").delete().eq("id", d.id));
     await LOAD.events(); render();
   },
+  calNav(d) { S.cw = +d.v === 0 ? 0 : S.cw + +d.v; render(); window.scrollTo(0, 0); },
   cancelEvEdit() { S.editEv = null; render(); },
   toggleMealForm() { S.mealOpen = !S.mealOpen; render(); },
   async delMeal(d) { if (confirm("Wirklich löschen?")) await q(sb.from("meals").delete().eq("id", d.id)); },
@@ -930,6 +949,13 @@ document.addEventListener("pointerdown", e => {
 });
 ["pointerup", "pointercancel", "pointerleave", "scroll", "touchmove"].forEach(t => document.addEventListener(t, lpStop, true));
 document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("[data-ev]")) e.preventDefault(); });
+/* Wischen im Kalender: links = nächste Woche, rechts = vorherige */
+let sw = null;
+document.addEventListener("touchstart", e => { const el = e.target.closest && e.target.closest(".calweek"); sw = el && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!sw) return; const t = e.changedTouches[0]; const dx = t.clientX - sw.x, dy = t.clientY - sw.y; sw = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) ACT.calNav({ v: dx < 0 ? 1 : -1 });
+}, { passive: true });
 window.addEventListener("hashchange", render);
 document.addEventListener("toggle", e => { const d = e.target; if (d.matches && d.matches("details.recipe")) S.open[d.dataset.id] = d.open; }, true);
 document.addEventListener("change", async e => {
