@@ -1,7 +1,7 @@
 /* Wandkalender – nur Ansicht. Zugang über die geheime Adresse (…/wand.html#k=TOKEN).
    Es wird nichts eingetragen oder geändert. Die Daten kommen von der Funktion "wall-data". */
 
-const VERSION = "1 (29.10.)";
+const VERSION = "2 (4.11.)";
 const $w = document.getElementById("wall");
 const store = {
   get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
@@ -10,7 +10,7 @@ const store = {
 };
 let TOKEN = (location.hash.match(/k=([0-9a-f]{32})/) || [])[1] || store.get("wallToken");
 if (/^[0-9a-f]{32}$/.test(TOKEN)) store.set("wallToken", TOKEN); else TOKEN = "";
-const W = { data: null, ical: [], view: "cal", wo: 0, touch: Date.now(), stale: false, pair: null };
+const W = { data: null, ical: [], view: "cal", wo: 0, live: true, touch: Date.now(), stale: false, pair: null };
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pad = n => String(n).padStart(2, "0");
@@ -171,11 +171,21 @@ async function loadIcal() {
 }
 
 /* ---------- Ansichten ---------- */
-const DAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const DAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]; // nach getDay()
 function weekStart() {
   const d = startOfDay(new Date());
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + W.wo * 7);
   return d;
+}
+/* Live-Ansicht: heute steht in der Mitte (3 Tage zurück, 3 Tage voraus). Wischen/Pfeile: Wochen Montag bis Sonntag. */
+function rangeStart() {
+  if (!W.live) return weekStart();
+  const d = startOfDay(new Date()); d.setDate(d.getDate() - 3); return d;
+}
+function goCal(dir) { // dir: -1 / +1 = Woche zurück / vor, 0 = heute (Live-Ansicht)
+  if (dir === 0) { W.live = true; W.wo = 0; return; }
+  if (W.live) { W.live = false; W.wo = dir; return; }
+  W.wo += dir; if (W.wo === 0) W.live = true;
 }
 function isoWeek(d) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -187,7 +197,7 @@ function chip(e, p) {
   return `<div class="chip" style="--c:${c};--bg-c:${c}22">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}${esc(e.title)}</div>`;
 }
 function viewCal() {
-  const mon = weekStart();
+  const mon = rangeStart();
   const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
   const end = new Date(days[6]); end.setHours(23, 59, 59, 999);
   const map = byDay(eventsInRange(mon, end));
@@ -198,17 +208,20 @@ function viewCal() {
   const todayK = dkey(new Date());
   let html = `<div class="grid" style="grid-template-columns:minmax(7em,13%) repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(${Math.max(rows.length, 1)},minmax(3.6em,1fr))">`;
   html += `<div class="corner"></div>`;
-  days.forEach((d, i) => {
-    html += `<div class="dayh${dkey(d) === todayK ? " today" : ""}${i > 4 ? " we" : ""}">${DAYS[i]}<small>${d.getDate()}.${d.getMonth() + 1}.</small></div>`;
+  days.forEach(d => {
+    const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6;
+    html += `<div class="dayh${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}"><span class="wd">${DAYS[d.getDay()]}</span><b class="dn">${d.getDate()}</b><small>${d.toLocaleDateString("de-DE", { month: "short" })}</small></div>`;
   });
   for (const p of rows) {
     html += `<div class="person">${avatar(p)}<span class="pn">${esc(p.name)}</span></div>`;
     for (const d of days) {
       const list = (map[dkey(d)] || []).filter(e => (p.id ? e.owner === p.id : !known.has(e.owner)));
       const shown = list.slice(0, 6);
-      html += `<div class="cell${dkey(d) === todayK ? " today" : ""}">${shown.map(e => chip(e, p)).join("")}${list.length > 6 ? `<div class="more">+${list.length - 6} weitere</div>` : ""}</div>`;
+      const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6;
+      html += `<div class="cell${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}">${shown.map(e => chip(e, p)).join("")}${list.length > 6 ? `<div class="more">+${list.length - 6} weitere</div>` : ""}</div>`;
     }
   }
+  if (days.some(d => dkey(d) === todayK)) html += `<div class="todaybox"></div>`; // dicker Rahmen um den heutigen Tag (Lage: placeTodayBox)
   return html + `</div>`;
 }
 function viewTodo() {
@@ -262,8 +275,9 @@ function render() {
   }
   if (!W.data) { $w.innerHTML = `<div class="center">Lade …</div>`; return; }
   const now = new Date();
-  const mon = weekStart(); const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
-  const range = `KW ${isoWeek(mon)} · ${mon.getDate()}.${mon.getMonth() + 1}. – ${sun.getDate()}.${sun.getMonth() + 1}.${sun.getFullYear()}`;
+  const mon = rangeStart(); const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const kwOf = W.live ? startOfDay(now) : mon;
+  const range = `KW ${isoWeek(kwOf)} · ${mon.getDate()}.${mon.getMonth() + 1}. – ${sun.getDate()}.${sun.getMonth() + 1}.${sun.getFullYear()}${W.live ? "" : " · Wochenansicht"}`;
   const cur = VIEWS.find(v => v[0] === W.view) || VIEWS[0];
   const nav = W.view === "cal" ? `<button class="btn nav" data-go="prev">‹</button><button class="btn nav" data-go="today">Heute</button><button class="btn nav" data-go="next">›</button>` : "";
   $w.innerHTML = `<div class="head">
@@ -274,17 +288,32 @@ function render() {
       <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span></button>`).join("")}</div>
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
     </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr</div>`;
+  placeTodayBox();
 }
+
+function placeTodayBox() {
+  const box = document.querySelector(".todaybox"), h = document.querySelector(".dayh.today"), g = document.querySelector(".grid");
+  if (!box || !h || !g) return;
+  box.style.left = h.offsetLeft - 1 + "px"; box.style.top = "0px"; box.style.width = h.offsetWidth + 2 + "px"; box.style.height = g.clientHeight + "px";
+}
+window.addEventListener("resize", placeTodayBox);
 
 /* Nur Umschalten der Ansicht (kein Eintragen). Nach 90 s ohne Berührung zurück zum Wochenkalender. */
 document.addEventListener("click", e => {
   W.touch = Date.now();
   const v = e.target.closest("[data-view]"), g = e.target.closest("[data-go]");
   if (v) { W.view = v.dataset.view; render(); }
-  if (g) { W.wo = g.dataset.go === "today" ? 0 : W.wo + (g.dataset.go === "next" ? 1 : -1); render(); }
+  if (g) { goCal(g.dataset.go === "today" ? 0 : g.dataset.go === "next" ? 1 : -1); render(); }
 });
+/* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche */
+let swp = null;
+document.addEventListener("touchstart", e => { W.touch = Date.now(); swp = W.view === "cal" && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!swp) return; const t = e.changedTouches[0]; const dx = t.clientX - swp.x, dy = t.clientY - swp.y; swp = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) { W.touch = Date.now(); goCal(dx < 0 ? 1 : -1); render(); }
+}, { passive: true });
 setInterval(() => {
-  if (W.data && (W.view !== "cal" || W.wo !== 0) && Date.now() - W.touch > 90000) { W.view = "cal"; W.wo = 0; }
+  if (W.data && (W.view !== "cal" || !W.live) && Date.now() - W.touch > 90000) { W.view = "cal"; W.wo = 0; W.live = true; }
   render();
 }, 30000);
 

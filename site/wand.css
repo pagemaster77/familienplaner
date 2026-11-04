@@ -1,7 +1,7 @@
 /* Wandkalender: nur Ansicht, fürs Display. Feste helle Darstellung, große Schrift. */
-:root{--bg:#f3f5f9;--card:#fff;--text:#1d2433;--muted:#6b7488;--line:#dfe4ee;--primary:#2b6cb0;--today:#fff6d6}
+:root{--bg:#eef2f8;--card:#fff;--text:#1d2433;--muted:#6b7488;--line:#e2e7f0;--primary:#2b6cb0;--today:#fff8dc}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+html,body{margin:0;height:100%;background:linear-gradient(160deg,#f6f8fc 0%,#e9eef7 100%) fixed;color:var(--text);
   font:clamp(12px,min(1.35vw,2.4vh),22px)/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   overflow:hidden;cursor:none;-webkit-user-select:none;user-select:none}
 button{font:inherit;color:inherit;cursor:none}
@@ -80,3 +80,27 @@ button{font:inherit;color:inherit;cursor:none}
 .center.pair .code{font-size:5em;font-weight:700;letter-spacing:.08em;color:var(--text);margin:.1em 0}
 .center.pair p{font-size:.9em;color:var(--text)}
 .center.pair p.muted{color:var(--muted);font-size:.7em}
+
+/* ---- Version 2: Kalender hübscher, heutiger Tag mit dickem Rahmen ---- */
+.view{touch-action:pan-y}
+.head .title{font-size:1.4em;letter-spacing:.01em}
+.head .range{font-size:.95em}
+.btn{box-shadow:0 .1em .3em rgba(30,50,90,.08)}
+.grid{position:relative;gap:2px;border:0;border-radius:1em;box-shadow:0 .25em 1.2em rgba(30,50,90,.12);background:#d9e0ec}
+.dayh{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:.35em .3em;background:linear-gradient(#ffffff,#f4f7fc)!important}
+.dayh .wd{font-size:.8em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.dayh .dn{font-size:1.9em;font-weight:800;line-height:1.05}
+.dayh small{font-size:.75em;margin-top:.05em}
+.dayh.we .wd,.dayh.we .dn{color:#b4503f}
+.dayh.today{background:var(--primary)!important;color:#fff}
+.dayh.today .wd,.dayh.today .dn,.dayh.today small{color:#fff}
+.dayh.past .dn,.dayh.past .wd{opacity:.5}
+.cell.we{background:#fcf7f6!important}
+.cell.past{opacity:.6}
+.cell.today{background:var(--today)!important}
+.person{background:linear-gradient(90deg,#ffffff,#f4f7fc)!important}
+.chip{border-radius:.45em;box-shadow:0 .08em .2em rgba(30,50,90,.12);padding:.2em .45em}
+.todaybox{position:absolute;pointer-events:none;border:.32em solid var(--primary);border-radius:.7em;background:transparent!important;z-index:3;
+  box-shadow:0 0 1em rgba(43,108,176,.35)}
+.head .range{overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.head .title{flex:none;max-width:40%}
