@@ -298,7 +298,7 @@ function placeTodayBox() {
 }
 window.addEventListener("resize", placeTodayBox);
 
-/* Nur Umschalten der Ansicht (kein Eintragen). Nach 30 s ohne Berührung zurück zur Live-Ansicht. */
+/* Nur Umschalten der Ansicht (kein Eintragen). Nach 90 s ohne Berührung zurück zur Live-Ansicht. */
 document.addEventListener("click", e => {
   W.touch = Date.now();
   const v = e.target.closest("[data-view]"), g = e.target.closest("[data-go]");
@@ -312,9 +312,9 @@ document.addEventListener("touchend", e => {
   if (!swp) return; const t = e.changedTouches[0]; const dx = t.clientX - swp.x, dy = t.clientY - swp.y; swp = null;
   if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.4) { W.touch = Date.now(); goCal(dx < 0 ? 1 : -1); render(); }
 }, { passive: true });
-/* Nach 30 s ohne Berührung zurück zur Live-Ansicht (Kalender, heute in der Mitte) */
+/* Nach 90 s ohne Berührung zurück zur Live-Ansicht (Kalender, heute in der Mitte) */
 setInterval(() => {
-  if (W.data && (W.view !== "cal" || !W.live) && Date.now() - W.touch > 30000) { W.view = "cal"; W.wo = 0; W.live = true; render(); }
+  if (W.data && (W.view !== "cal" || !W.live) && Date.now() - W.touch > 90000) { W.view = "cal"; W.wo = 0; W.live = true; render(); }
 }, 3000);
 setInterval(render, 30000);
 
