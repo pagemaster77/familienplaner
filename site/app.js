@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "12.4 (4.11.)";
+const VERSION = "13 (6.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [],
+  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [],
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -232,6 +232,7 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
+  point_log: async () => (S.pointlog = await q(sb.from("point_log").select("*").order("created_at", { ascending: false }).limit(3000))),
   messages: async () => (S.msgs = (await q(sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100))).reverse()),
   meals: async () => (S.meals = await q(sb.from("meals").select("*").order("plan_date", { ascending: true, nullsFirst: false }))),
   events: async () => {
@@ -324,7 +325,24 @@ function viewShell() {
   </div>${evModal()}`;
 }
 
-const ptsOf = p => S.tasks.filter(t => t.done && t.approved && t.done_by === p.id).reduce((a, t) => a + t.points, 0);
+/* Punktekonto: Summe aller Gutschriften und Abzüge (bleibt erhalten, auch wenn Aufgaben gelöscht werden) */
+const ptsOf = p => S.pointlog.filter(l => l.profile_id === p.id).reduce((a, l) => a + l.points, 0);
+const fmtShort = d => new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
+function cardPoints() {
+  const adm = S.me.is_admin && !isDisplay();
+  const log = S.pointlog.slice(0, 15);
+  const form = adm ? `<form class="add" data-form="pointadj" style="margin-bottom:10px">
+      <select id="pjw" name="who" required style="max-width:130px"><option value="">Wer?</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)} (${ptsOf(p)})</option>`).join("")}</select>
+      <select id="pjo" name="op" style="max-width:130px"><option value="-">Abziehen</option><option value="+">Gutschreiben</option></select>
+      <input id="pjp" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
+      <input id="pjr" name="reason" placeholder="Grund (optional)" maxlength="120">
+      <button class="btn">OK</button></form>` : "";
+  return `<div class="card"><h2>📒 Punktekonto</h2>${form}
+    ${log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
+      <div class="sub">${fmtShort(l.created_at)} · ${l.kind === "reward" ? "🎁 " : l.kind === "manual" ? "✎ " : "✅ "}${esc(l.reason || (l.kind === "task" ? "Aufgabe" : ""))}</div></div>
+      ${adm && l.kind === "manual" ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Eintrag löschen">×</button>` : ""}</div>`).join("") || `<div class="empty">Noch keine Punkte-Einträge</div>`}
+    <div class="sub" style="margin-top:6px">Punkte bleiben erhalten, auch wenn erledigte Aufgaben gelöscht werden. Sie sinken nur, wenn eine Belohnung übergeben wird oder ein Admin Punkte abzieht.</div></div>`;
+}
 // Für wen gilt die Aufgabe? (leer = für alle)
 const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
 const whoChips = (sel = []) => `<div class="who"><span class="sub">Für wen? (nichts gewählt = für alle)</span><div class="chips">${S.profiles.map(p =>
@@ -391,7 +409,7 @@ function cardTodo(limit) {
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
   const waitCard = wait.length && (!limit || adm) ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">${adm ? "Erst nach „Freigeben“ gibt es die Punkte. Mit dem Haken geht die Aufgabe wieder auf offen." : "Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte."}</div></div>` : "";
-  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
+  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
     ${form}${!S.me.is_admin && !limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
@@ -755,7 +773,16 @@ const ACT = {
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
   cancelEdit() { S.editTask = S.editShop = S.editMeal = S.editReward = null; render(); },
-  async claimReward(d) { await q(sb.from("rewards").update({ claimed: true, claimed_at: new Date().toISOString() }).eq("id", d.id)); toast("Als übergeben markiert ✔"); },
+  async claimReward(d) {
+    const r = S.rewards.find(x => x.id === d.id); if (!r || r.claimed || !S.me.is_admin) return;
+    const who = prof(r.profile_id); const bal = ptsOf(who || { id: r.profile_id });
+    if (bal < r.points) return toast("Noch nicht genug Punkte");
+    if (!confirm(`„${r.title}“ übergeben? Dafür werden ${r.points} Punkte von ${who?.name || "?"} abgezogen.`)) return;
+    await q(sb.from("point_log").insert({ family_id: S.me.family_id, profile_id: r.profile_id, points: -r.points, kind: "reward", reason: r.title, created_by: S.me.id }));
+    await q(sb.from("rewards").update({ claimed: true, claimed_at: new Date().toISOString() }).eq("id", d.id));
+    await Promise.all([LOAD.point_log(), LOAD.rewards()]); render(); toast(`Übergeben ✔ (−${r.points} Punkte)`);
+  },
+  async delPointLog(d) { if (S.me.is_admin && confirm("Diesen Eintrag löschen?")) { await q(sb.from("point_log").delete().eq("id", d.id)); await LOAD.point_log(); render(); } },
   async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },
   async delTask(d) { await q(sb.from("tasks").delete().eq("id", d.id)); },
   async toggleShop(d) { const i = S.shop.find(x => x.id === d.id); i.checked = !i.checked; render(); await q(sb.from("shopping_items").update({ checked: i.checked }).eq("id", d.id)); },
@@ -844,6 +871,13 @@ const FORMS = {
     }
     await q(sb.from("meals").update(patch).eq("id", S.editMeal));
     S.editMeal = null; await LOAD.meals(); render();
+  },
+  async pointadj(f) {
+    const n = parseInt(f.get("points"), 10); if (!f.get("who") || !(n >= 1)) return toast("Bitte Mitglied und Punkte angeben");
+    const minus = f.get("op") !== "+"; const who = prof(f.get("who"));
+    if (minus && !confirm(`${n} Punkte von ${who?.name || "?"} abziehen?`)) return;
+    await q(sb.from("point_log").insert({ family_id: S.me.family_id, profile_id: f.get("who"), points: minus ? -n : n, kind: "manual", reason: (f.get("reason") || "").trim() || (minus ? "Punkte abgezogen" : "Punkte gutgeschrieben"), created_by: S.me.id }));
+    await LOAD.point_log(); render(); toast(minus ? `−${n} Punkte` : `+${n} Punkte`);
   },
   async reward(f) {
     const points = parseInt(f.get("points"), 10); const title = (f.get("title") || "").trim();

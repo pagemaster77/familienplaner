@@ -1,0 +1,5 @@
+-- Update 6 (6.11.2026): Punktekonto. Bereits eingespielt (Migration "punktekonto_point_log").
+-- point_log: jede Gutschrift/Abzug (kind task | reward | manual). Punktestand = Summe pro Mitglied.
+-- Trigger tasks_points_log: Freigabe einer Aufgabe -> Gutschrift; Freigabe zurueck -> Gutschrift weg.
+-- Geloeschte Aufgaben behalten ihre Gutschrift (task_id wird NULL).
+-- Belohnung uebergeben = Abzug (kind reward). Admin kann Punkte abziehen/gutschreiben (kind manual).

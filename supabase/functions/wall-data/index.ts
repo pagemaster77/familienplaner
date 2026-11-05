@@ -74,17 +74,18 @@ Deno.serve(async (req: Request) => {
     const from = new Date(now - 2 * 864e5).toISOString();
     const to = new Date(now + 70 * 864e5).toISOString();
     const today = new Date(now - 864e5).toISOString().slice(0, 10);
-    const [pr, tk, sh, ev, ml, ms] = await Promise.all([
+    const [pr, tk, sh, ev, ml, ms, pl] = await Promise.all([
       db.from("profiles").select("id,name,color,avatar,photo,is_admin").eq("family_id", fam.id).order("created_at"),
       db.from("tasks").select("id,title,points,assigned_to,assignees,done,done_by,done_at,approved,created_at").eq("family_id", fam.id).limit(2000),
       db.from("shopping_items").select("id,title,amount,checked").eq("family_id", fam.id).order("created_at").limit(300),
       db.from("events").select("id,title,starts_at,ends_at,owner,recurrence,all_day").eq("family_id", fam.id).lte("starts_at", to).or(`starts_at.gte.${from},recurrence.neq.none`).order("starts_at").limit(500),
       db.from("meals").select("id,title,plan_date,image_url,wished_by").eq("family_id", fam.id).or(`plan_date.gte.${today},plan_date.is.null`).order("plan_date", { nullsFirst: false }).limit(60),
       db.from("messages").select("id,author,body,created_at").eq("family_id", fam.id).order("created_at", { ascending: false }).limit(20),
+      db.from("point_log").select("profile_id,points").eq("family_id", fam.id).limit(20000),
     ]);
     const tasks = tk.data ?? [];
     const pts: Record<string, number> = {};
-    for (const t of tasks) if (t.done && t.approved && t.done_by) pts[t.done_by] = (pts[t.done_by] ?? 0) + (t.points ?? 0);
+    for (const l of pl.data ?? []) pts[l.profile_id] = (pts[l.profile_id] ?? 0) + (l.points ?? 0); // Punktekonto
     const recent = now - 864e5;
     return json({
       ok: true,
