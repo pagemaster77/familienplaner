@@ -291,6 +291,9 @@ function render() {
   placeTodayBox();
 }
 
+/* Versteckt: 5x schnell auf die Uhr tippen -> Gipfelstürmer-Pyramide */
+const pyrTap = pyrTrigger(() => showPyramid((W.data?.profiles || []).map(p => ({ name: p.name, color: colorOf(p.color), avatar: p.avatar, photo: safePhoto(p.photo), points: p.points }))));
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".clock")) pyrTap(); });
 /* Vollbild: blendet Fenstertitel und Pi-Taskleiste aus. Einschalten und Beenden per Antippen (unten rechts).
    Nach einem Neustart genügt ein beliebiges Antippen, dann geht es wieder ins Vollbild (der Browser erlaubt es nur nach einer Berührung). */
 const inFs = () => !!document.fullscreenElement;
