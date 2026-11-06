@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "14 (6.11.)";
+const VERSION = "14.1 (6.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -335,7 +335,7 @@ const WD = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"
 const rhythmText = t => t.rhythm === "daily" ? "jeden Tag" : t.rhythm === "weekly" ? `jeden ${WD[(t.weekday || 1) - 1]}` : `am ${t.monthday || 1}. jedes Monats`;
 function cardTemplates() {
   if (!S.me.is_admin || isDisplay()) return "";
-  return `<div class="card"><h2>🔁 Wiederkehrende Aufgaben</h2>
+  return `<div class="card"><h2>🔁 Wiederkehrende Aufgaben</h2><p class="sub" style="margin-top:0">Vorlagen, die sich von selbst wiederholen</p>
     ${S.templates.map(t => { const ids = t.assignees || [];
       return `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div><div class="sub">${rhythmText(t)} · ${t.points} ⭐ · ${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}</div></div>
       <button class="x" data-act="delTemplate" data-id="${t.id}" title="Löschen">×</button></div>`; }).join("") || `<div class="empty">Noch keine wiederkehrenden Aufgaben</div>`}
@@ -345,9 +345,8 @@ function cardTemplates() {
         <select id="tmw" name="weekday">${WD.map((n, i) => `<option value="${i + 1}">${n}</option>`).join("")}</select>
         <input id="tmm" class="pt" name="monthday" type="number" min="1" max="31" value="1" title="Tag im Monat" style="display:none"></div>
       ${whoChips([])}
-      <label class="wchip" style="margin:8px 0"><input type="checkbox" name="first" checked><span>Gleich die erste Aufgabe anlegen</span></label>
-      <button class="btn block">Wiederkehrende Aufgabe anlegen</button></form>
-    <div class="sub" style="margin-top:6px">Die neue Aufgabe erscheint automatisch am gewählten Tag ab 6 Uhr. Ist die letzte noch offen, wird keine zweite angelegt.</div></div>`;
+      <button class="btn block" style="margin-top:10px">Vorlage speichern</button></form>
+    <div class="sub" style="margin-top:8px">So funktioniert es: Du legst hier einmal eine Vorlage an (z. B. „Müll rausbringen“, jeden Dienstag). Ab dann erscheint die Aufgabe an diesem Tag morgens von selbst in der To-Do-Liste. Ist die letzte noch nicht erledigt, kommt keine zweite dazu. Soll eine Aufgabe nur einmal kommen, lege sie oben ganz normal an.</div></div>`;
 }
 function cardPoints() {
   const adm = S.me.is_admin && !isDisplay();
@@ -915,8 +914,7 @@ const FORMS = {
     const points = Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)); const ids = f.getAll("who");
     const row = { family_id: S.me.family_id, title, points, assignees: ids, rhythm, weekday: rhythm === "weekly" ? Math.max(1, Math.min(7, parseInt(f.get("weekday"), 10) || 1)) : null, monthday: rhythm === "monthly" ? Math.max(1, Math.min(31, parseInt(f.get("monthday"), 10) || 1)) : null };
     await q(sb.from("task_templates").insert(row));
-    if (f.get("first") === "on") await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points, assignees: ids, assigned_to: ids.length === 1 ? ids[0] : null }));
-    await Promise.all([LOAD.task_templates(), LOAD.tasks()]); render(); toast("Wiederkehrende Aufgabe angelegt 🔁");
+    await Promise.all([LOAD.task_templates(), LOAD.tasks()]); render(); toast("Vorlage gespeichert 🔁");
   },
   async pointadj(f) {
     const n = parseInt(f.get("points"), 10); if (!f.get("who") || !(n >= 1)) return toast("Bitte Mitglied und Punkte angeben");
