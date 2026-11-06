@@ -3,7 +3,7 @@
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
 ## Version 14 (6.11.2026)
-- Wiederkehrende Aufgaben (To-Do-Tab, nur Admin): Vorlage täglich/wöchentlich/monatlich; Server legt die Aufgabe automatisch ab 6 Uhr an (Cron `spawn-task-templates`, stündlich), nie doppelt solange die letzte offen ist
+- Wiederkehrende Aufgaben: in 14.2 wieder entfernt (nicht gewünscht); Cron-Job abgeschaltet
 - Termin-Erinnerungen per Push (Cron `event-reminders`, alle 5 Min; nur eigene Termine, keine Google/iCloud-Termine)
 - Geburtstage mit Geburtsjahr: Titel zeigt das Alter, z. B. „Oma (77)“ (App und Wandanzeige)
 - Datensicherung: automatisch sonntags (Cron `weekly-backup`, Funktion `backup`, Bucket `backups`, letzte 12), plus Knopf „Sicherung herunterladen“ unter Familie (Admin)

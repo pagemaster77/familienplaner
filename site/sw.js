@@ -1,5 +1,5 @@
 // Einfacher Offline-Speicher: die App-Dateien werden gemerkt, Daten kommen immer frisch aus dem Netz.
-const CACHE = "familie-v21";
+const CACHE = "familie-v22";
 const FILES = ["./", "index.html", "styles.css", "app.js", "config.js", "ferien.js", "pyramide.js", "feier.js", "icon.svg"];
 
 self.addEventListener("install", e => {
