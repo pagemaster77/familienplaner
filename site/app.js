@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "14.2 (6.11.)";
+const VERSION = "14.3 (6.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -464,9 +464,9 @@ function evRow(e) {
 
 function viewHome() { return cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
 
-/* Wochenansicht: immer Montag bis Sonntag, mit Wischen oder Pfeilen zur nächsten/vorherigen Woche */
+/* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {
-  const from = startOfDay(new Date()); from.setDate(from.getDate() - ((from.getDay() + 6) % 7) + off * 7);
+  const from = startOfDay(new Date()); from.setDate(from.getDate() + off * 7);
   const to = new Date(from); to.setDate(to.getDate() + 6); to.setHours(23, 59, 59, 999);
   const th = new Date(from); th.setDate(th.getDate() + 3); // Donnerstag bestimmt die Kalenderwoche
   const jan4 = new Date(th.getFullYear(), 0, 4); const kw = 1 + Math.round(((th - jan4) / 864e5 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
@@ -479,14 +479,14 @@ function viewCal() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(w.from); d.setDate(d.getDate() + i); const k = dkey(d); const list = map[k] || [];
     const di = window.dayInfo ? dayInfo(d) : {};
-    days += `<div class="day${k === todayK ? " today" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}">${fmtDay(d)}${k === todayK ? " · heute" : ""}${di.holiday ? " · " + esc(di.holiday) : di.ferien ? " · " + esc(di.ferien) : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
+    days += `<div class="day${k === todayK ? " today" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}">${k === todayK ? `<span class="todaybadge">HEUTE</span> ` : ""}${fmtDay(d)}${di.holiday ? " · " + esc(di.holiday) : di.ferien ? " · " + esc(di.ferien) : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
   }
   return `<div class="card calweek"><div class="wk"><button class="btn small ghost" data-act="calNav" data-v="-1">‹</button>
-      <div class="wkt"><b>KW ${w.kw}</b><span class="sub">${esc(w.title)}</span></div>
+      <div class="wkt"><b>${S.cw === 0 ? "Ab heute" : S.cw < 0 ? "Rückblick" : "Vorschau"}</b><span class="sub">${esc(w.title)}</span></div>
       <button class="btn small ghost" data-act="calNav" data-v="1">›</button></div>
-    ${S.cw !== 0 ? `<button class="btn small ghost block" data-act="calNav" data-v="0" style="margin-bottom:4px">Zur aktuellen Woche</button>` : ""}
+    ${S.cw !== 0 ? `<button class="btn small ghost block" data-act="calNav" data-v="0" style="margin-bottom:4px">Zurück zu heute</button>` : ""}
     ${days}
-    <div class="sub" style="margin-top:10px;text-align:center">← wischen für andere Wochen →${S.events.length ? "<br>Eigenen Termin lange gedrückt halten zum Ändern oder Löschen." : ""}</div></div>
+    <div class="sub" style="margin-top:10px;text-align:center">← vor · zurück wischen für Rückblick →${S.events.length ? "<br>Eigenen Termin lange gedrückt halten zum Ändern oder Löschen." : ""}</div></div>
     <div class="card"><h2>Termin eintragen</h2><form data-form="event">
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>

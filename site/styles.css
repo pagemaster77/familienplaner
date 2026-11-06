@@ -182,7 +182,9 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .wk{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
 .wkt{display:flex;flex-direction:column;align-items:center}
 .wkt b{font-size:18px}
-.day.today{color:var(--brand,#4f8cff)}
+.day.today{color:#fff;background:var(--brand,#4f8cff);padding:6px 10px;border-radius:10px;font-weight:700;margin-top:2px}
+.todaybadge{background:#fff;color:var(--brand,#4f8cff);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:800;letter-spacing:.04em;margin-right:4px}
+.day.today.hol,.day.today.fer{background:var(--brand,#4f8cff);color:#fff}
 
 /* Feiertage rot, Schulferien NRW blau */
 .day.hol{background:#fde8e8;color:#c0392b;padding:3px 8px;border-radius:8px}

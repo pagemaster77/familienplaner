@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 14.3: Termine-Ansicht in der App beginnt mit HEUTE (7 Tage ab heute, heute farbig markiert); Wischen zurück = Rückblick
+
 ## Version 14 (6.11.2026)
 - Wiederkehrende Aufgaben: in 14.2 wieder entfernt (nicht gewünscht); Cron-Job abgeschaltet
 - Termin-Erinnerungen per Push (Cron `event-reminders`, alle 5 Min; nur eigene Termine, keine Google/iCloud-Termine)
