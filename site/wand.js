@@ -95,7 +95,7 @@ function eventsInRange(from, to) {
   const own = [];
   for (const e of W.data?.events || []) {
     const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null; const rec = e.recurrence || "none";
-    const mk = st => ({ title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, allDay: !!e.all_day });
+    const mk = st => ({ title: e.birth_year && st.getFullYear() > e.birth_year ? `${String(e.title).trim()} (${st.getFullYear() - e.birth_year})` : e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, allDay: !!e.all_day });
     if (rec === "none") { own.push(mk(s0)); continue; }
     for (let n = 0; n < 1200; n++) {
       let d;
@@ -264,7 +264,33 @@ function viewChat() {
 
 const VIEWS = [["cal", "📅", "Kalender", viewCal], ["todo", "✅", "To-Do", viewTodo], ["shop", "🛒", "Einkauf", viewShop], ["meals", "🍽️", "Essen", viewMeals], ["chat", "💬", "Chat", viewChat]];
 
+/* Nachtmodus: zwischen NIGHT_FROM und NIGHT_TO Uhr wird der Bildschirm dunkel, sobald 60 s niemand getippt hat. Antippen weckt ihn. */
+const NIGHT_FROM = 22, NIGHT_TO = 6, NIGHT_IDLE = 60000;
+const isNight = (d = new Date()) => d.getHours() >= NIGHT_FROM || d.getHours() < NIGHT_TO;
+const nightActive = () => !!W.data && isNight() && Date.now() - W.touch > NIGHT_IDLE;
+
+/* Belohnung erreicht -> Fanfare + Konfetti (einmal pro Belohnung); nachts still */
+function checkRewards() {
+  if (!W.data || !Array.isArray(W.data.rewards) || !window.celebrate) return;
+  const pr = id => (W.data.profiles || []).find(p => p.id === id);
+  const reached = W.data.rewards.filter(r => !r.claimed && pr(r.profile_id) && (pr(r.profile_id).points || 0) >= r.points);
+  const ids = reached.map(r => r.id); let seen = null;
+  try { seen = JSON.parse(store.get("rwSeen") || "null"); } catch (e) { /* egal */ }
+  const keep = list => store.set("rwSeen", JSON.stringify(list));
+  if (!Array.isArray(seen)) return keep(ids); // erster Start: nichts feiern
+  const fresh = reached.filter(r => !seen.includes(r.id));
+  keep(seen.filter(id => ids.includes(id)).concat(fresh.map(r => r.id)));
+  if (fresh.length && !nightActive()) celebrate(fresh.map(r => `${pr(r.profile_id).name}: „${r.title}“`));
+}
+
 function render() {
+  if (W.data && TOKEN && nightActive()) {
+    W.night = true;
+    const now = new Date();
+    $w.innerHTML = `<div class="nightscr"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>`;
+    return;
+  }
+  W.night = false;
   if (!TOKEN) {
     const c = W.pair?.code || "";
     $w.innerHTML = `<div class="center pair"><div><div class="muted">Wandkalender koppeln</div>
@@ -289,6 +315,7 @@ function render() {
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
     </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr<span class="grow"></span><button class="btn fsb" data-fs>${document.fullscreenElement ? "Vollbild beenden" : "Vollbild"}</button></div>`;
   placeTodayBox();
+  checkRewards();
 }
 
 /* Versteckt: 5x schnell auf die Uhr tippen -> Gipfelstürmer-Pyramide */
@@ -323,7 +350,7 @@ document.addEventListener("click", e => {
 /* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche.
    Pointer-Events: funktionieren mit Touch, Stift und Maus – auch bei Touch-Monitoren, die sich wie eine Maus melden. */
 let swp = null;
-document.addEventListener("pointerdown", e => { W.touch = Date.now(); swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
+document.addEventListener("pointerdown", e => { const wasNight = W.night; W.touch = Date.now(); if (wasNight) { render(); return; } swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
 document.addEventListener("pointermove", e => { if (swp) { swp.lx = e.clientX; swp.ly = e.clientY; } }, true);
 const swipeEnd = e => {
   if (!swp) return;

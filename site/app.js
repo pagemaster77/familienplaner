@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "13.1 (6.11.)";
+const VERSION = "14 (6.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [],
+  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], templates: [],
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -180,7 +180,7 @@ function expandOwn(list, from, to) {
   const out = [];
   for (const e of list) {
     const s0 = new Date(e.starts_at); const len = e.ends_at ? new Date(e.ends_at) - s0 : null;
-    const mk = st => ({ id: e.id, title: e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, src: "own", rec: e.recurrence || "none", allDay: !!e.all_day });
+    const mk = st => ({ id: e.id, title: e.birth_year && st.getFullYear() > e.birth_year ? `${e.title.trim()} (${st.getFullYear() - e.birth_year})` : e.title, start: st, end: len ? new Date(+st + len) : null, owner: e.owner, src: "own", rec: e.recurrence || "none", allDay: !!e.all_day });
     const rec = e.recurrence || "none";
     if (rec === "none") { out.push(mk(s0)); continue; }
     for (let n = 0; n < 1200; n++) {
@@ -232,6 +232,7 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
+  task_templates: async () => (S.templates = await q(sb.from("task_templates").select("*").order("created_at"))),
   point_log: async () => (S.pointlog = await q(sb.from("point_log").select("*").order("created_at", { ascending: false }).limit(3000))),
   messages: async () => (S.msgs = (await q(sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100))).reverse()),
   meals: async () => (S.meals = await q(sb.from("meals").select("*").order("plan_date", { ascending: true, nullsFirst: false }))),
@@ -309,6 +310,7 @@ function evModal() {
     <label class="field"><span>Titel</span><input id="eev-t" name="title" value="${esc(e.title)}" required></label>
     <div class="add" style="margin:0 0 10px"><input id="eev-d" name="date" type="date" required value="${dkey(d)}"><input id="eev-h" name="time" type="time" value="${ad ? "12:00" : two(d.getHours()) + ":" + two(d.getMinutes())}" ${ad ? "disabled" : ""}></div>
     <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="eev-a" ${ad ? "checked" : ""}><span>Ganztägig (ohne Uhrzeit)</span></label>
+    <label class="field"><span>Geburtsjahr (zeigt das Alter an, leer = aus)</span><input id="eev-b" name="birth_year" type="number" min="1900" max="2100" value="${e.birth_year || ""}"></label>
     <label class="field"><span>Wiederholen</span><select id="eev-r" name="recurrence">${opt("none", "Nein, nur einmal")}${opt("weekly", "Jede Woche")}${opt("monthly", "Jeden Monat")}${opt("yearly", "Jedes Jahr")}</select></label>
     ${rec !== "none" ? `<p class="sub">Änderungen gelten für alle Wiederholungen.</p>` : ""}
     <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEvEdit">Abbrechen</button><button type="button" class="btn danger" data-act="delEvent" data-id="${e.id}">Löschen</button></div></form></div></div>`;
@@ -326,8 +328,27 @@ function viewShell() {
 }
 
 /* Punktekonto: Summe aller Gutschriften und Abzüge (bleibt erhalten, auch wenn Aufgaben gelöscht werden) */
+const parseBirth = v => { const n = parseInt(v, 10); return n >= 1900 && n <= 2100 ? n : null; };
 const ptsOf = p => S.pointlog.filter(l => l.profile_id === p.id).reduce((a, l) => a + l.points, 0);
 const fmtShort = d => new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
+const WD = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+const rhythmText = t => t.rhythm === "daily" ? "jeden Tag" : t.rhythm === "weekly" ? `jeden ${WD[(t.weekday || 1) - 1]}` : `am ${t.monthday || 1}. jedes Monats`;
+function cardTemplates() {
+  if (!S.me.is_admin || isDisplay()) return "";
+  return `<div class="card"><h2>🔁 Wiederkehrende Aufgaben</h2>
+    ${S.templates.map(t => { const ids = t.assignees || [];
+      return `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div><div class="sub">${rhythmText(t)} · ${t.points} ⭐ · ${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}</div></div>
+      <button class="x" data-act="delTemplate" data-id="${t.id}" title="Löschen">×</button></div>`; }).join("") || `<div class="empty">Noch keine wiederkehrenden Aufgaben</div>`}
+    <form data-form="template" style="margin-top:10px">
+      <div class="add" style="margin:0 0 8px"><input id="tmt" name="title" placeholder="z. B. Müll rausbringen" required maxlength="120"><input id="tmp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte"></div>
+      <div class="add" style="margin:0 0 8px"><select id="tmr" name="rhythm"><option value="weekly">Jede Woche</option><option value="daily">Jeden Tag</option><option value="monthly">Jeden Monat</option></select>
+        <select id="tmw" name="weekday">${WD.map((n, i) => `<option value="${i + 1}">${n}</option>`).join("")}</select>
+        <input id="tmm" class="pt" name="monthday" type="number" min="1" max="31" value="1" title="Tag im Monat" style="display:none"></div>
+      ${whoChips([])}
+      <label class="wchip" style="margin:8px 0"><input type="checkbox" name="first" checked><span>Gleich die erste Aufgabe anlegen</span></label>
+      <button class="btn block">Wiederkehrende Aufgabe anlegen</button></form>
+    <div class="sub" style="margin-top:6px">Die neue Aufgabe erscheint automatisch am gewählten Tag ab 6 Uhr. Ist die letzte noch offen, wird keine zweite angelegt.</div></div>`;
+}
 function cardPoints() {
   const adm = S.me.is_admin && !isDisplay();
   const log = S.pointlog.slice(0, 15);
@@ -409,7 +430,7 @@ function cardTodo(limit) {
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
   const waitCard = wait.length && (!limit || adm) ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">${adm ? "Erst nach „Freigeben“ gibt es die Punkte. Mit dem Haken geht die Aufgabe wieder auf offen." : "Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte."}</div></div>` : "";
-  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
+  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardTemplates()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
     ${form}${!S.me.is_admin && !limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
@@ -489,6 +510,7 @@ function viewCal() {
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
       <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="ead"><span>Ganztägig (z. B. Geburtstag, ohne Uhrzeit)</span></label>
+      <label class="field"><span>Geburtsjahr (nur bei Geburtstagen, zeigt das Alter an)</span><input id="eby" name="birth_year" type="number" min="1900" max="2100" placeholder="z. B. 2014"></label>
       <label class="field"><span>Wiederholen</span><select id="er" name="recurrence"><option value="none">Nein, nur einmal</option><option value="weekly">Jede Woche</option><option value="monthly">Jeden Monat</option><option value="yearly">Jedes Jahr</option></select></label>
       <button class="btn block">Speichern</button></form>
       <p class="sub">Eigene Google- oder iCloud-Kalender hängst du unter „Familie“ an.</p></div>`;
@@ -560,6 +582,9 @@ function viewFamily() {
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
     ${S.me.is_admin ? `<div class="card"><h2>Wandanzeige</h2>${wallCard()}</div>` : ""}
+    ${S.me.is_admin ? `<div class="card"><h2>💾 Datensicherung</h2>
+      <p class="sub">Jeden Sonntagmorgen wird automatisch eine Sicherung aller Familien-Daten auf dem Server gespeichert (die letzten 12 bleiben erhalten). Hier kannst du zusätzlich jederzeit eine Datei auf dieses Gerät laden.</p>
+      <button class="btn block" data-act="backupDownload">Sicherung jetzt herunterladen</button></div>` : ""}
     ${S.me.is_admin ? `<div class="card"><h2>Alexa</h2>${alexaCard()}</div>` : ""}
     <div class="card"><h2>Anzeige</h2>
       <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
@@ -782,6 +807,17 @@ const ACT = {
     await q(sb.from("rewards").update({ claimed: true, claimed_at: new Date().toISOString() }).eq("id", d.id));
     await Promise.all([LOAD.point_log(), LOAD.rewards()]); render(); toast(`Übergeben ✔ (−${r.points} Punkte)`);
   },
+  async backupDownload() {
+    if (!S.me.is_admin) return;
+    toast("Sicherung wird erstellt …");
+    const dump = { created_at: new Date().toISOString(), note: "Familienplaner Sicherung", tables: {} };
+    for (const t of ["profiles", "tasks", "task_templates", "shopping_items", "events", "meals", "messages", "rewards", "point_log"]) dump.tables[t] = await q(sb.from(t).select("*").limit(20000));
+    const blob = new Blob([JSON.stringify(dump)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `familienplaner-sicherung-${dkey(new Date())}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast("Sicherung gespeichert ✔");
+  },
+  async delTemplate(d) { if (S.me.is_admin && confirm("Wiederkehrende Aufgabe löschen? (Schon angelegte Aufgaben bleiben.)")) { await q(sb.from("task_templates").delete().eq("id", d.id)); await LOAD.task_templates(); render(); } },
   async delPointLog(d) { if (S.me.is_admin && confirm("Diesen Eintrag löschen?")) { await q(sb.from("point_log").delete().eq("id", d.id)); await LOAD.point_log(); render(); } },
   async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },
   async delTask(d) { await q(sb.from("tasks").delete().eq("id", d.id)); },
@@ -872,6 +908,16 @@ const FORMS = {
     await q(sb.from("meals").update(patch).eq("id", S.editMeal));
     S.editMeal = null; await LOAD.meals(); render();
   },
+  async template(f) {
+    if (!S.me.is_admin) return;
+    const title = (f.get("title") || "").trim(); if (!title) return;
+    const rhythm = ["daily", "weekly", "monthly"].includes(f.get("rhythm")) ? f.get("rhythm") : "weekly";
+    const points = Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)); const ids = f.getAll("who");
+    const row = { family_id: S.me.family_id, title, points, assignees: ids, rhythm, weekday: rhythm === "weekly" ? Math.max(1, Math.min(7, parseInt(f.get("weekday"), 10) || 1)) : null, monthday: rhythm === "monthly" ? Math.max(1, Math.min(31, parseInt(f.get("monthday"), 10) || 1)) : null };
+    await q(sb.from("task_templates").insert(row));
+    if (f.get("first") === "on") await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points, assignees: ids, assigned_to: ids.length === 1 ? ids[0] : null }));
+    await Promise.all([LOAD.task_templates(), LOAD.tasks()]); render(); toast("Wiederkehrende Aufgabe angelegt 🔁");
+  },
   async pointadj(f) {
     const n = parseInt(f.get("points"), 10); if (!f.get("who") || !(n >= 1)) return toast("Bitte Mitglied und Punkte angeben");
     const minus = f.get("op") !== "+"; const who = prof(f.get("who"));
@@ -896,7 +942,7 @@ const FORMS = {
   async event(f) {
     const allDay = f.get("allday") === "on";
     const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
-    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, all_day: allDay, recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
+    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, all_day: allDay, birth_year: parseBirth(f.get("birth_year")), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
   },
   async eventedit(f) {
     const e = S.events.find(x => x.id === S.editEv); if (!e) return;
@@ -904,7 +950,7 @@ const FORMS = {
     const allDay = f.get("allday") === "on";
     const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
     const len = e.ends_at ? new Date(e.ends_at) - new Date(e.starts_at) : null;
-    const patch = { title, all_day: allDay, starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
+    const patch = { title, all_day: allDay, birth_year: parseBirth(f.get("birth_year")), starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
     if (len !== null) patch.ends_at = new Date(+starts + len).toISOString();
     await q(sb.from("events").update(patch).eq("id", S.editEv));
     S.editEv = null; await LOAD.events(); render();
@@ -998,6 +1044,7 @@ window.addEventListener("hashchange", render);
 document.addEventListener("toggle", e => { const d = e.target; if (d.matches && d.matches("details.recipe")) S.open[d.dataset.id] = d.open; }, true);
 document.addEventListener("change", async e => {
   const c = e.target;
+  if (c.name === "rhythm" && c.form) { const w = c.form.querySelector('[name="weekday"]'), m = c.form.querySelector('[name="monthday"]'); if (w) w.style.display = c.value === "weekly" ? "" : "none"; if (m) m.style.display = c.value === "monthly" ? "" : "none"; }
   if (c.name === "allday" && c.form) { const t = c.form.querySelector('input[name="time"]'); if (t) t.disabled = c.checked; }
   if (c.dataset && c.dataset.meal) S.uncheck[c.dataset.meal + ":" + c.dataset.i] = !c.checked;
   if (c.id === "pphoto" && c.files && c.files[0]) {
@@ -1006,12 +1053,25 @@ document.addEventListener("change", async e => {
 });
 
 /* ---------- Zeichnen & Start ---------- */
+/* Belohnung erreicht -> Konfetti + Fanfare (einmal pro Belohnung und Gerät) */
+function checkRewards() {
+  if (!S.me || isDisplay() || !S.rewards.length || !S.profiles.length) return;
+  const reached = S.rewards.filter(r => !r.claimed && prof(r.profile_id) && ptsOf(prof(r.profile_id)) >= r.points);
+  const ids = reached.map(r => r.id); let seen = null;
+  try { const raw = localStorage.getItem("rwSeen"); seen = raw ? JSON.parse(raw) : null; } catch (_) { /* egal */ }
+  if (!Array.isArray(seen)) { try { localStorage.setItem("rwSeen", JSON.stringify(ids)); } catch (_) { /* egal */ } return; } // erster Start: nichts feiern
+  const fresh = reached.filter(r => !seen.includes(r.id));
+  try { localStorage.setItem("rwSeen", JSON.stringify(seen.filter(id => ids.includes(id)).concat(fresh.map(r => r.id)))); } catch (_) { /* egal */ }
+  if (fresh.length && window.celebrate) celebrate(fresh.map(r => `${prof(r.profile_id).name}: „${r.title}“`));
+}
+
 function render() {
   const saved = saveInputs();
   if (!S.user) $app.innerHTML = viewAuth();
   else if (!S.me) $app.innerHTML = viewOnboarding();
   else $app.innerHTML = isDisplay() ? viewBoard() : viewShell();
   restoreInputs(saved);
+  setTimeout(checkRewards, 0);
   if (S.me && !isDisplay() && S.tab === "chat") window.scrollTo(0, document.body.scrollHeight);
 }
 

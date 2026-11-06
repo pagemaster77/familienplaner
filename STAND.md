@@ -2,6 +2,15 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 14 (6.11.2026)
+- Wiederkehrende Aufgaben (To-Do-Tab, nur Admin): Vorlage täglich/wöchentlich/monatlich; Server legt die Aufgabe automatisch ab 6 Uhr an (Cron `spawn-task-templates`, stündlich), nie doppelt solange die letzte offen ist
+- Termin-Erinnerungen per Push (Cron `event-reminders`, alle 5 Min; nur eigene Termine, keine Google/iCloud-Termine)
+- Geburtstage mit Geburtsjahr: Titel zeigt das Alter, z. B. „Oma (77)“ (App und Wandanzeige)
+- Datensicherung: automatisch sonntags (Cron `weekly-backup`, Funktion `backup`, Bucket `backups`, letzte 12), plus Knopf „Sicherung herunterladen“ unter Familie (Admin)
+- Wandanzeige-Nachtmodus: 22–6 Uhr dunkel mit schwacher Uhr nach 60 s ohne Berührung; Antippen weckt (Konstanten NIGHT_FROM/NIGHT_TO in wand.js)
+- Belohnung erreicht: Konfetti, Banner und Trompeten-Fanfare (`feier.js`, selbst erzeugter Ton, einmal pro Belohnung und Gerät; nachts auf der Wand still). Ton wird nach der ersten Berührung freigeschaltet.
+- SQL-Änderungen dieser Version wurden direkt per Supabase-Verbindung eingespielt (Tabelle `task_templates`, Spalte `events.birth_year`, pg_cron, Bucket `backups`).
+
 ## Was die App kann
 - Profile (Name, Farbe, kleines Foto oder Symbol), Familie per Einladungscode, Familienname änderbar (Admin)
 - Admin-Rechte: wer die Familie anlegt, ist Admin; Admins vergeben Admin-Titel, ändern den Familiennamen, löschen Chat-Nachrichten, vergeben Punkte

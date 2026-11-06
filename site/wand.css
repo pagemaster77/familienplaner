@@ -122,3 +122,9 @@ button{font:inherit;color:inherit;cursor:none}
 /* Vollbild-Knopf unten rechts */
 .foot .grow{flex:1}
 .fsb{font-size:.9em;padding:.25em .8em;opacity:.75;box-shadow:none}
+
+/* Nachtmodus */
+body:has(.nightscr){background:#000}
+.nightscr{position:fixed;inset:0;background:#000;color:#3a3a3a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.nightscr b{font-size:min(22vw,260px);font-weight:300;letter-spacing:.02em}
+.nightscr span{font-size:min(4vw,44px)}
