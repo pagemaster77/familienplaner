@@ -133,5 +133,6 @@ body:has(.nightscr){background:#000}
 .wmenu{position:fixed;inset:0;z-index:100003;background:#000a;display:flex;align-items:center;justify-content:center}
 .wbox{background:#1c2230;color:#fff;border-radius:20px;padding:22px;min-width:min(420px,90vw);display:flex;flex-direction:column;gap:12px;font-family:system-ui,sans-serif}
 .wbox h3{margin:0 0 4px;font-size:22px}
-.wbox .btn{padding:16px;font-size:18px;text-align:left}
+.wbox .btn{padding:16px;font-size:18px;text-align:left;background:#2f6fdd;color:#fff;border:1px solid #5b8fe8;width:100%}
+.wbox .btn.ghost{background:#39414f;border-color:#59627a}
 .wmsg{min-height:20px;color:#ffd34d}
