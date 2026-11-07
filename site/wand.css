@@ -128,3 +128,10 @@ body:has(.nightscr){background:#000}
 .nightscr{position:fixed;inset:0;background:#000;color:#3a3a3a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 .nightscr b{font-size:min(22vw,260px);font-weight:300;letter-spacing:.02em}
 .nightscr span{font-size:min(4vw,44px)}
+
+/* Verstecktes Menü */
+.wmenu{position:fixed;inset:0;z-index:100003;background:#000a;display:flex;align-items:center;justify-content:center}
+.wbox{background:#1c2230;color:#fff;border-radius:20px;padding:22px;min-width:min(420px,90vw);display:flex;flex-direction:column;gap:12px;font-family:system-ui,sans-serif}
+.wbox h3{margin:0 0 4px;font-size:22px}
+.wbox .btn{padding:16px;font-size:18px;text-align:left}
+.wmsg{min-height:20px;color:#ffd34d}

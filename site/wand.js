@@ -321,6 +321,39 @@ function render() {
 /* Versteckt: 5x schnell auf die Uhr tippen -> Gipfelstürmer-Pyramide */
 const pyrTap = pyrTrigger(() => showPyramid((W.data?.profiles || []).map(p => ({ name: p.name, color: colorOf(p.color), avatar: p.avatar, photo: safePhoto(p.photo), points: p.points }))));
 document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".clock")) pyrTap(); });
+/* Verstecktes Menü: 1x auf den Familiennamen oben links tippen -> Seite neu laden / Kiosk beenden / Rechner neu starten.
+   "Kiosk beenden" und "Neustart" erledigt ein kleines Hilfsprogramm auf dem Pi (nur lokal erreichbar, Port 8765). */
+const HELPER = "http://127.0.0.1:8765/cmd";
+async function helperCmd(cmd) {
+  const r = await fetch(HELPER, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ cmd }) });
+  if (!r.ok) throw new Error("helper");
+}
+function openMenu() {
+  if (document.querySelector(".wmenu")) return;
+  const el = document.createElement("div"); el.className = "wmenu";
+  el.innerHTML = `<div class="wbox"><h3>Menü</h3><div class="wmsg"></div>
+    <button class="btn" data-m="reload">🔄 Seite neu laden</button>
+    <button class="btn" data-m="exit">🖥️ Kiosk beenden</button>
+    <button class="btn" data-m="reboot">⏻ Rechner neu starten</button>
+    <button class="btn ghost" data-m="close">Abbrechen</button></div>`;
+  document.body.appendChild(el);
+  const msg = t => { el.querySelector(".wmsg").textContent = t; };
+  const close = () => { clearTimeout(tm); el.remove(); };
+  const tm = setTimeout(close, 20000);
+  let armed = false;
+  el.addEventListener("click", async e => {
+    W.touch = Date.now();
+    const m = e.target.closest("[data-m]")?.dataset.m;
+    if (!m) { if (e.target === el) close(); return; }
+    if (m === "close") return close();
+    if (m === "reload") return location.reload();
+    if (m === "reboot" && !armed) { armed = true; e.target.textContent = "⏻ Wirklich neu starten? Nochmal tippen"; return; }
+    try { msg(m === "exit" ? "Kiosk wird beendet …" : "Neustart …"); await helperCmd(m); }
+    catch (err) { msg("Hilfsprogramm auf dem Pi nicht erreichbar."); }
+  });
+}
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".head .title")) openMenu(); });
+
 /* Vollbild: blendet Fenstertitel und Pi-Taskleiste aus. Einschalten und Beenden per Antippen (unten rechts).
    Nach einem Neustart genügt ein beliebiges Antippen, dann geht es wieder ins Vollbild (der Browser erlaubt es nur nach einer Berührung). */
 const inFs = () => !!document.fullscreenElement;
