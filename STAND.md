@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 14.6: Wandanzeige mit Tönen (Tick, Wusch beim Wischen/Blättern); im Menü ein-/ausschaltbar, nachts stumm
+
 ## Version 14.4: Wandanzeige-Menü (Familienname antippen): Seite neu laden, Kiosk beenden, Neustart; Hilfsprogramm pi/wand-helper.py auf dem Pi
 
 ## Version 14.3: Termine-Ansicht in der App beginnt mit HEUTE (7 Tage ab heute, heute farbig markiert); Wischen zurück = Rückblick

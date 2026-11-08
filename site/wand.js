@@ -182,6 +182,27 @@ function rangeStart() {
   if (!W.live) return weekStart();
   const d = startOfDay(new Date()); d.setDate(d.getDate() - 3); return d;
 }
+/* Töne der Wandanzeige (selbst erzeugt, leise). An/Aus im Menü; nachts stumm. */
+const SND = { ctx: null, on: () => store.get("wallSnd") !== "0" };
+function beep(kind) {
+  if (!SND.on() || W.night || (W.data && nightActive())) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const c = SND.ctx = SND.ctx || new AC(); if (c.state === "suspended") c.resume();
+    const t = c.currentTime;
+    const tone = (f0, f1, at, dur, vol, type = "sine") => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, t + at); o.frequency.exponentialRampToValueAtTime(f1, t + at + dur);
+      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(vol, t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+      o.connect(g); g.connect(c.destination); o.start(t + at); o.stop(t + at + dur + 0.02);
+    };
+    if (kind === "tick") tone(1400, 900, 0, 0.06, 0.07);
+    else if (kind === "next") { tone(500, 1100, 0, 0.18, 0.06, "triangle"); }
+    else if (kind === "prev") { tone(1100, 500, 0, 0.18, 0.06, "triangle"); }
+    else if (kind === "today") { tone(700, 700, 0, 0.08, 0.06); tone(990, 990, 0.09, 0.12, 0.06); }
+  } catch (e) { /* Ton ist nur Zugabe */ }
+}
+
 function goCal(dir) { // dir: -1 / +1 = Woche zurück / vor, 0 = heute (Live-Ansicht)
   if (dir === 0) { W.live = true; W.wo = 0; return; }
   if (W.live) { W.live = false; W.wo = dir; return; }
@@ -332,6 +353,7 @@ function openMenu() {
   if (document.querySelector(".wmenu")) return;
   const el = document.createElement("div"); el.className = "wmenu";
   el.innerHTML = `<div class="wbox"><h3>Menü</h3><div class="wmsg"></div>
+    <button class="btn" data-m="snd">${SND.on() ? "🔊 Töne: an (tippen = aus)" : "🔇 Töne: aus (tippen = an)"}</button>
     <button class="btn" data-m="reload">🔄 Seite neu laden</button>
     <button class="btn" data-m="exit">🖥️ Kiosk beenden</button>
     <button class="btn" data-m="reboot">⏻ Rechner neu starten</button>
@@ -347,12 +369,14 @@ function openMenu() {
     if (!m) { if (e.target === el) close(); return; }
     if (m === "close") return close();
     if (m === "reload") return location.reload();
+    if (m === "snd") { store.set("wallSnd", SND.on() ? "0" : "1"); e.target.textContent = SND.on() ? "🔊 Töne: an (tippen = aus)" : "🔇 Töne: aus (tippen = an)"; beep("tick"); return; }
     if (m === "reboot" && !armed) { armed = true; e.target.textContent = "⏻ Wirklich neu starten? Nochmal tippen"; return; }
     try { msg(m === "exit" ? "Kiosk wird beendet …" : "Neustart …"); await helperCmd(m); }
     catch (err) { msg("Hilfsprogramm auf dem Pi nicht erreichbar."); }
   });
 }
 document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".head .title")) openMenu(); });
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".btn,.head .title"); if (b && !b.dataset.go && !b.closest(".wmenu") && !b.matches("[data-m]")) beep("tick"); }, true);
 
 /* Vollbild: blendet Fenstertitel und Pi-Taskleiste aus. Einschalten und Beenden per Antippen (unten rechts).
    Nach einem Neustart genügt ein beliebiges Antippen, dann geht es wieder ins Vollbild (der Browser erlaubt es nur nach einer Berührung). */
@@ -378,7 +402,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-fs]")) { inFs() ? fsOff() : fsOn(); return; }
   const v = e.target.closest("[data-view]"), g = e.target.closest("[data-go]");
   if (v) { W.view = v.dataset.view; render(); }
-  if (g) { goCal(g.dataset.go === "today" ? 0 : g.dataset.go === "next" ? 1 : -1); render(); }
+  if (g) { const d = g.dataset.go === "today" ? 0 : g.dataset.go === "next" ? 1 : -1; beep(d === 0 ? "today" : d > 0 ? "next" : "prev"); goCal(d); render(); }
 });
 /* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche.
    Pointer-Events: funktionieren mit Touch, Stift und Maus – auch bei Touch-Monitoren, die sich wie eine Maus melden. */
@@ -389,7 +413,7 @@ const swipeEnd = e => {
   if (!swp) return;
   const x = e.type === "pointercancel" ? swp.lx : e.clientX, y = e.type === "pointercancel" ? swp.ly : e.clientY;
   const dx = x - swp.x, dy = y - swp.y; swp = null;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.2) { W.touch = Date.now(); goCal(dx < 0 ? 1 : -1); render(); }
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.2) { W.touch = Date.now(); beep(dx < 0 ? "next" : "prev"); goCal(dx < 0 ? 1 : -1); render(); }
 };
 document.addEventListener("pointerup", swipeEnd, true);
 document.addEventListener("pointercancel", swipeEnd, true);
