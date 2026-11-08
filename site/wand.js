@@ -183,7 +183,7 @@ function rangeStart() {
   const d = startOfDay(new Date()); d.setDate(d.getDate() - 3); return d;
 }
 /* Töne der Wandanzeige (selbst erzeugt, leise). An/Aus im Menü; nachts stumm. */
-const SND = { ctx: null, on: () => store.get("wallSnd") !== "0" };
+const SND = { ctx: null, gain: 3.5, on: () => store.get("wallSnd") !== "0" };
 function beep(kind) {
   if (!SND.on() || W.night || (W.data && nightActive())) return;
   try {
@@ -193,7 +193,7 @@ function beep(kind) {
     const tone = (f0, f1, at, dur, vol, type = "sine") => {
       const o = c.createOscillator(), g = c.createGain();
       o.type = type; o.frequency.setValueAtTime(f0, t + at); o.frequency.exponentialRampToValueAtTime(f1, t + at + dur);
-      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(vol, t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(Math.min(0.6, vol * SND.gain), t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
       o.connect(g); g.connect(c.destination); o.start(t + at); o.stop(t + at + dur + 0.02);
     };
     if (kind === "tick") tone(1400, 900, 0, 0.06, 0.07);
