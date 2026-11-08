@@ -10,7 +10,7 @@ const store = {
 };
 let TOKEN = (location.hash.match(/k=([0-9a-f]{32})/) || [])[1] || store.get("wallToken");
 if (/^[0-9a-f]{32}$/.test(TOKEN)) store.set("wallToken", TOKEN); else TOKEN = "";
-const W = { data: null, ical: [], view: "cal", wo: 0, live: true, touch: Date.now(), stale: false, pair: null };
+const W = { badge: { todo: 0, shop: 0, chat: 0 }, data: null, ical: [], view: "cal", wo: 0, live: true, touch: Date.now(), stale: false, pair: null };
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pad = n => String(n).padStart(2, "0");
@@ -183,7 +183,7 @@ function rangeStart() {
   const d = startOfDay(new Date()); d.setDate(d.getDate() - 3); return d;
 }
 /* Töne der Wandanzeige (selbst erzeugt, leise). An/Aus im Menü; nachts stumm. */
-const SND = { ctx: null, gain: 3.5, on: () => store.get("wallSnd") !== "0" };
+const SND = { ctx: null, gain: 8, on: () => store.get("wallSnd") !== "0" };
 function beep(kind) {
   if (!SND.on() || W.night || (W.data && nightActive())) return;
   try {
@@ -193,7 +193,7 @@ function beep(kind) {
     const tone = (f0, f1, at, dur, vol, type = "sine") => {
       const o = c.createOscillator(), g = c.createGain();
       o.type = type; o.frequency.setValueAtTime(f0, t + at); o.frequency.exponentialRampToValueAtTime(f1, t + at + dur);
-      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(Math.min(0.6, vol * SND.gain), t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(Math.min(0.95, vol * SND.gain), t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
       o.connect(g); g.connect(c.destination); o.start(t + at); o.stop(t + at + dur + 0.02);
     };
     if (kind === "tick") tone(1400, 900, 0, 0.06, 0.07);
@@ -213,6 +213,9 @@ function announce(old, cur) {
   const ids = (a, f = () => true) => new Set((a || []).filter(f).map(x => x.id));
   const oldMsg = ids(old.messages), oldSh = ids(old.shopping), oldTk = ids(old.tasks), oldAp = ids(old.tasks, t => t.approved);
   const q = [];
+  const cnt = (a, o, f = () => true) => (a || []).filter(x => !o.has(x.id) && f(x)).length;
+  const bump = (v, n) => { if (n > 0 && W.view !== v) W.badge[v] += n; };
+  bump("chat", cnt(cur.messages, oldMsg)); bump("shop", cnt(cur.shopping, oldSh)); bump("todo", cnt(cur.tasks, oldTk, t => !t.done));
   if ((cur.messages || []).some(m => !oldMsg.has(m.id))) q.push("msg");
   if ((cur.tasks || []).some(t => t.approved && oldTk.has(t.id) && !oldAp.has(t.id))) q.push("coin");
   if ((cur.shopping || []).some(x => !oldSh.has(x.id)) || (cur.tasks || []).some(t => !oldTk.has(t.id) && !t.done)) q.push("blubb");
@@ -354,13 +357,14 @@ function render() {
   const kwOf = W.live ? startOfDay(now) : mon;
   const range = `KW ${isoWeek(kwOf)} · ${mon.getDate()}.${mon.getMonth() + 1}. – ${sun.getDate()}.${sun.getMonth() + 1}.${sun.getFullYear()}${W.live ? "" : " · Wochenansicht"}`;
   const cur = VIEWS.find(v => v[0] === W.view) || VIEWS[0];
+  if (W.badge[W.view]) W.badge[W.view] = 0;
   const nav = W.view === "cal" ? `<button class="btn nav" data-go="prev">‹</button><button class="btn nav" data-go="today">Heute</button><button class="btn nav" data-go="next">›</button>` : "";
   $w.innerHTML = `<div class="head">
       <div class="title">${esc(W.data.family?.name || "Familie")}</div>
       ${W.view === "cal" ? `<div class="range">${range}</div>` : ""}${nav}
       ${W.stale ? `<span class="stale">keine Verbindung</span>` : ""}
       <div class="grow"></div>
-      <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span></button>`).join("")}</div>
+      <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}${W.badge[v[0]] > 0 ? " blink" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span>${W.badge[v[0]] > 0 ? `<i class="bdg">${W.badge[v[0]]}</i>` : ""}</button>`).join("")}</div>
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
     </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr<span class="grow"></span><button class="btn fsb" data-fs>${document.fullscreenElement ? "Vollbild beenden" : "Vollbild"}</button></div>`;
   placeTodayBox();

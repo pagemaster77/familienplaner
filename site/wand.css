@@ -136,3 +136,9 @@ body:has(.nightscr){background:#000}
 .wbox .btn{padding:16px;font-size:18px;text-align:left;background:#2f6fdd;color:#fff;border:1px solid #5b8fe8;width:100%}
 .wbox .btn.ghost{background:#39414f;border-color:#59627a}
 .wmsg{min-height:20px;color:#ffd34d}
+
+/* Hinweis-Zahl und Blinken bei Neuem */
+.buttons .btn{position:relative}
+.bdg{position:absolute;top:-8px;right:-8px;min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:#e5252b;color:#fff;font:700 15px/26px system-ui,sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #fff}
+.btn.blink{animation:wblink 1s ease-in-out infinite}
+@keyframes wblink{0%,100%{background:var(--card,#fff);box-shadow:0 0 0 0 #e5252b}50%{background:#ff6b6f;box-shadow:0 0 16px 4px #e5252b}}
