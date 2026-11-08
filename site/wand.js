@@ -141,7 +141,7 @@ const call = what => post({ token: TOKEN, what });
 function lostAccess() { store.del("wallToken"); TOKEN = ""; W.data = null; W.ical = []; if (location.hash) history.replaceState(null, "", location.pathname); startPairing(); }
 async function loadCore() {
   if (!TOKEN) return;
-  try { W.data = await call("core"); W.stale = false; }
+  try { const old = W.data; W.data = await call("core"); W.stale = false; announce(old, W.data); }
   catch (e) { if (e.message === "invalid") return lostAccess(); W.stale = true; }
   render();
 }
@@ -200,8 +200,36 @@ function beep(kind) {
     else if (kind === "next") { tone(500, 1100, 0, 0.18, 0.06, "triangle"); }
     else if (kind === "prev") { tone(1100, 500, 0, 0.18, 0.06, "triangle"); }
     else if (kind === "today") { tone(700, 700, 0, 0.08, 0.06); tone(990, 990, 0.09, 0.12, 0.06); }
+    else if (kind === "msg") { tone(880, 880, 0, 0.12, 0.08); tone(1320, 1320, 0.13, 0.22, 0.08); }                  // Chat: heller Zweiklang
+    else if (kind === "ding") { tone(660, 660, 0, 0.45, 0.09); tone(523, 523, 0.5, 0.7, 0.09); }                      // Termin: Ding-Dong
+    else if (kind === "blubb") { tone(300, 650, 0, 0.14, 0.09); }                                                     // neu auf Liste: Blubb
+    else if (kind === "coin") { tone(1175, 1175, 0, 0.07, 0.07, "square"); tone(1568, 1568, 0.07, 0.3, 0.07, "square"); } // Punkte: Muenze
   } catch (e) { /* Ton ist nur Zugabe */ }
 }
+
+/* Klingeltöne bei Neuem (nur wenn schon Daten da waren): Chat > Punkte > neu auf Liste. Mehrere nacheinander. */
+function announce(old, cur) {
+  if (!old || !cur) return;
+  const ids = (a, f = () => true) => new Set((a || []).filter(f).map(x => x.id));
+  const oldMsg = ids(old.messages), oldSh = ids(old.shopping), oldTk = ids(old.tasks), oldAp = ids(old.tasks, t => t.approved);
+  const q = [];
+  if ((cur.messages || []).some(m => !oldMsg.has(m.id))) q.push("msg");
+  if ((cur.tasks || []).some(t => t.approved && oldTk.has(t.id) && !oldAp.has(t.id))) q.push("coin");
+  if ((cur.shopping || []).some(x => !oldSh.has(x.id)) || (cur.tasks || []).some(t => !oldTk.has(t.id) && !t.done)) q.push("blubb");
+  q.forEach((k, i) => setTimeout(() => beep(k), i * 700));
+}
+/* Termin-Erinnerung: bis 10 Minuten vorher einmal "Ding-Dong" (nur Termine mit Uhrzeit) */
+const dinged = new Set();
+function checkSoonEvents() {
+  if (!W.data) return;
+  const now = new Date(), to = new Date(+now + 10 * 60000);
+  for (const e of eventsInRange(now, to)) {
+    if (e.allDay || e.start < now || e.start > to) continue;
+    const k = e.title + "|" + +e.start; if (dinged.has(k)) continue;
+    dinged.add(k); beep("ding"); break;
+  }
+}
+setInterval(checkSoonEvents, 30000);
 
 function goCal(dir) { // dir: -1 / +1 = Woche zurück / vor, 0 = heute (Live-Ansicht)
   if (dir === 0) { W.live = true; W.wo = 0; return; }

@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 14.8: Wand-Klingeltöne: Chat (Zweiklang), Termin in 10 Min (Ding-Dong), neu auf Liste (Blubb), Punkte vergeben (Münze); nur Wand, nachts stumm, im Menü schaltbar
+
 ## Version 14.7: Pyramide spielt eigene Trompeten-Fanfare (laenger mit Thron)
 
 ## Version 14.6: Wandanzeige mit Tönen (Tick, Wusch beim Wischen/Blättern); im Menü ein-/ausschaltbar, nachts stumm
