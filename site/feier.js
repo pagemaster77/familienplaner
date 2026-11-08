@@ -46,6 +46,17 @@
       .forEach(([m, at, d]) => note(c, m, t + at, d, 0.16));
   };
 
+  /* Gipfel-Fanfare fuer die Pyramide: eigene Melodie (aufsteigender D-Dur-Dreiklang, langer Schlusston).
+     big = jemand sitzt auf dem Thron -> laenger, mit Nachklang. Auf der Wand per Menue stumm schaltbar. */
+  window.pyrSound = function (big) {
+    try { if (localStorage.getItem("wallSnd") === "0") return; } catch (_) { /* egal */ }
+    const c = audio(); if (!c) return;
+    const t = c.currentTime + 0.1, q = 0.14;
+    const seq = [[62, 0, q], [69, q, q], [74, 2 * q, q], [78, 3 * q, q], [81, 4 * q, big ? 0.9 : 0.6]];
+    if (big) seq.push([74, 4 * q + 1.0, 0.25], [78, 4 * q + 1.0, 0.25], [86, 4 * q + 1.0, 1.4]);
+    seq.forEach(([m, at, d]) => note(c, m, t + at, d, 0.15));
+  };
+
   function confetti(box) {
     const cv = document.createElement("canvas"); cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100001";
     document.body.appendChild(cv);

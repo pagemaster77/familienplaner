@@ -98,6 +98,7 @@
     el.addEventListener("click", e => { if (e.target.closest(".pyr-x") || e.target === el) close(); });
     document.addEventListener("keydown", onKey, true);
     document.body.appendChild(el);
+    try { if (window.pyrSound) pyrSound(list.some(p => lvl(p) >= TOP)); } catch (_) { /* Ton ist nur Zugabe */ }
     // Hochklettern starten
     requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll(".fig").forEach(f => {
       f.style.transitionDelay = f.dataset.d + "s"; f.style.transform = `translate(${f.dataset.x}px,${f.dataset.y}px)`;
