@@ -1,0 +1,5 @@
+-- Dokumentation (bereits eingespielt): Version 16 Tages-Chef
+-- families.chef_order (uuid[]): Reihenfolge, Start 15.11.2026 mit der ersten Person, danach taeglich die naechste
+-- daily_posts (Tag, Autor, yt_id, has_photo, rewarded), daily_photos (Bild als Data-URL, getrennt wegen Realtime/Groesse)
+-- Funktion post_daily(p_photo, p_yt): prueft Tages-Chef, speichert, schreibt einmal pro Tag 5 Punkte in point_log
+-- Cron daily-cleanup: loescht Eintraege (und Bilder) aelter als 14 Tage

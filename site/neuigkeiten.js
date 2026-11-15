@@ -2,6 +2,11 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "16", date: "15.11.2026", items: [
+    "Neu: Tages-Chef! Jeden Tag ist reihum jemand dran: Amy, Elena, Sophie, Meggy, Sascha.",
+    "Der Chef stellt ein Bild und/oder einen YouTube-Song des Tages ein und bekommt dafür 5 ⭐.",
+    "Alle sehen das Bild und hören den Song auf der Startseite. Auf der Wand läuft das Bild als Bildschirmschoner.",
+  ] },
   { v: "15.4", date: "15.11.2026", items: [
     "Neu: Für das Eintragen der Stimmung gibt es 5 ⭐ – aber nur einmal in 24 Stunden.",
     "Wer die Stimmung öfter ändert, bekommt dafür keine weiteren Punkte.",

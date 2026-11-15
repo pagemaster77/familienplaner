@@ -10,7 +10,7 @@ const store = {
 };
 let TOKEN = (location.hash.match(/k=([0-9a-f]{32})/) || [])[1] || store.get("wallToken");
 if (/^[0-9a-f]{32}$/.test(TOKEN)) store.set("wallToken", TOKEN); else TOKEN = "";
-const W = { badge: { todo: 0, shop: 0, chat: 0 }, data: null, ical: [], view: "cal", wo: 0, live: true, touch: Date.now(), stale: false, pair: null };
+const W = { saver: false, shot: null, badge: { todo: 0, shop: 0, chat: 0 }, data: null, ical: [], view: "cal", wo: 0, live: true, touch: Date.now(), stale: false, pair: null };
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pad = n => String(n).padStart(2, "0");
@@ -142,7 +142,7 @@ const call = what => post({ token: TOKEN, what });
 function lostAccess() { store.del("wallToken"); TOKEN = ""; W.data = null; W.ical = []; if (location.hash) history.replaceState(null, "", location.pathname); startPairing(); }
 async function loadCore() {
   if (!TOKEN) return;
-  try { const old = W.data; W.data = await call("core"); W.stale = false; announce(old, W.data); }
+  try { const old = W.data; W.data = await call("core"); W.stale = false; announce(old, W.data); loadShot(); }
   catch (e) { if (e.message === "invalid") return lostAccess(); W.stale = true; }
   render();
 }
@@ -236,6 +236,17 @@ function checkSoonEvents() {
   }
 }
 setInterval(checkSoonEvents, 30000);
+
+/* Bild des Tages: wird nur geholt, wenn es neu oder geaendert ist; dient nach 3 Minuten ohne Beruehrung als Bildschirmschoner */
+const SAVER_IDLE = 180000;
+async function loadShot() {
+  const d = W.data && W.data.daily;
+  if (!d || !d.has_photo) { W.shot = null; return; }
+  const key = d.id + "|" + d.updated_at;
+  if (W.shot && W.shot.key === key) return;
+  try { const r = await call("daily_photo"); W.shot = r.data && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(r.data) ? { key, src: r.data } : null; } catch (e) { /* naechster Versuch in 30 s */ }
+}
+const wantSaver = () => !!(W.data && W.shot && !nightActive() && Date.now() - W.touch > SAVER_IDLE && !(W.data.profiles || []).some(p => moodOf(p) === "help"));
 
 function goCal(dir) { // dir: -1 / +1 = Woche zurück / vor, 0 = heute (Live-Ansicht)
   if (dir === 0) { W.live = true; W.wo = 0; return; }
@@ -339,6 +350,13 @@ function checkRewards() {
 }
 
 function render() {
+  if (W.data && TOKEN && !nightActive() && wantSaver()) {
+    W.saver = true; W.night = false;
+    const now = new Date(), cf = (W.data.profiles || []).find(p => p.id === W.data.chef);
+    $w.innerHTML = `<div class="saver"><img src="${W.shot.src}" alt=""><div class="scap">👑 Bild des Tages${cf ? " von " + esc(cf.name) : ""}</div><div class="sclock">${fmtTime(now)}</div></div>`;
+    return;
+  }
+  W.saver = false;
   if (W.data && TOKEN && nightActive()) {
     W.night = true;
     const now = new Date();
@@ -370,7 +388,7 @@ function render() {
       <div class="grow"></div>
       <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}${W.badge[v[0]] > 0 ? " blink" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span>${W.badge[v[0]] > 0 ? `<i class="bdg">${W.badge[v[0]]}</i>` : ""}</button>`).join("")}</div>
       <div class="clock"><b>${fmtTime(now)}</b><span>${now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}</span></div>
-    </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr<span class="grow"></span><button class="btn fsb" data-fs>${document.fullscreenElement ? "Vollbild beenden" : "Vollbild"}</button></div>`;
+    </div><div class="view">${cur[3]()}</div><div class="foot">Stand ${W.data.at ? fmtTime(new Date(W.data.at)) : ""} Uhr${(() => { const cf = (W.data.profiles || []).find(p => p.id === W.data.chef); return cf ? `<span style="margin-left:1.2em">👑 Tages-Chef heute: <b>${esc(cf.name)}</b></span>` : ""; })()}<span class="grow"></span><button class="btn fsb" data-fs>${document.fullscreenElement ? "Vollbild beenden" : "Vollbild"}</button></div>`;
   placeTodayBox();
   checkRewards();
 }
@@ -443,7 +461,7 @@ document.addEventListener("click", e => {
 /* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche.
    Pointer-Events: funktionieren mit Touch, Stift und Maus – auch bei Touch-Monitoren, die sich wie eine Maus melden. */
 let swp = null;
-document.addEventListener("pointerdown", e => { const wasNight = W.night; W.touch = Date.now(); if (wasNight) { render(); return; } swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
+document.addEventListener("pointerdown", e => { const wasNight = W.night || W.saver; W.touch = Date.now(); if (wasNight) { W.swallow = Date.now(); render(); return; } swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
 document.addEventListener("pointermove", e => { if (swp) { swp.lx = e.clientX; swp.ly = e.clientY; } }, true);
 const swipeEnd = e => {
   if (!swp) return;
@@ -453,6 +471,8 @@ const swipeEnd = e => {
 };
 document.addEventListener("pointerup", swipeEnd, true);
 document.addEventListener("pointercancel", swipeEnd, true);
+document.addEventListener("click", e => { if (Date.now() - (W.swallow || 0) < 500) { e.stopPropagation(); e.preventDefault(); } }, true);
+setInterval(() => { if (W.data && wantSaver() !== W.saver) render(); }, 3000);
 /* Nach 90 s ohne Berührung zurück zur Live-Ansicht (Kalender, heute in der Mitte) */
 setInterval(() => {
   if (W.data && (W.view !== "cal" || !W.live) && Date.now() - W.touch > 90000) { W.view = "cal"; W.wo = 0; W.live = true; render(); }

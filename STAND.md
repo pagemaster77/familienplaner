@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 16 (15.11.2026): Tages-Chef. Reihum Amy, Elena, Sophie, Meggy, Sascha (families.chef_order, Start 15.11.). Chef stellt Bild und/oder YouTube-Link ein, bekommt einmal pro Tag 5 Punkte. Bild erscheint nach 3 Min ohne Berührung als Bildschirmschoner auf der Wand (nachts und bei SOS nicht); in der App Karte auf Start. Bilder werden nach 14 Tagen gelöscht.
+
 ## Version 15.3 (15.11.2026): Neuigkeiten-Popup nach Updates. Datei site/neuigkeiten.js: Liste NEWS (neueste zuerst); bei jedem Update dort oben einen Eintrag mit neuer Version einfügen (gleiche Nummer wie VERSION in app.js). Das Fenster erscheint einmal pro Gerät (localStorage "newsSeen"), zeigt alles seit dem letzten Mal (max. 5), nicht auf Wandanzeige/Tablet-Ansicht.
 
 ## Version 15 (15.11.2026): Stimmung. Karte „Wie geht’s dir heute?“ auf Start; Ring um das Profilbild (gut = bunter Verlauf, geht so = gelb, schlecht = rot, Hilfe = blinkend rot mit SOS). Gilt 24 Stunden. Hilfe schickt nur den Eltern (Admins) eine Push-Meldung, Wand zeigt Banner und Ton. Dateien: site/stimmung.js, DB-Spalten profiles.mood/mood_at

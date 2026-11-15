@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "15.4 (15.11.)";
+const VERSION = "16 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [],
+  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -59,6 +59,23 @@ function avatarFromFile(file, size = 128) {
       const c = document.createElement("canvas"); c.width = c.height = size;
       c.getContext("2d").drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, size, size);
       res(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => rej(new Error("Das Bild konnte nicht gelesen werden"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* Foto für das Tagesbild: längste Seite höchstens 1280 px, JPEG (ca. 150-300 KB) */
+function photoFromFile(file, max = 1280) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      let qy = 0.82, out = c.toDataURL("image/jpeg", qy);
+      while (out.length > 1000000 && qy > 0.4) { qy -= 0.1; out = c.toDataURL("image/jpeg", qy); }
+      res(out);
     };
     img.onerror = () => rej(new Error("Das Bild konnte nicht gelesen werden"));
     img.src = URL.createObjectURL(file);
@@ -233,6 +250,7 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
+  daily_posts: async () => (S.daily = await q(sb.from("daily_posts").select("*").order("day", { ascending: false }).limit(14))),
   point_log: async () => (S.pointlog = await q(sb.from("point_log").select("*").order("created_at", { ascending: false }).limit(3000))),
   messages: async () => (S.msgs = (await q(sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100))).reverse()),
   meals: async () => (S.meals = await q(sb.from("meals").select("*").order("plan_date", { ascending: true, nullsFirst: false }))),
@@ -463,6 +481,41 @@ function evRow(e) {
     <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}</div></div></div>`;
 }
 
+/* ---------- Tages-Chef: jeden Tag ist reihum jemand dran (Bild + YouTube-Song) ---------- */
+const CHEF_START = Date.UTC(2026, 10, 15); // an diesem Tag ist die erste Person der Reihenfolge dran
+function chefFor(d) {
+  const o = (S.family && S.family.chef_order) || []; if (!o.length) return null;
+  const days = Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - CHEF_START) / 864e5);
+  return prof(o[((days % o.length) + o.length) % o.length]) || null;
+}
+function ytId(s) {
+  const m = String(s || "").trim().match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/) || String(s || "").trim().match(/^([A-Za-z0-9_-]{11})$/);
+  return m ? m[1] : "";
+}
+const todayPost = () => S.daily.find(p => p.day === dkey(new Date()));
+function ensurePhoto(post) {
+  if (!post || !post.has_photo || S.dailyPhoto[post.id] !== undefined) return;
+  S.dailyPhoto[post.id] = null; // wird geladen
+  sb.from("daily_photos").select("data").eq("post_id", post.id).maybeSingle().then(({ data }) => { S.dailyPhoto[post.id] = data ? safePhoto(data.data) : ""; render(); });
+}
+function cardChef() {
+  if (!S.me || isDisplay()) return "";
+  const t = new Date(), chef = chefFor(t); if (!chef) return "";
+  const n = new Date(t); n.setDate(n.getDate() + 1); const next = chefFor(n);
+  const post = todayPost(), mine = chef.id === S.me.id; ensurePhoto(post);
+  const ph = post && S.dailyPhoto[post.id];
+  const show = post ? `${post.has_photo ? (ph ? `<img class="chefimg" src="${ph}" alt="Bild des Tages" data-act="chefPhotoOpen">` : `<div class="sub">Bild wird geladen …</div>`) : ""}
+      ${post.yt_id ? `<div class="chefsong"><img src="https://i.ytimg.com/vi/${post.yt_id}/hqdefault.jpg" alt=""><button class="btn" data-act="ytPlay" data-v="${post.yt_id}">▶ Song des Tages anhören</button></div>` : ""}` : "";
+  const form = mine ? `<form data-form="chef" style="margin-top:10px">
+      <div class="sub">${post ? "Du kannst dein Bild oder deinen Song noch ändern." : "Du bist heute dran! Stell ein Bild und/oder einen YouTube-Song ein und bekomme <b>5 Punkte</b>."}</div>
+      <label class="field"><span>Bild des Tages</span><input id="chefimg" type="file" accept="image/*"></label>
+      ${S.chefPhoto ? `<img class="chefimg" src="${S.chefPhoto}" alt="Vorschau">` : ""}
+      <label class="field"><span>YouTube-Link (Song des Tages)</span><input id="chefyt" name="yt" placeholder="https://www.youtube.com/watch?v=…" value="${post && post.yt_id ? `https://youtu.be/${post.yt_id}` : ""}"></label>
+      <button class="btn block">${post ? "Speichern" : "Einstellen (+5 Punkte)"}</button></form>` : (post ? "" : `<div class="sub">${esc(chef.name)} hat heute noch nichts eingestellt.</div>`);
+  return `<div class="card chefcard"><h2>👑 Tages-Chef heute: ${avatar(chef, 30)} ${esc(chef.name)}</h2>${show}${form}
+    ${next ? `<div class="sub" style="margin-top:8px">Morgen ist ${esc(next.name)} dran.</div>` : ""}</div>`;
+}
+
 /* Stimmung: jeder stellt für sich ein, wie es ihm geht (gilt 24 Stunden) */
 function cardMood() {
   if (!S.me || isDisplay()) return "";
@@ -471,7 +524,7 @@ function cardMood() {
     `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
     <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal in 24 Stunden.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
 }
-function viewHome() { return cardMood() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
+function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
 
 /* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {
@@ -807,6 +860,16 @@ const ACT = {
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     toast("Sicherung gespeichert ✔");
   },
+  chefPhotoOpen() {
+    const p = todayPost(), src = p && S.dailyPhoto[p.id]; if (!src) return;
+    const el = document.createElement("div"); el.className = "overlay-img"; el.innerHTML = `<img src="${src}" alt="">`; el.onclick = () => el.remove(); document.body.appendChild(el);
+  },
+  ytPlay(d) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(d.v)) return;
+    const el = document.createElement("div"); el.className = "overlay-img yt";
+    el.innerHTML = `<div class="ytbox"><iframe src="https://www.youtube-nocookie.com/embed/${d.v}?autoplay=1&rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe><button class="btn">Schließen</button></div>`;
+    el.onclick = e => { if (e.target === el || e.target.closest("button")) el.remove(); }; document.body.appendChild(el);
+  },
   async mood(d) {
     const v = d.v === "clear" ? null : d.v; if (v && !MOODS[v]) return;
     if (v === "help" && !confirm("Die Eltern bekommen eine Meldung, dass du reden möchtest. Okay?")) return;
@@ -905,6 +968,16 @@ const FORMS = {
     }
     await q(sb.from("meals").update(patch).eq("id", S.editMeal));
     S.editMeal = null; await LOAD.meals(); render();
+  },
+  async chef(f) {
+    const yt = ytId(f.get("yt")), raw = (f.get("yt") || "").trim();
+    if (raw && !yt) return toast("Das ist kein gültiger YouTube-Link");
+    if (!S.chefPhoto && !yt) return toast("Bitte ein Bild oder einen YouTube-Link angeben");
+    const { data, error } = await sb.rpc("post_daily", { p_photo: S.chefPhoto || null, p_yt: yt || null });
+    if (error) return toast(error.message);
+    S.chefPhoto = null; S.dailyPhoto = {};
+    await Promise.all([LOAD.daily_posts(), LOAD.point_log()]); render();
+    toast(data && data.points ? `Eingestellt – +${data.points} Punkte 🎉` : "Gespeichert");
   },
   async pointadj(f) {
     const n = parseInt(f.get("points"), 10); if (!f.get("who") || !(n >= 1)) return toast("Bitte Mitglied und Punkte angeben");
@@ -1034,6 +1107,9 @@ document.addEventListener("change", async e => {
   const c = e.target;
   if (c.name === "allday" && c.form) { const t = c.form.querySelector('input[name="time"]'); if (t) t.disabled = c.checked; }
   if (c.dataset && c.dataset.meal) S.uncheck[c.dataset.meal + ":" + c.dataset.i] = !c.checked;
+  if (c.id === "chefimg" && c.files && c.files[0]) {
+    try { S.chefPhoto = await photoFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
+  }
   if (c.id === "pphoto" && c.files && c.files[0]) {
     try { S.pe.photo = await avatarFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
   }

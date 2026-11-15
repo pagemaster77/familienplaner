@@ -57,8 +57,23 @@ Deno.serve(async (req: Request) => {
     }
 
     if (typeof token !== "string" || !/^[0-9a-f]{32}$/.test(token)) return json({ ok: false, error: "invalid" }, 403);
-    const { data: fam } = await db.from("families").select("id,name").eq("wall_token", token).maybeSingle();
+    const { data: fam } = await db.from("families").select("id,name,chef_order").eq("wall_token", token).maybeSingle();
     if (!fam) return json({ ok: false, error: "invalid" }, 403);
+
+    // Datum in Berlin, Tages-Chef (Reihenfolge rotiert taeglich)
+    const berlin = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date()); // YYYY-MM-DD
+    const [by, bm, bd] = berlin.split("-").map(Number);
+    const order: string[] = fam.chef_order ?? [];
+    const dd = Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(2026, 10, 15)) / 864e5);
+    const chef = order.length ? order[((dd % order.length) + order.length) % order.length] : null;
+
+    // Bild des Tages (einmal abgeholt, nur wenn sich etwas geaendert hat)
+    if (what === "daily_photo") {
+      const { data: post } = await db.from("daily_posts").select("id,updated_at").eq("family_id", fam.id).eq("day", berlin).maybeSingle();
+      if (!post) return json({ ok: true, id: null });
+      const { data: ph } = await db.from("daily_photos").select("data").eq("post_id", post.id).maybeSingle();
+      return json({ ok: true, id: post.id, updated_at: post.updated_at, data: ph?.data ?? null });
+    }
 
     // Kalender von Google/iCloud (seltener abgerufen)
     if (what === "ical") {
@@ -74,7 +89,7 @@ Deno.serve(async (req: Request) => {
     const from = new Date(now - 2 * 864e5).toISOString();
     const to = new Date(now + 70 * 864e5).toISOString();
     const today = new Date(now - 864e5).toISOString().slice(0, 10);
-    const [pr, tk, sh, ev, ml, ms, pl, rw] = await Promise.all([
+    const [pr, tk, sh, ev, ml, ms, pl, rw, dp] = await Promise.all([
       db.from("profiles").select("id,name,color,avatar,photo,is_admin,mood,mood_at").eq("family_id", fam.id).order("created_at"),
       db.from("tasks").select("id,title,points,assigned_to,assignees,done,done_by,done_at,approved,created_at").eq("family_id", fam.id).limit(2000),
       db.from("shopping_items").select("id,title,amount,checked").eq("family_id", fam.id).order("created_at").limit(300),
@@ -83,6 +98,7 @@ Deno.serve(async (req: Request) => {
       db.from("messages").select("id,author,body,created_at").eq("family_id", fam.id).order("created_at", { ascending: false }).limit(20),
       db.from("point_log").select("profile_id,points").eq("family_id", fam.id).limit(20000),
       db.from("rewards").select("id,profile_id,points,title,claimed").eq("family_id", fam.id).limit(200),
+      db.from("daily_posts").select("id,author,yt_id,has_photo,updated_at").eq("family_id", fam.id).eq("day", berlin).maybeSingle(),
     ]);
     const tasks = tk.data ?? [];
     const pts: Record<string, number> = {};
@@ -98,6 +114,8 @@ Deno.serve(async (req: Request) => {
       meals: ml.data ?? [],
       messages: (ms.data ?? []).reverse(),
       rewards: rw.data ?? [],
+      chef,
+      daily: dp.data ?? null,
       at: new Date().toISOString(),
     });
   } catch (e) {
