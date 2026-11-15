@@ -260,7 +260,9 @@ function isoWeek(d) {
 }
 function chip(e, p) {
   const c = colorOf(p?.color);
-  return `<div class="chip" style="--c:${c};--bg-c:${c}22">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}${esc(e.title)}</div>`;
+  const multi = e.end && e.end > e.start && dkey(new Date(+e.end - 1)) > dkey(e.start);
+  const til = multi ? ` <small>bis ${new Date(+e.end - 1).getDate()}.${new Date(+e.end - 1).getMonth() + 1}.</small>` : "";
+  return `<div class="chip" style="--c:${c};--bg-c:${c}22">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}${esc(e.title)}${til}</div>`;
 }
 function viewCal() {
   const mon = rangeStart();

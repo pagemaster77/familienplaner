@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "18.1", date: "15.11.2026", items: [
+    "Termine über mehrere Tage: Beim Eintragen und Ändern gibt es jetzt „Letzter Tag“ (z. B. Urlaub oder Klassenfahrt). Der Termin erscheint an jedem Tag, mit „bis …“.",
+  ] },
   { v: "18.0", date: "15.11.2026", items: [
     "Neu: Admins haben oben rechts ein ⚙️ „Verwalten“. Dort stehen Freigeben, Aufgaben-Punkte, Belohnungen, Punktekonto, Familie und Technik geordnet an einem Ort. Eine rote Zahl zeigt, was auf eine Freigabe wartet.",
     "Alle anderen Seiten sehen jetzt für alle gleich aus.",

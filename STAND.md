@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 18.1: Mehrtägige Termine (Feld Letzter Tag beim Eintragen/Ändern, Anzeige bis …)
+
 ## Version 18.0: Admin-Seite ⚙️ Verwalten, Oberfläche für alle gleich
 
 ## Version 17.1: Familien verbinden per Code (family_links, link_code; nur Wunschlisten geteilt)

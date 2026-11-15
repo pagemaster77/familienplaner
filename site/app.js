@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "18.0 (15.11.)";
+const VERSION = "18.1 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -337,11 +337,13 @@ function evModal() {
   const e = S.events.find(x => x.id === S.editEv); if (!e) return "";
   const d = new Date(e.starts_at); const two = n => String(n).padStart(2, "0"); const ad = !!e.all_day;
   const rec = e.recurrence || "none";
+  const en = e.ends_at ? new Date(e.ends_at) : null, multi = !!(en && dkey(new Date(+en - 1)) > dkey(d));
   const opt = (v, l) => `<option value="${v}" ${rec === v ? "selected" : ""}>${l}</option>`;
   return `<div class="ovl"><div class="card"><h2>✎ Termin ändern</h2><form data-form="eventedit">
     <label class="field"><span>Titel</span><input id="eev-t" name="title" value="${esc(e.title)}" required></label>
     <div class="add" style="margin:0 0 10px"><input id="eev-d" name="date" type="date" required value="${dkey(d)}"><input id="eev-h" name="time" type="time" value="${ad ? "12:00" : two(d.getHours()) + ":" + two(d.getMinutes())}" ${ad ? "disabled" : ""}></div>
     <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="eev-a" ${ad ? "checked" : ""}><span>Ganztägig (ohne Uhrzeit)</span></label>
+    <label class="field"><span>Mehrere Tage? Letzter Tag und Uhrzeit (leer = nur ein Tag)</span><div class="add" style="margin:0"><input id="eev-u" name="until" type="date" value="${multi ? dkey(new Date(+en - 1)) : ""}"><input id="eev-ut" name="until_time" type="time" value="${multi && !ad ? two(en.getHours()) + ":" + two(en.getMinutes()) : ""}"></div></label>
     <label class="field"><span>Geburtsjahr (zeigt das Alter an, leer = aus)</span><input id="eev-b" name="birth_year" type="number" min="1900" max="2100" value="${e.birth_year || ""}"></label>
     <label class="field"><span>Wiederholen</span><select id="eev-r" name="recurrence">${opt("none", "Nein, nur einmal")}${opt("weekly", "Jede Woche")}${opt("monthly", "Jeden Monat")}${opt("yearly", "Jedes Jahr")}</select></label>
     ${rec !== "none" ? `<p class="sub">Änderungen gelten für alle Wiederholungen.</p>` : ""}
@@ -536,11 +538,18 @@ function cardToday() {
     ${ev.map(evRow).join("") || `<div class="empty">Keine Termine heute</div>`}
     <div class="row"><span style="font-size:22px">🍽️</span><div class="grow"><div class="t">${meal ? esc(meal.title) : "Noch kein Essen geplant"}</div></div></div></div>`;
 }
+/* Mehrtägige Termine: letzter Tag (Ende zählt exklusiv) und Eingabe "bis" */
+const evMulti = e => !!(e.end && e.end > e.start && dkey(new Date(+e.end - 1)) > dkey(e.start));
+const evUntil = e => (evMulti(e) ? new Date(+e.end - 1).toLocaleDateString("de-DE", { day: "numeric", month: "numeric" }) : "");
+function untilDate(f, starts, allDay) {
+  const u = String(f.get("until") || ""); if (!u || u <= dkey(starts)) return null;
+  return new Date(`${u}T${allDay ? "23:59" : f.get("until_time") || "23:59"}`);
+}
 function evRow(e) {
   const p = prof(e.owner);
   const lp = e.src === "own" && !isDisplay();
   return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""}><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
-    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}</div></div></div>`;
+    <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${evMulti(e) ? " · bis " + evUntil(e) : ""}</div></div></div>`;
 }
 
 /* ---------- Tages-Chef: jeden Tag ist reihum jemand dran (Bild + YouTube-Song) ---------- */
@@ -617,6 +626,7 @@ function viewCal() {
       <label class="field"><span>Titel</span><input id="et" name="title" required></label>
       <div class="add" style="margin:0 0 10px"><input id="ed" name="date" type="date" required value="${dkey(new Date())}"><input id="eh" name="time" type="time" value="12:00"></div>
       <label class="wchip" style="margin:0 0 10px"><input type="checkbox" name="allday" id="ead"><span>Ganztägig (z. B. Geburtstag, ohne Uhrzeit)</span></label>
+      <label class="field"><span>Mehrere Tage? Letzter Tag und Uhrzeit (leer = nur ein Tag)</span><div class="add" style="margin:0"><input id="eu" name="until" type="date"><input id="eut" name="until_time" type="time"></div></label>
       <label class="field"><span>Geburtsjahr (nur bei Geburtstagen, zeigt das Alter an)</span><input id="eby" name="birth_year" type="number" min="1900" max="2100" placeholder="z. B. 2014"></label>
       <label class="field"><span>Wiederholen</span><select id="er" name="recurrence"><option value="none">Nein, nur einmal</option><option value="weekly">Jede Woche</option><option value="monthly">Jeden Monat</option><option value="yearly">Jedes Jahr</option></select></label>
       <button class="btn block">Speichern</button></form>
@@ -1158,16 +1168,23 @@ const FORMS = {
   async event(f) {
     const allDay = f.get("allday") === "on";
     const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
-    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), owner: S.me.id, all_day: allDay, birth_year: parseBirth(f.get("birth_year")), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
+    const until = untilDate(f, starts, allDay);
+    if (f.get("until") && !until) return toast("Der letzte Tag muss nach dem ersten Tag liegen");
+    await q(sb.from("events").insert({ family_id: S.me.family_id, title: f.get("title"), starts_at: starts.toISOString(), ends_at: until ? until.toISOString() : null, owner: S.me.id, all_day: allDay, birth_year: parseBirth(f.get("birth_year")), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" }));
   },
   async eventedit(f) {
     const e = S.events.find(x => x.id === S.editEv); if (!e) return;
     const title = (f.get("title") || "").trim(); if (!title) return;
     const allDay = f.get("allday") === "on";
     const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
-    const len = e.ends_at ? new Date(e.ends_at) - new Date(e.starts_at) : null;
+    const wasMulti = !!(e.ends_at && dkey(new Date(+new Date(e.ends_at) - 1)) > dkey(new Date(e.starts_at)));
+    const len = e.ends_at && !wasMulti ? new Date(e.ends_at) - new Date(e.starts_at) : null;
+    const until = untilDate(f, starts, allDay);
+    if (f.get("until") && !until) return toast("Der letzte Tag muss nach dem ersten Tag liegen");
     const patch = { title, all_day: allDay, birth_year: parseBirth(f.get("birth_year")), starts_at: starts.toISOString(), recurrence: ["weekly", "monthly", "yearly"].includes(f.get("recurrence")) ? f.get("recurrence") : "none" };
-    if (len !== null) patch.ends_at = new Date(+starts + len).toISOString();
+    if (until) patch.ends_at = until.toISOString();
+    else if (wasMulti) patch.ends_at = null;
+    else if (len !== null) patch.ends_at = new Date(+starts + len).toISOString();
     await q(sb.from("events").update(patch).eq("id", S.editEv));
     S.editEv = null; await LOAD.events(); render();
   },
