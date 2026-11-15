@@ -220,3 +220,12 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .gear{position:relative;background:none;border:0;font-size:22px;line-height:1;padding:4px 6px;cursor:pointer;border-radius:10px}
 .gear.on{background:var(--line)}
 .gear i{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;border-radius:8px;background:#e5484d;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;font-style:normal;padding:0 4px}
+
+/* Termin-Formular: Felder erscheinen nur, wenn der Haken gesetzt ist */
+.evopts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.evopts .wchip{position:relative}
+.evtimes{display:flex;gap:10px}.evtimes .field{flex:1;min-width:0}
+.evf:not(:has(.cb-multi:checked)) .when-multi,
+.evf:not(:has(.cb-time:checked)) .when-time,
+.evf:not(:has(.cb-multi:checked)) .when-multitime,
+.evf:not(:has(.sel-rec option[value="yearly"]:checked)) .when-year{display:none}

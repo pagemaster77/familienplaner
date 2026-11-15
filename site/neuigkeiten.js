@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "18.2", date: "15.11.2026", items: [
+    "Das Termin-Formular ist aufgeräumt: Titel, Datum, dann „Mehrere Tage“ und „Mit Uhrzeit“ zum Anhaken, danach „Wiederholen“. Felder wie „Bis“, Uhrzeit und Geburtsjahr erscheinen nur, wenn sie gebraucht werden.",
+  ] },
   { v: "18.1", date: "15.11.2026", items: [
     "Termine über mehrere Tage: Beim Eintragen und Ändern gibt es jetzt „Letzter Tag“ (z. B. Urlaub oder Klassenfahrt). Der Termin erscheint an jedem Tag, mit „bis …“.",
   ] },
