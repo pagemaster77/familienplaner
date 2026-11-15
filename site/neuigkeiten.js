@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "15.4", date: "15.11.2026", items: [
+    "Neu: Für das Eintragen der Stimmung gibt es 5 ⭐ – aber nur einmal in 24 Stunden.",
+    "Wer die Stimmung öfter ändert, bekommt dafür keine weiteren Punkte.",
+  ] },
   { v: "15.3", date: "15.11.2026", items: [
     "Neu: Nach einem Update zeigt die App dieses Fenster mit den Änderungen.",
   ] },

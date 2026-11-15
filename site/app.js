@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "15.3 (15.11.)";
+const VERSION = "15.4 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -469,7 +469,7 @@ function cardMood() {
   const cur = moodOf(S.me);
   return `<div class="card"><h2>Wie geht’s dir heute?</h2><div class="moods">${Object.entries(MOODS).map(([k, [e, l]]) =>
     `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
-    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
+    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal in 24 Stunden.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
 }
 function viewHome() { return cardMood() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
 
@@ -810,8 +810,11 @@ const ACT = {
   async mood(d) {
     const v = d.v === "clear" ? null : d.v; if (v && !MOODS[v]) return;
     if (v === "help" && !confirm("Die Eltern bekommen eine Meldung, dass du reden möchtest. Okay?")) return;
+    const before = prof(S.me.id)?.mood_points_at || null;
     await q(sb.from("profiles").update({ mood: v, mood_at: v ? new Date().toISOString() : null }).eq("id", S.me.id));
-    await LOAD.profiles(); render(); toast(v === "help" ? "Die Eltern wissen Bescheid 💛" : v ? "Gespeichert" : "Zurückgesetzt");
+    await Promise.all([LOAD.profiles(), LOAD.point_log()]);
+    const got = (prof(S.me.id)?.mood_points_at || null) !== before; /* Punkte vergibt die Datenbank: 5 ⭐ höchstens 1x in 24 Std. */
+    render(); toast(v === "help" ? "Die Eltern wissen Bescheid 💛" : v ? (got ? "Gespeichert · +5 Punkte ⭐" : "Gespeichert") : "Zurückgesetzt");
   },
   async delPointLog(d) { if (S.me.is_admin && confirm("Diesen Eintrag löschen?")) { await q(sb.from("point_log").delete().eq("id", d.id)); await LOAD.point_log(); render(); } },
   async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },
