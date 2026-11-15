@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 17.0: Wunschliste (Reiter Wünsche, Tabellen wishes + wish_marks; Wünschender sieht Gekauft-Haken nicht, per RLS)
+
 ## Version 16.3: Tages-Chef für alle Familien (Reihenfolge: chef_order, dann übrige nach Beitritt; Funktion family_chef_order, App chefFor, wall-data)
 
 ## Version 16.2: Passwort vergessen (E-Mail-Link, supabase resetPasswordForEmail) + Passwort ändern unter Familie. Voraussetzung: in Supabase unter Authentication -> URL Configuration muss die Site URL auf https://familienplaner.pagemaster77.workers.dev stehen (und dort als Redirect URL erlaubt sein).

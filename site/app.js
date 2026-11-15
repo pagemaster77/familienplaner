@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "16.3 (15.11.)";
+const VERSION = "17.0 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -9,12 +9,12 @@ const COLORS = ["#4f8cff", "#e5484d", "#2f9e5b", "#d9822b", "#8e4ec6", "#12a594"
 const EMOJIS = ["🙂", "😎", "🦸", "👩", "👨", "👧", "👦", "👵", "👴", "🐶", "🐱", "🦊", "🐼", "🦁", "⚽", "🎸"];
 const TABS = [
   ["home", "🏠", "Start"], ["todo", "✅", "To-Do"], ["shop", "🛒", "Einkauf"], ["meals", "🍽️", "Essen"],
-  ["cal", "📅", "Termine"], ["chat", "💬", "Chat"], ["family", "👪", "Familie"],
+  ["cal", "📅", "Termine"], ["wish", "🎁", "Wünsche"], ["chat", "💬", "Chat"], ["family", "👪", "Familie"],
 ];
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -250,6 +250,8 @@ const LOAD = {
   },
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
+  wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
+  wish_marks: async () => (S.marks = await q(sb.from("wish_marks").select("*"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
   daily_posts: async () => (S.daily = await q(sb.from("daily_posts").select("*").order("day", { ascending: false }).limit(14))),
   point_log: async () => (S.pointlog = await q(sb.from("point_log").select("*").order("created_at", { ascending: false }).limit(3000))),
@@ -343,7 +345,7 @@ function evModal() {
 }
 
 function viewShell() {
-  const body = { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, chat: cardChat, family: viewFamily }[S.tab]();
+  const body = { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, wish: viewWishes, chat: cardChat, family: viewFamily }[S.tab]();
   return `<div class="shell">
     <div class="top-wrap">
       <div class="top"><h1>${esc(S.family.name)}</h1><div class="who">${avatar(S.me, 28)} ${esc(S.me.name)}</div></div>
@@ -612,6 +614,38 @@ function viewMeals() {
     ${wishes.length ? `<div class="day">Wünsche</div>${wishes.map(card).join("")}` : ""}`;
 }
 
+/* Wunschliste: jeder sieht die Wünsche der anderen und kann "gekauft" abhaken.
+   Der Wünschende sieht den Haken NICHT (das erzwingt die Datenbank, nicht nur die Anzeige). */
+const OCC = ["Geburtstag", "Weihnachten", "Sonstiges"], OCC_IC = { Geburtstag: "🎂", Weihnachten: "🎄", Sonstiges: "🎁" };
+const wishUrl = u => { try { const t = String(u).trim(); if (/\s/.test(t)) return ""; const x = new URL(t); return (x.protocol === "https:" || x.protocol === "http:") && x.hostname.includes(".") ? x.toString() : ""; } catch (_) { return ""; } };
+function wishRow(w, mine) {
+  const mk = S.marks.find(m => m.wish_id === w.id), by = mk && prof(mk.by_profile), u = wishUrl(w.url);
+  const can = S.me.is_admin || mine;
+  const status = mine ? "" : mk
+    ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || S.me.is_admin ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
+    : `<button class="btn small" data-act="buy" data-id="${w.id}">✔ Gekauft</button>`;
+  return `<div class="row ${mk ? "done" : ""}"><div class="grow"><div class="t">${OCC_IC[w.occasion] || "🎁"} ${esc(w.title)}${w.price ? ` <span class="sub">· ${esc(w.price)}</span>` : ""}</div>
+    ${u ? `<div class="sub"><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen</a></div>` : ""}
+    ${w.note ? `<div class="sub">${esc(w.note)}</div>` : ""}</div>${status}
+    ${can ? `<button class="x" data-act="delWish" data-id="${w.id}" title="Wunsch löschen">×</button>` : ""}</div>`;
+}
+function viewWishes() {
+  const mine = S.wishes.filter(w => w.owner === S.me.id);
+  const others = S.profiles.filter(p => p.id !== S.me.id);
+  const form = `<form class="add" data-form="wish" style="flex-wrap:wrap">
+    <input id="wt" name="title" placeholder="Was wünschst du dir?" required maxlength="120">
+    <input id="wu" name="url" placeholder="Link (optional)" maxlength="600" inputmode="url">
+    <input id="wp" class="pt" name="price" placeholder="Preis" maxlength="30" style="max-width:90px">
+    <select id="wo" name="occasion" aria-label="Anlass">${OCC.map(o => `<option>${o}</option>`).join("")}</select>
+    ${S.me.is_admin ? `<select id="wf" name="owner" aria-label="Für wen"><option value="">für mich</option>${others.map(p => `<option value="${p.id}">für ${esc(p.name)}</option>`).join("")}</select>` : ""}
+    <input id="wn" name="note" placeholder="Notiz (Größe, Farbe …)" maxlength="300">
+    <button class="btn">Wunsch speichern</button></form>`;
+  return `<div class="card"><h2>🎁 Meine Wünsche</h2>${form}
+    ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}
+    <div class="sub" style="margin-top:6px">Die anderen sehen deine Wünsche und haken ab, was gekauft ist. Du siehst diese Haken nicht – so bleibt es eine Überraschung. 🤫</div></div>
+    ${others.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)}</h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
+}
+
 function viewFamily() {
   const p = S.pe; const adm = S.me.is_admin;
   return `<div class="card"><h2>Familie</h2>
@@ -838,6 +872,9 @@ const ACT = {
     await q(sb.from("tasks").update({ points: n }).eq("id", d.id));
   },
   photoRemove() { S.pe.photo = null; render(); },
+  async buy(d) { await q(sb.from("wish_marks").insert({ wish_id: d.id, family_id: S.me.family_id, by_profile: S.me.id })); await LOAD.wish_marks(); render(); },
+  async unbuy(d) { await q(sb.from("wish_marks").delete().eq("wish_id", d.id)); await LOAD.wish_marks(); render(); },
+  async delWish(d) { if (!confirm("Wunsch wirklich löschen?")) return; await q(sb.from("wishes").delete().eq("id", d.id)); await LOAD.wishes(); render(); },
   async delMsg(d) {
     if (!confirm("Nachricht wirklich löschen?")) return;
     await q(sb.from("messages").delete().eq("id", d.id));
@@ -1030,6 +1067,14 @@ const FORMS = {
     S.editReward = null; await LOAD.rewards(); render();
   },
   async shop(f) { await q(sb.from("shopping_items").insert({ family_id: S.me.family_id, title: f.get("title"), amount: f.get("amount") || null })); },
+  async wish(f) {
+    const title = String(f.get("title") || "").trim(); if (!title) return;
+    const raw = String(f.get("url") || "").trim(), url = raw ? wishUrl(/^https?:\/\//i.test(raw) ? raw : "https://" + raw) : "";
+    if (raw && !url) return toast("Der Link sieht nicht richtig aus");
+    const owner = S.me.is_admin && f.get("owner") ? f.get("owner") : S.me.id;
+    await q(sb.from("wishes").insert({ family_id: S.me.family_id, owner, title, url: url || null, price: String(f.get("price") || "").trim() || null, note: String(f.get("note") || "").trim() || null, occasion: OCC.includes(f.get("occasion")) ? f.get("occasion") : "Sonstiges" }));
+    await LOAD.wishes(); render(); toast("Wunsch gespeichert 🎁");
+  },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {
     const allDay = f.get("allday") === "on";

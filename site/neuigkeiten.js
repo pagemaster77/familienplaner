@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "17.0", date: "15.11.2026", items: [
+    "Neu: Reiter „Wünsche“. Jeder trägt Wünsche ein (mit Link, Preis, Anlass). Die anderen sehen sie und haken „Gekauft“ ab.",
+    "Du selbst siehst die Haken bei deinen eigenen Wünschen nicht – so bleibt es eine Überraschung.",
+  ] },
   { v: "16.3", date: "15.11.2026", items: [
     "Der Tages-Chef gibt es jetzt in jeder Familie. Die Reihenfolge richtet sich nach dem Beitritt, neue Mitglieder kommen automatisch dazu.",
   ] },

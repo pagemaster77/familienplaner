@@ -1,0 +1,3 @@
+-- Version 17.0: Wunschliste. Tabellen wishes (Wuensche) und wish_marks (Gekauft-Haken).
+-- wish_marks ist fuer den Wuenschenden unsichtbar (RLS-Regel marks_read) und kann von ihm nicht gesetzt werden.
+-- (Bereits ueber Migration "wunschliste" eingespielt; Datei dient der Dokumentation.)
