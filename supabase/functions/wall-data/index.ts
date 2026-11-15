@@ -63,9 +63,7 @@ Deno.serve(async (req: Request) => {
     // Datum in Berlin, Tages-Chef (Reihenfolge rotiert taeglich)
     const berlin = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date()); // YYYY-MM-DD
     const [by, bm, bd] = berlin.split("-").map(Number);
-    const order: string[] = fam.chef_order ?? [];
     const dd = Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(2026, 10, 15)) / 864e5);
-    const chef = order.length ? order[((dd % order.length) + order.length) % order.length] : null;
 
     // Bild des Tages (einmal abgeholt, nur wenn sich etwas geaendert hat)
     if (what === "daily_photo") {
@@ -100,6 +98,11 @@ Deno.serve(async (req: Request) => {
       db.from("rewards").select("id,profile_id,points,title,claimed").eq("family_id", fam.id).limit(200),
       db.from("daily_posts").select("id,author,yt_id,has_photo,updated_at").eq("family_id", fam.id).eq("day", berlin).maybeSingle(),
     ]);
+    // Reihenfolge: erst die in chef_order genannten, dann alle anderen nach Beitritt (jede Familie)
+    const ids: string[] = (pr.data ?? []).map((p: any) => p.id);
+    const fo: string[] = (fam.chef_order ?? []).filter((id: string) => ids.includes(id));
+    const order = [...fo, ...ids.filter((id) => !fo.includes(id))];
+    const chef = order.length ? order[((dd % order.length) + order.length) % order.length] : null;
     const tasks = tk.data ?? [];
     const pts: Record<string, number> = {};
     for (const l of pl.data ?? []) pts[l.profile_id] = (pts[l.profile_id] ?? 0) + (l.points ?? 0); // Punktekonto

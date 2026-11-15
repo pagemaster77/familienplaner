@@ -3,3 +3,5 @@
 -- daily_posts (Tag, Autor, yt_id, has_photo, rewarded), daily_photos (Bild als Data-URL, getrennt wegen Realtime/Groesse)
 -- Funktion post_daily(p_photo, p_yt): prueft Tages-Chef, speichert, schreibt einmal pro Tag 5 Punkte in point_log
 -- Cron daily-cleanup: loescht Eintraege (und Bilder) aelter als 14 Tage
+-- Version 16.3: Tages-Chef fuer jede Familie. Funktion family_chef_order(familie): erst die in families.chef_order genannten
+-- Mitglieder, danach alle anderen nach Beitritt. Wer geloescht wird faellt heraus, wer neu dazukommt wird angehaengt.

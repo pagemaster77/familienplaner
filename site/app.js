@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "16.2 (15.11.)";
+const VERSION = "16.3 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -492,7 +492,9 @@ function evRow(e) {
 /* ---------- Tages-Chef: jeden Tag ist reihum jemand dran (Bild + YouTube-Song) ---------- */
 const CHEF_START = Date.UTC(2026, 10, 15); // an diesem Tag ist die erste Person der Reihenfolge dran
 function chefFor(d) {
-  const o = (S.family && S.family.chef_order) || []; if (!o.length) return null;
+  /* Reihenfolge: erst die in chef_order genannten, dann alle anderen Mitglieder nach Beitritt (gilt so für jede Familie) */
+  const ids = S.profiles.map(p => p.id), fo = ((S.family && S.family.chef_order) || []).filter(id => ids.includes(id));
+  const o = fo.concat(ids.filter(id => !fo.includes(id))); if (!o.length) return null;
   const days = Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - CHEF_START) / 864e5);
   return prof(o[((days % o.length) + o.length) % o.length]) || null;
 }
