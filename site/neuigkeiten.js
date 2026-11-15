@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "18.3", date: "15.11.2026", items: [
+    "Im Termin-Formular wählst du oben „Termin“ oder „Geburtstag“. Ein Geburtstag ist automatisch ganztägig und jährlich, mit Geburtsjahr zeigt die App das Alter.",
+  ] },
   { v: "18.2", date: "15.11.2026", items: [
     "Das Termin-Formular ist aufgeräumt: Titel, Datum, dann „Mehrere Tage“ und „Mit Uhrzeit“ zum Anhaken, danach „Wiederholen“. Felder wie „Bis“, Uhrzeit und Geburtsjahr erscheinen nur, wenn sie gebraucht werden.",
   ] },

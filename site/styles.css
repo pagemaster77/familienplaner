@@ -228,4 +228,5 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .evf:not(:has(.cb-multi:checked)) .when-multi,
 .evf:not(:has(.cb-time:checked)) .when-time,
 .evf:not(:has(.cb-multi:checked)) .when-multitime,
-.evf:not(:has(.sel-rec option[value="yearly"]:checked)) .when-year{display:none}
+.evf:has(.kind-bd:checked) :is(.when-termin,.when-multi,.when-time,.when-multitime){display:none}
+.evf:not(:has(.kind-bd:checked)) .when-bd{display:none}

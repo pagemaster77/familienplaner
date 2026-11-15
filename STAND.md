@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 18.3: Termin-Formular mit Auswahl Termin / Geburtstag
+
 ## Version 18.2: Termin-Formular aufgeraeumt (Haken Mehrere Tage / Mit Uhrzeit, Geburtsjahr nur bei jaehrlich)
 
 ## Version 18.1: Mehrtägige Termine (Feld Letzter Tag beim Eintragen/Ändern, Anzeige bis …)
