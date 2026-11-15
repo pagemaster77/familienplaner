@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "18.0", date: "15.11.2026", items: [
+    "Neu: Admins haben oben rechts ein ⚙️ „Verwalten“. Dort stehen Freigeben, Aufgaben-Punkte, Belohnungen, Punktekonto, Familie und Technik geordnet an einem Ort. Eine rote Zahl zeigt, was auf eine Freigabe wartet.",
+    "Alle anderen Seiten sehen jetzt für alle gleich aus.",
+  ] },
   { v: "17.1", date: "15.11.2026", items: [
     "Familien verbinden: Unter „Familie“ gibt es einen Verbindungs-Code. Gibt ein Admin den Code einer anderen Familie ein, sehen sich beide Familien die Wunschlisten und können „Gekauft“ abhaken.",
   ] },

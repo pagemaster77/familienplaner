@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "17.1 (15.11.)";
+const VERSION = "18.0 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -348,11 +348,62 @@ function evModal() {
     <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEvEdit">Abbrechen</button><button type="button" class="btn danger" data-act="delEvent" data-id="${e.id}">Löschen</button></div></form></div></div>`;
 }
 
+/* ⚙️ Verwalten: alles, was nur Admins tun – Freigeben, Punkte, Belohnungen, Familie, Technik */
+const rewardsReached = () => S.rewards.filter(r => !r.claimed && prof(r.profile_id) && ptsOf(prof(r.profile_id)) >= r.points);
+const adminOpenCount = () => S.tasks.filter(t => t.done && !t.approved).length + rewardsReached().length;
+function viewAdmin() {
+  const wait = S.tasks.filter(t => t.done && !t.approved), reached = rewardsReached();
+  const open = S.tasks.filter(t => !t.done);
+  const todoRow = t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
+      <div class="sub">${whoIds(t).length ? "für " + whoIds(t).map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
+    <button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button></div>`;
+  const people = S.profiles;
+  return `<div class="card"><button class="btn ghost small" data-act="tab" data-v="home">← Zurück</button>
+      <h2 style="margin-top:10px">⚙️ Verwalten</h2><p class="sub">Nur für Admins. Alle anderen sehen diese Seite nicht.</p></div>
+
+    <div class="card"><h2>✔ Freigeben${wait.length + reached.length ? ` <span class="tag">${wait.length + reached.length}</span>` : ""}</h2>
+      ${wait.map(t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
+        <div class="sub">erledigt von ${esc(prof(t.done_by)?.name || "?")} · ⏳ wartet auf Freigabe</div></div>
+        <button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button>
+        <button class="btn small" data-act="approveTask" data-id="${t.id}">✔ Freigeben</button></div>`).join("")}
+      ${reached.map(r => `<div class="row"><div class="grow"><div class="t">🎁 ${esc(r.title)}</div>
+        <div class="sub">${esc(prof(r.profile_id)?.name || "?")} hat ${r.points} ⭐ erreicht</div></div>
+        <button class="btn small" data-act="claimReward" data-id="${r.id}">✔ Übergeben</button></div>`).join("")}
+      ${wait.length || reached.length ? "" : `<div class="empty">Nichts offen 🎉</div>`}
+      <div class="sub" style="margin-top:6px">Erst nach „Freigeben“ gibt es die Punkte für eine erledigte Aufgabe. Bei einer erreichten Belohnung hakst du mit „Übergeben“ ab, dass sie ausgehändigt wurde.</div></div>
+
+    <div class="card"><h2>⭐ Aufgaben &amp; Punkte</h2>
+      <form class="add" data-form="admintask">
+        <input id="atn" name="title" placeholder="Neue Aufgabe mit Punkten" required>
+        <input id="atp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte">
+        <button class="btn">+</button>
+        <div style="flex-basis:100%">${whoChips([])}</div></form>
+      ${open.map(todoRow).join("") || `<div class="empty">Keine offenen Aufgaben</div>`}
+      <div class="sub" style="margin-top:6px">Tippe auf die Punktezahl, um sie zu ändern. Aufgaben, die die anderen anlegen, haben zuerst 0 Punkte.</div></div>
+
+    ${cardRewards(true)}
+    ${cardPoints(true)}
+
+    <div class="card"><h2>👪 Familie</h2>
+      <div class="sub">Name der Familie:</div>
+      <form class="add" data-form="famname" style="margin:4px 0 12px"><input id="fn" name="name" value="${esc(S.family.name)}" required maxlength="40" aria-label="Familienname"><button class="btn">Umbenennen</button></form>
+      ${people.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}</div>
+        ${x.id !== S.me.id ? `<button class="btn small ghost" data-act="setAdmin" data-id="${x.id}" data-v="${x.is_admin ? 0 : 1}">${x.is_admin ? "Admin entziehen" : "Zum Admin machen"}</button>` : ""}</div>`).join("")}
+      <div class="sub" style="margin-top:6px">Chat-Nachrichten löschen kannst du direkt im Chat (kleines ×).</div></div>
+    ${cardLink(true)}
+
+    <div class="card"><h2>📺 Wandanzeige</h2>${wallCard()}</div>
+    <div class="card"><h2>Alexa</h2>${alexaCard()}</div>
+    <div class="card"><h2>💾 Datensicherung</h2>
+      <p class="sub">Jeden Sonntagmorgen wird automatisch eine Sicherung aller Familien-Daten auf dem Server gespeichert (die letzten 12 bleiben erhalten). Hier kannst du zusätzlich jederzeit eine Datei auf dieses Gerät laden.</p>
+      <button class="btn block" data-act="backupDownload">Sicherung jetzt herunterladen</button></div>`;
+}
+
 function viewShell() {
-  const body = { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, wish: viewWishes, chat: cardChat, family: viewFamily }[S.tab]();
+  const body = (S.tab === "admin" && S.me.is_admin ? viewAdmin : { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, wish: viewWishes, chat: cardChat, family: viewFamily }[S.tab] || viewHome)();
   return `<div class="shell">
     <div class="top-wrap">
-      <div class="top"><h1>${esc(S.family.name)}</h1><div class="who">${avatar(S.me, 28)} ${esc(S.me.name)}</div></div>
+      <div class="top"><h1>${esc(S.family.name)}</h1><div class="who">${S.me.is_admin ? `<button class="gear ${S.tab === "admin" ? "on" : ""}" data-act="tab" data-v="admin" title="Verwalten" aria-label="Verwalten">⚙️${adminOpenCount() ? `<i>${adminOpenCount()}</i>` : ""}</button>` : ""}${avatar(S.me, 28)} ${esc(S.me.name)}</div></div>
       <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}</button>`).join("")}</nav>
     </div>
     <div class="main">${body}</div>
@@ -363,8 +414,8 @@ function viewShell() {
 const parseBirth = v => { const n = parseInt(v, 10); return n >= 1900 && n <= 2100 ? n : null; };
 const ptsOf = p => S.pointlog.filter(l => l.profile_id === p.id).reduce((a, l) => a + l.points, 0);
 const fmtShort = d => new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
-function cardPoints() {
-  const adm = S.me.is_admin && !isDisplay();
+function cardPoints(admin) {
+  const adm = !!admin && S.me.is_admin && !isDisplay();
   const log = S.pointlog.slice(0, 15);
   const form = adm ? `<form class="add" data-form="pointadj" style="margin-bottom:10px">
       <select id="pjw" name="who" required style="max-width:130px"><option value="">Wer?</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)} (${ptsOf(p)})</option>`).join("")}</select>
@@ -389,8 +440,8 @@ function cardRank() {
     `<div class="p">${avatar(p)}<b>${n}</b><small>${esc(p.name)}</small></div>`).join("")}</div></div>`;
 }
 
-function cardRewards() {
-  const adm = S.me.is_admin && !isDisplay();
+function cardRewards(admin) {
+  const adm = !!admin && S.me.is_admin && !isDisplay();
   const by = p => S.rewards.filter(r => r.profile_id === p.id).sort((a, b) => a.points - b.points);
   const people = S.profiles.filter(p => by(p).length);
   if (!people.length && !adm) return "";
@@ -426,7 +477,6 @@ function cardTodo(limit) {
   const row = t => {
     if (canEdit && S.editTask === t.id) return `<div class="row"><form class="grow" data-form="taskedit">
       <input id="tet-${t.id}" name="title" value="${esc(t.title)}" required style="width:100%">
-      ${S.me.is_admin ? `<label class="field"><span>Punkte</span><input name="points" class="pt" type="number" min="0" max="1000" value="${t.points}"></label>` : ""}
       ${whoChips(whoIds(t))}
       <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
     const ids = whoIds(t);
@@ -434,20 +484,18 @@ function cardTodo(limit) {
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
       <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}</div></div>
-    ${t.done && !t.approved && adm ? `<button class="btn" data-act="approveTask" data-id="${t.id}">✔ Freigeben</button>` : ""}
-    ${S.me.is_admin && !limit && !isDisplay() ? `<button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button>` : `<span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>`}
+    <span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>
     ${canEdit ? `<button class="x" data-act="editTask" data-id="${t.id}" title="Ändern">✎</button><button class="x" data-act="delTask" data-id="${t.id}">×</button>` : ""}</div>`;
   };
   const form = limit || isDisplay() ? "" : `<form class="add" data-form="task">
       <input id="tt" name="title" placeholder="Neue Aufgabe" required>
-      ${S.me.is_admin ? `<input id="tp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte">` : ""}
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
-  const waitCard = wait.length && (!limit || adm) ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">${adm ? "Erst nach „Freigeben“ gibt es die Punkte. Mit dem Haken geht die Aufgabe wieder auf offen." : "Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte."}</div></div>` : "";
+  const waitCard = wait.length ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte.</div></div>` : "";
   return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
-    ${form}${!S.me.is_admin && !limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
+    ${form}${!limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
     ${limit || !done.length ? "" : `<div class="card"><h2>Zuletzt erledigt</h2>${done.map(row).join("")}</div>`}`;
 }
 
@@ -652,8 +700,8 @@ function viewWishes() {
     ${S.lprof.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)} <span class="sub">· ${esc(p.family_name)}</span></h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
 }
 
-function cardLink() {
-  const adm = S.me.is_admin, code = String(S.family.link_code || ""), nice = code.slice(0, 5) + "-" + code.slice(5);
+function cardLink(admin) {
+  const adm = !!admin && S.me.is_admin, code = String(S.family.link_code || ""), nice = code.slice(0, 5) + "-" + code.slice(5);
   const names = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name }));
   return `<div class="card"><h2>🔗 Mit anderen Familien verbinden</h2>
     <p class="sub">Verbundene Familien sehen gegenseitig ihre Wunschlisten (sonst nichts) und können „Gekauft“ abhaken.</p>
@@ -666,17 +714,14 @@ function cardLink() {
 }
 
 function viewFamily() {
-  const p = S.pe; const adm = S.me.is_admin;
+  const p = S.pe;
   return `<div class="card"><h2>Familie</h2>
-    ${adm ? `<div class="sub">Name der Familie:</div>
-    <form class="add" data-form="famname" style="margin:4px 0 12px"><input id="fn" name="name" value="${esc(S.family.name)}" required maxlength="40" aria-label="Familienname"><button class="btn">Umbenennen</button></form>`
-      : `<div style="font-size:18px;font-weight:700;margin-bottom:8px">${esc(S.family.name)}</div>`}
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">${esc(S.family.name)}</div>
     <div class="sub">Einladungscode zum Beitreten:</div>
     <div style="font-size:26px;font-weight:700;letter-spacing:.1em;margin:4px 0 10px">${esc(S.family.invite_code)}</div>
-    ${S.profiles.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}<div class="sub">${x.ical_url ? "Kalender verbunden" : "kein Kalender"}</div></div>
-      ${adm && x.id !== S.me.id ? `<button class="btn small ghost" data-act="setAdmin" data-id="${x.id}" data-v="${x.is_admin ? 0 : 1}">${x.is_admin ? "Admin entziehen" : "Zum Admin machen"}</button>` : ""}</div>`).join("")}
-    <p class="sub">${adm ? "Als Admin kannst du andere zu Admins machen, den Familiennamen ändern und Chat-Nachrichten löschen." : "Nur Admins können den Familiennamen ändern, Admin-Rechte vergeben und Chat-Nachrichten löschen."}</p></div>
-    ${cardLink()}
+    ${S.profiles.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}<div class="sub">${x.ical_url ? "Kalender verbunden" : "kein Kalender"}</div></div></div>`).join("")}
+    <p class="sub">Admins verwalten Punkte, Belohnungen und Einstellungen unter dem ⚙️ oben rechts.</p></div>
+    ${cardLink(false)}
     <div class="card"><h2>Mein Profil</h2><form data-form="profile">
       <label class="field"><span>Name</span><input id="pn" name="name" value="${esc(S.me.name)}" required></label>
       <span class="sub">Farbe</span>${swatches(p.color, "pe")}
@@ -688,12 +733,7 @@ function viewFamily() {
       <p class="sub">Google: Kalender-Einstellungen → „Geheime Adresse im iCal-Format“. iCloud: Kalender teilen → „Öffentlicher Kalender“ → Link kopieren.</p>
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
-    ${S.me.is_admin ? `<div class="card"><h2>Wandanzeige</h2>${wallCard()}</div>` : ""}
     <div class="card"><h2>🔑 Passwort ändern</h2><form data-form="changepw"><label class="field"><span>Neues Passwort (mind. 6 Zeichen)</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label><button class="btn block">Passwort ändern</button></form></div>
-    ${S.me.is_admin ? `<div class="card"><h2>💾 Datensicherung</h2>
-      <p class="sub">Jeden Sonntagmorgen wird automatisch eine Sicherung aller Familien-Daten auf dem Server gespeichert (die letzten 12 bleiben erhalten). Hier kannst du zusätzlich jederzeit eine Datei auf dieses Gerät laden.</p>
-      <button class="btn block" data-act="backupDownload">Sicherung jetzt herunterladen</button></div>` : ""}
-    ${S.me.is_admin ? `<div class="card"><h2>Alexa</h2>${alexaCard()}</div>` : ""}
     <div class="card"><h2>Anzeige</h2>
       <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
       <a class="btn block" href="#display">📺 Tablet-Ansicht starten</a></div>
@@ -1107,6 +1147,12 @@ const FORMS = {
   async link(f) {
     try { const n = await q(sb.rpc("link_family", { p_code: String(f.get("code") || "") })); await LOAD.family_links(); render(); toast(`Verbunden mit „${n}“ ✔`); }
     catch (_) { /* q() hat die Meldung schon gezeigt */ }
+  },
+  async admintask(f) {
+    const title = String(f.get("title") || "").trim(); if (!title) return;
+    const who = f.getAll("who");
+    await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points: Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)), assignees: who, assigned_to: who.length === 1 ? who[0] : null }));
+    toast("Aufgabe angelegt ✔");
   },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {

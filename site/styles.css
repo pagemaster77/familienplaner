@@ -215,3 +215,8 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .ytbox{width:min(720px,100%);display:flex;flex-direction:column;gap:10px}
 .ytbox iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
 .ok{background:#e6f7ec;color:#14532d;border-radius:10px;padding:10px 12px;font-size:.95rem}
+
+/* Admin-Zahnrad im Kopf */
+.gear{position:relative;background:none;border:0;font-size:22px;line-height:1;padding:4px 6px;cursor:pointer;border-radius:10px}
+.gear.on{background:var(--line)}
+.gear i{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;border-radius:8px;background:#e5484d;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;font-style:normal;padding:0 4px}
