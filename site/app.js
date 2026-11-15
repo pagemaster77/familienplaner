@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "16.1 (15.11.)";
+const VERSION = "16.2 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -283,6 +283,13 @@ function listen() {
 
 /* ---------- Ansichten ---------- */
 function viewAuth() {
+  if (S.recovery) return `<div class="auth"><h1>🔑 Neues Passwort</h1><p>Wähle ein neues Passwort für dein Konto.</p>
+    <form data-form="newpw"><label class="field"><span>Neues Passwort (mind. 6 Zeichen)</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label>
+    ${S.err ? `<div class="err">${esc(S.err)}</div>` : ""}<button class="btn block">Passwort speichern</button></form></div>`;
+  if (S.authMode === "forgot") return `<div class="auth"><h1>🔑 Passwort vergessen?</h1><p>Gib deine E-Mail-Adresse ein. Du bekommst einen Link, mit dem du ein neues Passwort wählen kannst.</p>
+    <form data-form="forgot"><label class="field"><span>E-Mail</span><input name="email" type="email" autocomplete="email" required></label>
+    ${S.err ? `<div class="err">${esc(S.err)}</div>` : ""}${S.info ? `<div class="ok" style="margin:8px 0">${esc(S.info)}</div>` : ""}<button class="btn block">Link senden</button></form>
+    <button class="link" data-act="backLogin">Zurück zur Anmeldung</button></div>`;
   const login = S.authMode === "login";
   return `<div class="auth">
     <h1>🏠 Familienplaner</h1>
@@ -293,7 +300,7 @@ function viewAuth() {
       ${S.err ? `<div class="err">${esc(S.err)}</div>` : ""}
       <button class="btn block">${login ? "Anmelden" : "Konto erstellen"}</button>
     </form>
-    <button class="link" data-act="switchAuth">${login ? "Noch kein Konto? Hier registrieren" : "Schon ein Konto? Anmelden"}</button>
+    ${login ? `<button class="link" data-act="forgotPw">Passwort vergessen?</button><br>` : ""}<button class="link" data-act="switchAuth">${login ? "Noch kein Konto? Hier registrieren" : "Schon ein Konto? Anmelden"}</button>
   </div>`;
 }
 function swatches(cur, act) { return `<div class="swatches">${COLORS.map(c => `<button type="button" class="${c === cur ? "on" : ""}" style="background:${c}" data-act="${act}" data-k="color" data-v="${c}"></button>`).join("")}</div>`; }
@@ -626,6 +633,7 @@ function viewFamily() {
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
     ${S.me.is_admin ? `<div class="card"><h2>Wandanzeige</h2>${wallCard()}</div>` : ""}
+    <div class="card"><h2>🔑 Passwort ändern</h2><form data-form="changepw"><label class="field"><span>Neues Passwort (mind. 6 Zeichen)</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label><button class="btn block">Passwort ändern</button></form></div>
     ${S.me.is_admin ? `<div class="card"><h2>💾 Datensicherung</h2>
       <p class="sub">Jeden Sonntagmorgen wird automatisch eine Sicherung aller Familien-Daten auf dem Server gespeichert (die letzten 12 bleiben erhalten). Hier kannst du zusätzlich jederzeit eine Datei auf dieses Gerät laden.</p>
       <button class="btn block" data-act="backupDownload">Sicherung jetzt herunterladen</button></div>` : ""}
@@ -794,6 +802,8 @@ const ACT = {
     S.push.prefs = prefs;
     await q(sb.from("push_subs").update({ prefs }).eq("id", S.push.id));
   },
+  forgotPw() { S.authMode = "forgot"; S.err = ""; S.info = ""; render(); },
+  backLogin() { S.authMode = "login"; S.err = ""; S.info = ""; render(); },
   async switchAuth() { S.authMode = S.authMode === "login" ? "signup" : "login"; S.err = ""; render(); },
   async logout() { await sb.auth.signOut(); },
   tab(d) { S.tab = d.v; render(); window.scrollTo(0, 0); },
@@ -923,6 +933,24 @@ const FORMS = {
     await q(sb.rpc("wall_pair", { p_code: String(f.get("code") || "") }));
     S.family = await q(sb.from("families").select("*").eq("id", S.family.id).single());
     toast("Display gekoppelt ✔"); render();
+  },
+  async forgot(f) {
+    S.err = ""; S.info = "";
+    const { error } = await sb.auth.resetPasswordForEmail(String(f.get("email") || "").trim(), { redirectTo: location.origin + location.pathname.replace(/[^/]*$/, "") });
+    if (error) S.err = error.message; else S.info = "Fertig. Wenn die Adresse bekannt ist, kommt in ein paar Minuten eine E-Mail (auch im Spam-Ordner nachsehen).";
+    render();
+  },
+  async newpw(f) {
+    S.err = "";
+    const { error } = await sb.auth.updateUser({ password: String(f.get("password") || "") });
+    if (error) { S.err = error.message; return render(); }
+    S.recovery = false; history.replaceState(null, "", location.pathname); toast("Neues Passwort gespeichert ✔");
+    if (S.user && !S.me) await loadAll(); else render();
+  },
+  async changepw(f) {
+    const pw = String(f.get("password") || "");
+    const { error } = await sb.auth.updateUser({ password: pw });
+    toast(error ? error.message : "Passwort geändert ✔");
   },
   async auth(f) {
     S.err = "";
@@ -1132,7 +1160,7 @@ function checkRewards() {
 function render() {
   window.CHEF_ID = (chefFor(new Date()) || {}).id || null;
   const saved = saveInputs();
-  if (!S.user) $app.innerHTML = viewAuth();
+  if (!S.user || S.recovery) $app.innerHTML = viewAuth();
   else if (!S.me) $app.innerHTML = viewOnboarding();
   else $app.innerHTML = isDisplay() ? viewBoard() : viewShell();
   restoreInputs(saved);
@@ -1148,6 +1176,7 @@ async function start() {
   render();
   if (S.user) await loadAll();
   sb.auth.onAuthStateChange(async (ev, session) => {
+    if (ev === "PASSWORD_RECOVERY") S.recovery = true;
     const was = S.user?.id; S.user = session?.user || null;
     if (!S.user) { S.me = null; if (channel) sb.removeChannel(channel); render(); }
     else if (S.user.id !== was) await loadAll();

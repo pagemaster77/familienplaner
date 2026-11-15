@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 16.2: Passwort vergessen (E-Mail-Link, supabase resetPasswordForEmail) + Passwort ändern unter Familie. Voraussetzung: in Supabase unter Authentication -> URL Configuration muss die Site URL auf https://familienplaner.pagemaster77.workers.dev stehen (und dort als Redirect URL erlaubt sein).
+
 ## Version 16.1: Krone über dem Profilbild des Tages-Chefs (window.CHEF_ID, crownWrap in stimmung.js)
 
 ## Version 16 (15.11.2026): Tages-Chef. Reihum Amy, Elena, Sophie, Meggy, Sascha (families.chef_order, Start 15.11.). Chef stellt Bild und/oder YouTube-Link ein, bekommt einmal pro Tag 5 Punkte. Bild erscheint nach 3 Min ohne Berührung als Bildschirmschoner auf der Wand (nachts und bei SOS nicht); in der App Karte auf Start. Bilder werden nach 14 Tagen gelöscht.

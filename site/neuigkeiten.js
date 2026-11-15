@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "16.2", date: "15.11.2026", items: [
+    "Neu: „Passwort vergessen?“ bei der Anmeldung. Du bekommst per E-Mail einen Link für ein neues Passwort.",
+    "Unter Familie gibt es außerdem „Passwort ändern“.",
+  ] },
   { v: "16.1", date: "15.11.2026", items: [
     "Neu: Der Tages-Chef trägt jetzt eine Krone 👑 über seinem Profilbild (App und Wand).",
   ] },
