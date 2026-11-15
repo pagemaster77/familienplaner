@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "14.10 (8.11.)";
+const VERSION = "15 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -47,7 +47,8 @@ const safePhoto = u => (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.t
 function avatar(p, size) {
   if (!p) return `<span class="avatar" style="background:#999">?</span>`;
   const ph = safePhoto(p.photo);
-  return `<span class="avatar" style="background:${esc(p.color)};${size ? `width:${size}px;height:${size}px` : ""}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar)}</span>`;
+  const html = `<span class="avatar" style="background:${esc(p.color)};${size ? `width:${size}px;height:${size}px` : ""}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar)}</span>`;
+  return window.moodWrap ? moodWrap(html, p, !size || size >= 30) : html;
 }
 /* Profilfoto: quadratisch zuschneiden und auf 128x128 verkleinern (ca. 5-8 KB) */
 function avatarFromFile(file, size = 128) {
@@ -462,7 +463,15 @@ function evRow(e) {
     <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}</div></div></div>`;
 }
 
-function viewHome() { return cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
+/* Stimmung: jeder stellt für sich ein, wie es ihm geht (gilt 24 Stunden) */
+function cardMood() {
+  if (!S.me || isDisplay()) return "";
+  const cur = moodOf(S.me);
+  return `<div class="card"><h2>Wie geht’s dir heute?</h2><div class="moods">${Object.entries(MOODS).map(([k, [e, l]]) =>
+    `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
+    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt den anderen eine Meldung.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
+}
+function viewHome() { return cardMood() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
 
 /* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {
@@ -797,6 +806,12 @@ const ACT = {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `familienplaner-sicherung-${dkey(new Date())}.json`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     toast("Sicherung gespeichert ✔");
+  },
+  async mood(d) {
+    const v = d.v === "clear" ? null : d.v; if (v && !MOODS[v]) return;
+    if (v === "help" && !confirm("Die anderen bekommen eine Meldung, dass du reden möchtest. Okay?")) return;
+    await q(sb.from("profiles").update({ mood: v, mood_at: v ? new Date().toISOString() : null }).eq("id", S.me.id));
+    await LOAD.profiles(); render(); toast(v === "help" ? "Die anderen wissen Bescheid 💛" : v ? "Gespeichert" : "Zurückgesetzt");
   },
   async delPointLog(d) { if (S.me.is_admin && confirm("Diesen Eintrag löschen?")) { await q(sb.from("point_log").delete().eq("id", d.id)); await LOAD.point_log(); render(); } },
   async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },

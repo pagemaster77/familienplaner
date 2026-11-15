@@ -189,3 +189,10 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 /* Feiertage rot, Schulferien NRW blau */
 .day.hol{background:#fde8e8;color:#c0392b;padding:3px 8px;border-radius:8px}
 .day.fer{background:#e3effc;color:#25588f;padding:3px 8px;border-radius:8px}
+
+/* Stimmung */
+.moods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mbtn{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:2px solid var(--line,#ddd);background:var(--card,#fff);color:inherit;font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.mbtn .me{font-size:26px}
+.mbtn.on{border-color:var(--brand,#4f8cff);box-shadow:0 0 0 2px var(--brand,#4f8cff) inset}
+.mbtn.help{grid-column:1/-1;border-color:#e5252b}

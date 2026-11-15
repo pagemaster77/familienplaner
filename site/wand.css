@@ -142,3 +142,8 @@ body:has(.nightscr){background:#000}
 .bdg{position:absolute;top:-8px;right:-8px;min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:#e5252b;color:#fff;font:700 15px/26px system-ui,sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #fff}
 .btn.blink{animation:wblink 1s ease-in-out infinite}
 @keyframes wblink{0%,100%{background:var(--card,#fff);box-shadow:0 0 0 0 #e5252b}50%{background:#ff6b6f;box-shadow:0 0 16px 4px #e5252b}}
+
+/* Hilfe-Hinweis in der Kopfzeile */
+.helpbar{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);z-index:50;background:#e5252b;color:#fff;font-weight:800;font-size:1.05em;padding:.3em 1em;border-radius:1em;animation:wblink2 .9s ease-in-out infinite;white-space:nowrap;box-shadow:0 2px 10px #0005}
+.helpbar+.helpbar{left:calc(50% + 9em)}
+@keyframes wblink2{0%,100%{opacity:1}50%{opacity:.45}}

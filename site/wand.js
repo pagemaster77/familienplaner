@@ -24,7 +24,8 @@ const safeUrl = u => (/^https:\/\//i.test(u || "") ? u : "");
 function avatar(p, small) {
   if (!p) return `<span class="avatar${small ? " s" : ""}" style="background:#999">?</span>`;
   const ph = safePhoto(p.photo);
-  return `<span class="avatar${small ? " s" : ""}" style="background:${colorOf(p.color)}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar || "🙂")}</span>`;
+  const html = `<span class="avatar${small ? " s" : ""}" style="background:${colorOf(p.color)}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar || "🙂")}</span>`;
+  return window.moodWrap ? moodWrap(html, p, !small) : html;
 }
 
 /* ---------- Kalender-Inhalte auswerten (gleiche Logik wie in der App) ---------- */
@@ -213,6 +214,8 @@ function announce(old, cur) {
   const ids = (a, f = () => true) => new Set((a || []).filter(f).map(x => x.id));
   const oldMsg = ids(old.messages), oldSh = ids(old.shopping), oldTk = ids(old.tasks), oldAp = ids(old.tasks, t => t.approved);
   const q = [];
+  const wasHelp = new Set((old.profiles || []).filter(p => moodOf(p) === "help").map(p => p.id));
+  if ((cur.profiles || []).some(p => moodOf(p) === "help" && !wasHelp.has(p.id))) q.push("ding");
   const cnt = (a, o, f = () => true) => (a || []).filter(x => !o.has(x.id) && f(x)).length;
   const bump = (v, n) => { if (n > 0 && W.view !== v) W.badge[v] += n; };
   bump("chat", cnt(cur.messages, oldMsg)); bump("shop", cnt(cur.shopping, oldSh)); bump("todo", cnt(cur.tasks, oldTk, t => !t.done));
@@ -362,6 +365,7 @@ function render() {
   $w.innerHTML = `<div class="head">
       <div class="title">${esc(W.data.family?.name || "Familie")}</div>
       ${W.view === "cal" ? `<div class="range">${range}</div>` : ""}${nav}
+      ${(W.data.profiles || []).filter(p => moodOf(p) === "help").map(p => `<span class="helpbar">🆘 ${esc(p.name)} möchte reden</span>`).join("")}
       ${W.stale ? `<span class="stale">keine Verbindung</span>` : ""}
       <div class="grow"></div>
       <div class="buttons">${VIEWS.map(v => `<button class="btn${v[0] === W.view ? " on" : ""}${W.badge[v[0]] > 0 ? " blink" : ""}" data-view="${v[0]}">${v[1]}<span class="lbl">${v[2]}</span>${W.badge[v[0]] > 0 ? `<i class="bdg">${W.badge[v[0]]}</i>` : ""}</button>`).join("")}</div>
