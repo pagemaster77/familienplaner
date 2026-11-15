@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "18.3 (15.11.)";
+const VERSION = "18.4 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -440,7 +440,7 @@ const ptsOf = p => S.pointlog.filter(l => l.profile_id === p.id).reduce((a, l) =
 const fmtShort = d => new Date(d).toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
 function cardPoints(admin) {
   const adm = !!admin && S.me.is_admin && !isDisplay();
-  const log = S.pointlog.slice(0, 15);
+  const log = S.pointlog.filter(l => !l.hidden).slice(0, 10);
   const form = adm ? `<form class="add" data-form="pointadj" style="margin-bottom:10px">
       <select id="pjw" name="who" required style="max-width:130px"><option value="">Wer?</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)} (${ptsOf(p)})</option>`).join("")}</select>
       <select id="pjo" name="op" style="max-width:130px"><option value="-">Abziehen</option><option value="+">Gutschreiben</option></select>
@@ -450,8 +450,8 @@ function cardPoints(admin) {
   return `<div class="card"><h2>📒 Punktekonto</h2>${form}
     ${log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
       <div class="sub">${fmtShort(l.created_at)} · ${l.kind === "reward" ? "🎁 " : l.kind === "manual" ? "✎ " : "✅ "}${esc(l.reason || (l.kind === "task" ? "Aufgabe" : ""))}</div></div>
-      ${adm && l.kind === "manual" ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Eintrag löschen">×</button>` : ""}</div>`).join("") || `<div class="empty">Noch keine Punkte-Einträge</div>`}
-    <div class="sub" style="margin-top:6px">Punkte bleiben erhalten, auch wenn erledigte Aufgaben gelöscht werden. Sie sinken nur, wenn eine Belohnung übergeben wird oder ein Admin Punkte abzieht.</div></div>`;
+      ${adm ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Aus der Liste ausblenden (Punkte bleiben)">×</button>` : ""}</div>`).join("") || `<div class="empty">Keine Einträge in der Liste</div>`}
+    <div class="sub" style="margin-top:6px">Es werden nur die letzten 10 Einträge gezeigt. Mit × blendest du einen Eintrag aus der Liste aus – die Punkte bleiben erhalten. Sie sinken nur, wenn eine Belohnung übergeben wird oder ein Admin Punkte abzieht.</div></div>`;
 }
 // Für wen gilt die Aufgabe? (leer = für alle)
 const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
@@ -1026,7 +1026,7 @@ const ACT = {
     const got = (prof(S.me.id)?.mood_points_at || null) !== before; /* Punkte vergibt die Datenbank: 5 ⭐ höchstens 1x in 24 Std. */
     render(); toast(v === "help" ? "Die Eltern wissen Bescheid 💛" : v ? (got ? "Gespeichert · +5 Punkte ⭐" : "Gespeichert") : "Zurückgesetzt");
   },
-  async delPointLog(d) { if (S.me.is_admin && confirm("Diesen Eintrag löschen?")) { await q(sb.from("point_log").delete().eq("id", d.id)); await LOAD.point_log(); render(); } },
+  async delPointLog(d) { if (S.me.is_admin) { await q(sb.from("point_log").update({ hidden: true }).eq("id", d.id)); await LOAD.point_log(); render(); toast("Ausgeblendet – Punkte bleiben"); } },
   async delReward(d) { if (confirm("Belohnung wirklich löschen?")) await q(sb.from("rewards").delete().eq("id", d.id)); },
   async delTask(d) { await q(sb.from("tasks").delete().eq("id", d.id)); },
   async toggleShop(d) { const i = S.shop.find(x => x.id === d.id); i.checked = !i.checked; render(); await q(sb.from("shopping_items").update({ checked: i.checked }).eq("id", d.id)); },

@@ -1,0 +1,1 @@
+-- Update 18.4 (16.11.2026): point_log.hidden (bool, default false). Bereits eingespielt (Migration "point_log_hidden"). Ausgeblendete Eintraege zaehlen weiter zum Punktestand, erscheinen nur nicht mehr in der Liste.
