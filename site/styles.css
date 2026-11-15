@@ -196,3 +196,13 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .mbtn .me{font-size:26px}
 .mbtn.on{border-color:var(--brand,#4f8cff);box-shadow:0 0 0 2px var(--brand,#4f8cff) inset}
 .mbtn.help{grid-column:1/-1;border-color:#e5252b}
+
+/* ---- Neuigkeiten-Fenster nach Updates ---- */
+.news-back{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.news-card{background:var(--card,#fff);color:var(--text,#1a1a1a);border-radius:18px;padding:22px 20px 18px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.news-card h2{margin:0 0 10px;font-size:1.3rem}
+.news-card h3{margin:14px 0 4px;font-size:1rem}
+.news-card h3 span{font-weight:400;color:var(--muted,#6b7488);font-size:.85rem;margin-left:6px}
+.news-card ul{margin:0;padding-left:20px}
+.news-card li{margin:4px 0;line-height:1.4}
+.news-ok{display:block;width:100%;margin-top:18px;padding:12px;border:0;border-radius:12px;background:#2b6cb0;color:#fff;font-size:1rem;font-weight:600;cursor:pointer}

@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 15.3 (15.11.2026): Neuigkeiten-Popup nach Updates. Datei site/neuigkeiten.js: Liste NEWS (neueste zuerst); bei jedem Update dort oben einen Eintrag mit neuer Version einfügen (gleiche Nummer wie VERSION in app.js). Das Fenster erscheint einmal pro Gerät (localStorage "newsSeen"), zeigt alles seit dem letzten Mal (max. 5), nicht auf Wandanzeige/Tablet-Ansicht.
+
 ## Version 15 (15.11.2026): Stimmung. Karte „Wie geht’s dir heute?“ auf Start; Ring um das Profilbild (gut = bunter Verlauf, geht so = gelb, schlecht = rot, Hilfe = blinkend rot mit SOS). Gilt 24 Stunden. Hilfe schickt nur den Eltern (Admins) eine Push-Meldung, Wand zeigt Banner und Ton. Dateien: site/stimmung.js, DB-Spalten profiles.mood/mood_at
 
 ## Version 14.10: Wandtöne deutlich lauter; rote Zahl + Blinken an To-Do/Einkauf/Chat bei Neuem (verschwindet beim Öffnen)
