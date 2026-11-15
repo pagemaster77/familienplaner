@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "16.1", date: "15.11.2026", items: [
+    "Neu: Der Tages-Chef trägt jetzt eine Krone 👑 über seinem Profilbild (App und Wand).",
+  ] },
   { v: "16", date: "15.11.2026", items: [
     "Neu: Tages-Chef! Jeden Tag ist reihum jemand dran: Amy, Elena, Sophie, Meggy, Sascha.",
     "Der Chef stellt ein Bild und/oder einen YouTube-Song des Tages ein und bekommt dafür 5 ⭐.",

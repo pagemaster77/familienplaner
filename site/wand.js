@@ -25,7 +25,7 @@ function avatar(p, small) {
   if (!p) return `<span class="avatar${small ? " s" : ""}" style="background:#999">?</span>`;
   const ph = safePhoto(p.photo);
   const html = `<span class="avatar${small ? " s" : ""}" style="background:${colorOf(p.color)}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar || "🙂")}</span>`;
-  return window.moodWrap ? moodWrap(html, p, !small) : html;
+  return window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, !small) : html, p, !!small) : html;
 }
 
 /* ---------- Kalender-Inhalte auswerten (gleiche Logik wie in der App) ---------- */
@@ -350,6 +350,7 @@ function checkRewards() {
 }
 
 function render() {
+  window.CHEF_ID = (W.data && W.data.chef) || null;
   if (W.data && TOKEN && !nightActive() && wantSaver()) {
     W.saver = true; W.night = false;
     const now = new Date(), cf = (W.data.profiles || []).find(p => p.id === W.data.chef);

@@ -10,6 +10,9 @@
     const m = window.moodOf(p); if (!m) return html;
     return `<span class="mring m-${m}">${html}${badge ? `<i class="mj">${MOODS[m][0]}</i>` : ""}</span>`;
   };
+  /* Krone ueber dem Profilbild des heutigen Tages-Chefs (window.CHEF_ID wird von App/Wand gesetzt) */
+  window.crownWrap = (html, p, small = false) =>
+    p && window.CHEF_ID && p.id === window.CHEF_ID ? `<span class="crowned">${html}<i class="crown${small ? " sm" : ""}">👑</i></span>` : html;
   const st = document.createElement("style");
   st.textContent = `
   .mring{position:relative;display:inline-flex;flex:none;padding:6px;border-radius:50%;vertical-align:middle}
@@ -22,6 +25,9 @@
   .m-help{padding:8px}
   .m-help::before{background:#e5252b;animation:mblink .8s ease-in-out infinite}
   .m-help .mj{animation:mpulse .8s ease-in-out infinite}
+  .crowned{position:relative;display:inline-flex;flex:none;vertical-align:middle}
+  .crown{position:absolute;top:-.95em;left:50%;transform:translateX(-50%) rotate(-10deg);z-index:4;font-style:normal;font-size:1.15em;line-height:1;filter:drop-shadow(0 1px 2px #0007);pointer-events:none}
+  .crown.sm{font-size:.85em;top:-.8em}
   @keyframes mspin{to{transform:rotate(360deg)}}
   @keyframes mblink{0%,100%{background:#e5252b;box-shadow:0 0 0 0 #e5252b99}50%{background:#fff;box-shadow:0 0 14px 6px #e5252bcc}}
   @keyframes mpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}`;

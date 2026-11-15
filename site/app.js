@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "16 (15.11.)";
+const VERSION = "16.1 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -48,7 +48,8 @@ function avatar(p, size) {
   if (!p) return `<span class="avatar" style="background:#999">?</span>`;
   const ph = safePhoto(p.photo);
   const html = `<span class="avatar" style="background:${esc(p.color)};${size ? `width:${size}px;height:${size}px` : ""}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar)}</span>`;
-  return window.moodWrap ? moodWrap(html, p, !size || size >= 30) : html;
+  const big = !size || size >= 30;
+  return window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, big) : html, p, !big) : html;
 }
 /* Profilfoto: quadratisch zuschneiden und auf 128x128 verkleinern (ca. 5-8 KB) */
 function avatarFromFile(file, size = 128) {
@@ -1129,6 +1130,7 @@ function checkRewards() {
 }
 
 function render() {
+  window.CHEF_ID = (chefFor(new Date()) || {}).id || null;
   const saved = saveInputs();
   if (!S.user) $app.innerHTML = viewAuth();
   else if (!S.me) $app.innerHTML = viewOnboarding();
