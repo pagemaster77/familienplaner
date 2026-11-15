@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "17.0 (15.11.)";
+const VERSION = "17.1 (15.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -251,6 +251,10 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
+  family_links: async () => {
+    S.links = await q(sb.from("family_links").select("*"));
+    const { data } = await sb.rpc("linked_profiles"); S.lprof = data || [];
+  },
   wish_marks: async () => (S.marks = await q(sb.from("wish_marks").select("*"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
   daily_posts: async () => (S.daily = await q(sb.from("daily_posts").select("*").order("day", { ascending: false }).limit(14))),
@@ -618,11 +622,12 @@ function viewMeals() {
    Der Wünschende sieht den Haken NICHT (das erzwingt die Datenbank, nicht nur die Anzeige). */
 const OCC = ["Geburtstag", "Weihnachten", "Sonstiges"], OCC_IC = { Geburtstag: "🎂", Weihnachten: "🎄", Sonstiges: "🎁" };
 const wishUrl = u => { try { const t = String(u).trim(); if (/\s/.test(t)) return ""; const x = new URL(t); return (x.protocol === "https:" || x.protocol === "http:") && x.hostname.includes(".") ? x.toString() : ""; } catch (_) { return ""; } };
+const wprof = id => prof(id) || S.lprof.find(x => x.id === id);
 function wishRow(w, mine) {
-  const mk = S.marks.find(m => m.wish_id === w.id), by = mk && prof(mk.by_profile), u = wishUrl(w.url);
-  const can = S.me.is_admin || mine;
+  const mk = S.marks.find(m => m.wish_id === w.id), by = mk && wprof(mk.by_profile), u = wishUrl(w.url);
+  const own = w.family_id === S.me.family_id, can = mine || (S.me.is_admin && own);
   const status = mine ? "" : mk
-    ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || S.me.is_admin ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
+    ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || (S.me.is_admin && prof(mk.by_profile)) ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
     : `<button class="btn small" data-act="buy" data-id="${w.id}">✔ Gekauft</button>`;
   return `<div class="row ${mk ? "done" : ""}"><div class="grow"><div class="t">${OCC_IC[w.occasion] || "🎁"} ${esc(w.title)}${w.price ? ` <span class="sub">· ${esc(w.price)}</span>` : ""}</div>
     ${u ? `<div class="sub"><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen</a></div>` : ""}
@@ -643,7 +648,21 @@ function viewWishes() {
   return `<div class="card"><h2>🎁 Meine Wünsche</h2>${form}
     ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}
     <div class="sub" style="margin-top:6px">Die anderen sehen deine Wünsche und haken ab, was gekauft ist. Du siehst diese Haken nicht – so bleibt es eine Überraschung. 🤫</div></div>
-    ${others.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)}</h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
+    ${others.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)}</h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}
+    ${S.lprof.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)} <span class="sub">· ${esc(p.family_name)}</span></h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
+}
+
+function cardLink() {
+  const adm = S.me.is_admin, code = String(S.family.link_code || ""), nice = code.slice(0, 5) + "-" + code.slice(5);
+  const names = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name }));
+  return `<div class="card"><h2>🔗 Mit anderen Familien verbinden</h2>
+    <p class="sub">Verbundene Familien sehen gegenseitig ihre Wunschlisten (sonst nichts) und können „Gekauft“ abhaken.</p>
+    ${names.map(f => `<div class="row"><div class="grow"><div class="t">${esc(f.name)}</div><div class="sub">verbunden</div></div>${adm ? `<button class="btn small ghost" data-act="unlink" data-id="${f.id}">Trennen</button>` : ""}</div>`).join("") || `<div class="empty">Noch mit keiner Familie verbunden</div>`}
+    ${adm ? `<div class="sub" style="margin-top:10px">Euer Verbindungs-Code (den gebt ihr der anderen Familie):</div>
+    <div style="font-size:24px;font-weight:700;letter-spacing:.1em;margin:4px 0 6px">${esc(nice)}</div>
+    <button class="btn small ghost" data-act="newCode">Neuen Code erzeugen</button>
+    <div class="sub" style="margin-top:12px">Code einer anderen Familie eingeben:</div>
+    <form class="add" data-form="link" style="margin-top:4px"><input id="lc" name="code" placeholder="XXXXX-XXXXX" maxlength="14" autocomplete="off" required><button class="btn">Verbinden</button></form>` : ""}</div>`;
 }
 
 function viewFamily() {
@@ -657,6 +676,7 @@ function viewFamily() {
     ${S.profiles.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}<div class="sub">${x.ical_url ? "Kalender verbunden" : "kein Kalender"}</div></div>
       ${adm && x.id !== S.me.id ? `<button class="btn small ghost" data-act="setAdmin" data-id="${x.id}" data-v="${x.is_admin ? 0 : 1}">${x.is_admin ? "Admin entziehen" : "Zum Admin machen"}</button>` : ""}</div>`).join("")}
     <p class="sub">${adm ? "Als Admin kannst du andere zu Admins machen, den Familiennamen ändern und Chat-Nachrichten löschen." : "Nur Admins können den Familiennamen ändern, Admin-Rechte vergeben und Chat-Nachrichten löschen."}</p></div>
+    ${cardLink()}
     <div class="card"><h2>Mein Profil</h2><form data-form="profile">
       <label class="field"><span>Name</span><input id="pn" name="name" value="${esc(S.me.name)}" required></label>
       <span class="sub">Farbe</span>${swatches(p.color, "pe")}
@@ -872,9 +892,18 @@ const ACT = {
     await q(sb.from("tasks").update({ points: n }).eq("id", d.id));
   },
   photoRemove() { S.pe.photo = null; render(); },
-  async buy(d) { await q(sb.from("wish_marks").insert({ wish_id: d.id, family_id: S.me.family_id, by_profile: S.me.id })); await LOAD.wish_marks(); render(); },
+  async buy(d) { const w = S.wishes.find(x => x.id === d.id); if (!w) return; await q(sb.from("wish_marks").insert({ wish_id: d.id, family_id: w.family_id, by_profile: S.me.id })); await LOAD.wish_marks(); render(); },
   async unbuy(d) { await q(sb.from("wish_marks").delete().eq("wish_id", d.id)); await LOAD.wish_marks(); render(); },
   async delWish(d) { if (!confirm("Wunsch wirklich löschen?")) return; await q(sb.from("wishes").delete().eq("id", d.id)); await LOAD.wishes(); render(); },
+  async unlink(d) {
+    const f = S.lprof.find(p => p.family_id === d.id);
+    if (!confirm(`Verbindung mit „${f ? f.family_name : "dieser Familie"}“ wirklich trennen? Die Wunschlisten sind dann nicht mehr gegenseitig sichtbar.`)) return;
+    await q(sb.rpc("unlink_family", { p_fam: d.id })); await LOAD.family_links(); render();
+  },
+  async newCode() {
+    if (!confirm("Neuen Code erzeugen? Der alte Code funktioniert danach nicht mehr (bestehende Verbindungen bleiben).")) return;
+    S.family.link_code = await q(sb.rpc("new_link_code")); render();
+  },
   async delMsg(d) {
     if (!confirm("Nachricht wirklich löschen?")) return;
     await q(sb.from("messages").delete().eq("id", d.id));
@@ -1074,6 +1103,10 @@ const FORMS = {
     const owner = S.me.is_admin && f.get("owner") ? f.get("owner") : S.me.id;
     await q(sb.from("wishes").insert({ family_id: S.me.family_id, owner, title, url: url || null, price: String(f.get("price") || "").trim() || null, note: String(f.get("note") || "").trim() || null, occasion: OCC.includes(f.get("occasion")) ? f.get("occasion") : "Sonstiges" }));
     await LOAD.wishes(); render(); toast("Wunsch gespeichert 🎁");
+  },
+  async link(f) {
+    try { const n = await q(sb.rpc("link_family", { p_code: String(f.get("code") || "") })); await LOAD.family_links(); render(); toast(`Verbunden mit „${n}“ ✔`); }
+    catch (_) { /* q() hat die Meldung schon gezeigt */ }
   },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {

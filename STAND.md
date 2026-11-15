@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 17.1: Familien verbinden per Code (family_links, link_code; nur Wunschlisten geteilt)
+
 ## Version 17.0: Wunschliste (Reiter Wünsche, Tabellen wishes + wish_marks; Wünschender sieht Gekauft-Haken nicht, per RLS)
 
 ## Version 16.3: Tages-Chef für alle Familien (Reihenfolge: chef_order, dann übrige nach Beitritt; Funktion family_chef_order, App chefFor, wall-data)

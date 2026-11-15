@@ -1,0 +1,2 @@
+-- Version 17.1: Familien verbinden. families.link_code, family_links, Funktionen link_family/unlink_family/new_link_code/linked_profiles/linked_families;
+-- Wunsch-Regeln (RLS) gelten jetzt auch fuer verbundene Familien. (Migration "familien_verbindung" bereits eingespielt.)

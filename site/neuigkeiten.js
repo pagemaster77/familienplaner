@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "17.1", date: "15.11.2026", items: [
+    "Familien verbinden: Unter „Familie“ gibt es einen Verbindungs-Code. Gibt ein Admin den Code einer anderen Familie ein, sehen sich beide Familien die Wunschlisten und können „Gekauft“ abhaken.",
+  ] },
   { v: "17.0", date: "15.11.2026", items: [
     "Neu: Reiter „Wünsche“. Jeder trägt Wünsche ein (mit Link, Preis, Anlass). Die anderen sehen sie und haken „Gekauft“ ab.",
     "Du selbst siehst die Haken bei deinen eigenen Wünschen nicht – so bleibt es eine Überraschung.",
