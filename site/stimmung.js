@@ -2,7 +2,7 @@
    good = bunter Farbverlauf, neutral = gelb, bad = rot, help = blinkender Ring + SOS ("ich möchte reden").
    Eine Stimmung gilt 24 Stunden, danach verschwindet sie von selbst. */
 (function () {
-  const MOODS = { good: ["😄", "Gut drauf"], neutral: ["😐", "Geht so"], bad: ["😟", "Nicht so gut"], help: ["🆘", "Ich möchte reden"] };
+  const MOODS = { good: ["😄", "Mir geht’s gut"], neutral: ["😐", "Geht so"], bad: ["😟", "Nicht so gut"], help: ["🆘", "Ich möchte reden"] };
   const TTL = 24 * 3600e3;
   window.MOODS = MOODS;
   window.moodOf = p => (p && MOODS[p.mood] && p.mood_at && Date.now() - new Date(p.mood_at) < TTL ? p.mood : null);
