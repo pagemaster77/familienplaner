@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.1", date: "16.11.2026", items: [
+    "Wandpanel: Das Bild des Tages ist kein Bildschirmschoner mehr. Es erscheint klein oben links im Kalender. Antippen zeigt es 3 Minuten groß, nochmal tippen schließt es. Der Kalender bleibt immer vorne.",
+  ] },
   { v: "20.0", date: "16.11.2026", items: [
     "Neu: Spielhalle! Auf der Startseite gibt es den Button „Zur Spielhalle“ mit den Minispielen Snake, Memory und Reaktion.",
     "Es gibt Bestenlisten und einen Familien-Battle mit den verbundenen Familien. Die Spielpunkte haben nichts mit den Aufgaben-Punkten zu tun.",

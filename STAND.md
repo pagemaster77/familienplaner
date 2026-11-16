@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.1: Wandpanel: Bild des Tages klein im Eck oben links statt automatischem Bildschirmschoner (Antippen = 3 Min gross)
+
 ## Version 20.0: Spielhalle (eigene Seite site/spielhalle/, Spiele in spiele/, Tabelle arcade_scores, Funktionen submit_score/arcade_board/arcade_battle/arcade_me)
 
 ## Version 19.0: Reiter Jobs (Tabelle jobs, Funktionen create/answer/finish/pay/reopen/cancel_job, Push, push-send user_ids)

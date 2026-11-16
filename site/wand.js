@@ -237,8 +237,9 @@ function checkSoonEvents() {
 }
 setInterval(checkSoonEvents, 30000);
 
-/* Bild des Tages: wird nur geholt, wenn es neu oder geaendert ist; dient nach 3 Minuten ohne Beruehrung als Bildschirmschoner */
-const SAVER_IDLE = 180000;
+/* Bild des Tages: wird nur geholt, wenn es neu oder geaendert ist. Es erscheint klein im Eck oben links im Kalender;
+   Antippen zeigt es 3 Minuten gross (nochmal tippen schliesst es). Der Kalender bleibt sonst immer vorne. */
+const SAVER_MS = 180000;
 async function loadShot() {
   const d = W.data && W.data.daily;
   if (!d || !d.has_photo) { W.shot = null; return; }
@@ -246,7 +247,7 @@ async function loadShot() {
   if (W.shot && W.shot.key === key) return;
   try { const r = await call("daily_photo"); W.shot = r.data && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(r.data) ? { key, src: r.data } : null; } catch (e) { /* naechster Versuch in 30 s */ }
 }
-const wantSaver = () => !!(W.data && W.shot && !nightActive() && Date.now() - W.touch > SAVER_IDLE && !(W.data.profiles || []).some(p => moodOf(p) === "help"));
+const wantSaver = () => !!(W.data && W.shot && !nightActive() && (W.saverUntil || 0) > Date.now() && !(W.data.profiles || []).some(p => moodOf(p) === "help"));
 
 function goCal(dir) { // dir: -1 / +1 = Woche zurück / vor, 0 = heute (Live-Ansicht)
   if (dir === 0) { W.live = true; W.wo = 0; return; }
@@ -275,7 +276,7 @@ function viewCal() {
   const rows = hasShared ? [...people, { id: null, name: "Alle", color: "#6b7488", avatar: "👪" }] : people;
   const todayK = dkey(new Date());
   let html = `<div class="grid" style="grid-template-columns:minmax(7em,13%) repeat(7,minmax(0,1fr));grid-template-rows:auto repeat(${Math.max(rows.length, 1)},minmax(3.6em,1fr))">`;
-  html += `<div class="corner"></div>`;
+  html += `<div class="corner">${W.shot ? `<button class="pod" data-shot="1" aria-label="Bild des Tages groß anzeigen"><img src="${W.shot.src}" alt=""><span class="podc">👑 ${esc(((W.data.profiles || []).find(p => p.id === W.data.chef) || {}).name || "Bild des Tages")}</span></button>` : ""}</div>`;
   days.forEach(d => {
     const k = dkey(d); const we = d.getDay() === 0 || d.getDay() === 6; const di = window.dayInfo ? dayInfo(d) : {};
     html += `<div class="dayh${k === todayK ? " today" : ""}${k < todayK ? " past" : ""}${we ? " we" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}"><span class="wd">${DAYS[d.getDay()]}</span><b class="dn">${d.getDate()}</b><small>${d.toLocaleDateString("de-DE", { month: "short" })}</small>${di.holiday ? `<small class="hn">${esc(di.holiday)}</small>` : ""}</div>`;
@@ -356,7 +357,7 @@ function render() {
   if (W.data && TOKEN && !nightActive() && wantSaver()) {
     W.saver = true; W.night = false;
     const now = new Date(), cf = (W.data.profiles || []).find(p => p.id === W.data.chef);
-    $w.innerHTML = `<div class="saver"><img src="${W.shot.src}" alt=""><div class="scap">👑 Bild des Tages${cf ? " von " + esc(cf.name) : ""}</div><div class="sclock">${fmtTime(now)}</div></div>`;
+    $w.innerHTML = `<div class="saver"><img src="${W.shot.src}" alt=""><div class="scap">👑 Bild des Tages${cf ? " von " + esc(cf.name) : ""}</div><div class="sclock">${fmtTime(now)}</div><div class="shint">Tippen zum Schließen</div></div>`;
     return;
   }
   W.saver = false;
@@ -464,7 +465,7 @@ document.addEventListener("click", e => {
 /* Wischen im Kalender: nach links = nächste Woche, nach rechts = vorherige Woche.
    Pointer-Events: funktionieren mit Touch, Stift und Maus – auch bei Touch-Monitoren, die sich wie eine Maus melden. */
 let swp = null;
-document.addEventListener("pointerdown", e => { const wasNight = W.night || W.saver; W.touch = Date.now(); if (wasNight) { W.swallow = Date.now(); render(); return; } swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
+document.addEventListener("pointerdown", e => { const wasNight = W.night || W.saver; W.touch = Date.now(); if (wasNight) { if (W.saver) W.saverUntil = 0; W.swallow = Date.now(); render(); return; } swp = W.view === "cal" && (e.isPrimary !== false) ? { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY } : null; }, true);
 document.addEventListener("pointermove", e => { if (swp) { swp.lx = e.clientX; swp.ly = e.clientY; } }, true);
 const swipeEnd = e => {
   if (!swp) return;
@@ -474,6 +475,7 @@ const swipeEnd = e => {
 };
 document.addEventListener("pointerup", swipeEnd, true);
 document.addEventListener("pointercancel", swipeEnd, true);
+document.addEventListener("click", e => { const pod = e.target.closest && e.target.closest("[data-shot]"); if (pod && W.shot && Date.now() - (W.swallow || 0) >= 500) { W.saverUntil = Date.now() + SAVER_MS; beep("tick"); render(); return; } });
 document.addEventListener("click", e => { if (Date.now() - (W.swallow || 0) < 500) { e.stopPropagation(); e.preventDefault(); } }, true);
 setInterval(() => { if (W.data && wantSaver() !== W.saver) render(); }, 3000);
 /* Nach 90 s ohne Berührung zurück zur Live-Ansicht (Kalender, heute in der Mitte) */

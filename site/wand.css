@@ -30,7 +30,10 @@ button{font:inherit;color:inherit;cursor:none}
 .dayh small{display:block;color:var(--muted);font-weight:400}
 .dayh.today{background:var(--today)!important}
 .dayh.we{color:#a14a4a}
-.corner{background:#fafbfd!important}
+.corner{background:#fafbfd!important;padding:4px;display:flex}
+.pod{position:relative;display:block;width:100%;min-height:60px;padding:0;border:0;border-radius:10px;overflow:hidden;background:#000;cursor:pointer;box-shadow:0 1px 4px #0003}
+.pod img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.podc{position:absolute;left:0;right:0;bottom:0;padding:2px 6px;font:600 11px/1.3 system-ui,sans-serif;color:#fff;background:#000a;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .person{display:flex;align-items:center;gap:.5em;padding:.4em .5em;font-weight:600;background:#fafbfd!important}
 .person .pn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cell{padding:.25em;display:flex;flex-direction:column;gap:.2em}
@@ -154,3 +157,5 @@ body:has(.nightscr){background:#000}
 @keyframes skb{from{transform:scale(1)}to{transform:scale(1.06)}}
 .scap{position:absolute;left:24px;bottom:20px;color:#fff;font:600 clamp(16px,2.4vw,30px) system-ui,sans-serif;text-shadow:0 2px 8px #000}
 .sclock{position:absolute;right:24px;bottom:20px;color:#fff;font:300 clamp(24px,4vw,56px) system-ui,sans-serif;text-shadow:0 2px 8px #000}
+
+.shint{position:absolute;right:24px;top:18px;color:#fffc;font:500 clamp(12px,1.6vw,18px) system-ui,sans-serif;text-shadow:0 1px 6px #000}
