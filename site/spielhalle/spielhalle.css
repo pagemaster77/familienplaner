@@ -66,3 +66,22 @@ a{color:var(--pri);text-decoration:none}
 .nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;background:#141c2cf2;border-top:1px solid var(--line);padding:6px 10px calc(8px + env(safe-area-inset-bottom));backdrop-filter:blur(8px);z-index:5}
 .nav button{background:none;border:0;color:var(--muted);font-size:24px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 18px;cursor:pointer}
 .nav button span{font-size:11px;font-weight:600}
+
+.chal{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 0;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#3b2a6e,#2a4a8c);font-size:14px}
+.chal span{color:#d8e2ff}.chal #cd{color:var(--gold);font-variant-numeric:tabular-nums}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:8px;margin:12px 0 6px}
+.pod{flex:1;max-width:130px;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}
+.pod .who{display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:6px;max-width:100%;opacity:0;animation:rise .5s ease-out forwards}
+.pod .who b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .who .sub{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .pv{font-weight:700;color:var(--gold);font-size:14px}
+.pod .step{width:100%;height:0;border-radius:12px 12px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-size:26px;animation:grow .7s cubic-bezier(.2,.9,.3,1.2) forwards}
+.pod.p1 .step{background:linear-gradient(180deg,#ffd75e,#c9962a)}.pod.p2 .step{background:linear-gradient(180deg,#cfd6e4,#8d97ab)}.pod.p3 .step{background:linear-gradient(180deg,#e0a070,#a2663a)}
+.pod.p2 .step{animation-delay:.1s}.pod.p1 .step{animation-delay:.35s}.pod.p3 .step{animation-delay:0s}
+.pod.p2 .who{animation-delay:.6s}.pod.p1 .who{animation-delay:.9s}.pod.p3 .who{animation-delay:.5s}
+.crown{font-size:24px;animation:bob 1.6s ease-in-out infinite 1.4s}
+@keyframes grow{to{height:var(--h)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bob{50%{transform:translateY(-5px) rotate(-6deg)}}
+@media (prefers-reduced-motion:reduce){.pod .who,.pod .step,.crown{animation-duration:.01s;animation-delay:0s}}
+.chal{flex-wrap:wrap}.chal>b{white-space:nowrap}.chal>span{text-align:right;margin-left:auto}.chal #cd{white-space:nowrap}

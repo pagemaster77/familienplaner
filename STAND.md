@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.8: Spielhalle: Siegertreppchen + Wochen-Countdown; Woche = Kalenderwoche ab Montag 0 Uhr Berlin (arcade_*-Funktionen, p_days=7)
+
 ## Version 20.7: Spielhalle als App-Layout, Bestenliste Familien+Personen (Funktion arcade_people)
 
 ## Version 20.6: Spielhalle: Farbenspiel (spiele/farben.js, game-ID farben, Punkte = Runden*2 max 200)

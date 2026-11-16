@@ -9,6 +9,17 @@ const ARCADE = (() => {
   const fmt = (g, v) => g.fmt ? g.fmt(v) : g.lower ? v + " ms" : g.id === "snake" ? v + " 🍎" : v + " P.";
   const medal = i => ["🥇", "🥈", "🥉"][i] || i + 1;
 
+  // Ende der Wochen-Challenge: nächster Montag 00:00 (Datenbank zählt Kalenderwochen ab Montag 0 Uhr, Berlin)
+  const weekEnd = () => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); return d; };
+  const left = () => { let s = Math.max(0, Math.floor((weekEnd() - Date.now()) / 1000)); const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); s %= 60;
+    return d > 0 ? `${d} Tg ${h} Std ${m} Min` : `${h} Std ${m} Min ${s} Sek`; };
+  let tick = 0;
+  // Siegertreppchen: Platz 2 links, 1 Mitte, 3 rechts. items: [{name, sub, val}]
+  const podium = items => {
+    if (!items.length) return "";
+    const o = [1, 0, 2].filter(i => items[i]), hh = [0, 118, 84, 62];
+    return `<div class="podium">${o.map(i => `<div class="pod p${i + 1}"><div class="who">${i === 0 ? '<span class="crown">👑</span>' : ""}<b>${esc(items[i].name)}</b><span class="sub">${esc(items[i].sub || "")}</span><span class="pv">${esc(items[i].val)}</span></div><div class="step" style="--h:${hh[i + 1]}px">${["🥇", "🥈", "🥉"][i]}</div></div>`).join("")}</div>`;
+  };
   async function lobby() {
     if (stopGame) { stopGame(); stopGame = null; }
     const days = S.range || null, gid = S.tab; // gid: null = alle Spiele zusammen
@@ -19,19 +30,25 @@ const ARCADE = (() => {
     const g = gid && games.find(x => x.id === gid);
     const people = g ? (brd.data || []).map(r => ({ id: r.profile_id, name: r.name, family_name: r.family_name, val: fmt(g, r.best), plays: r.plays })) : (ppl.data || []).map(r => ({ id: r.profile_id, name: r.name, family_name: r.family_name, val: r.pts + " ⭐", plays: r.plays }));
     const mineIdx = people.findIndex(x => x.id === me.id);
+    clearInterval(tick);
+    const fitems = f.map(x => ({ name: x.family_name, sub: x.players + " Spieler", val: x.pts + " ⭐" })), pitems = people.map(x => ({ name: x.name, sub: x.family_name, val: x.val }));
     $("#arc").innerHTML = `<div class="top"><button class="back" id="home">← App</button><h1>🎮 Spielhalle</h1><span></span></div>
       <div class="pts"><span>Hallo <b>${esc(me.name)}</b></span><span>⭐ <b>${m.total}</b> gesamt · <b>${m.week}</b> diese Woche${mineIdx >= 0 ? ` · Platz <b>${mineIdx + 1}</b>` : ""}</span></div>
       <div class="card" id="rank"><h2>🏆 Bestenliste</h2>
         <div class="seg"><button data-r="7" class="${S.range === 7 ? "on" : ""}">Diese Woche</button><button data-r="0" class="${S.range === 0 ? "on" : ""}">Gesamt</button></div>
+        ${S.range === 7 ? `<div class="chal">🏁 <b>Wochen-Challenge</b><span>endet in <b id="cd">${left()}</b></span></div>` : `<div class="chal">🏆 <b>Gesamtwertung</b><span>seit Beginn der Spielhalle</span></div>`}
         <h3>👪 Familien</h3>
-        ${f.map((x, i) => `<div class="row"><span class="rank">${medal(i)}</span><div class="grow"><b>${esc(x.family_name)}</b> <span class="sub">${x.players} Spieler</span><div class="bar" style="width:${Math.round(Number(x.pts) / fmax * 100)}%"></div></div><span class="val">${x.pts} ⭐</span></div>`).join("") || `<div class="empty">Noch niemand gespielt – du kannst der/die Erste sein!</div>`}
+        ${podium(fitems)}
+        ${f.slice(3).map((x, j) => { const i = j + 3;(x, i) => `<div class="row"><span class="rank">${medal(i)}</span><div class="grow"><b>${esc(x.family_name)}</b> <span class="sub">${x.players} Spieler</span><div class="bar" style="width:${Math.round(Number(x.pts) / fmax * 100)}%"></div></div><span class="val">${x.pts} ⭐</span></div>`; }).join("")}${f.length ? "" : `<div class="empty">Noch niemand gespielt – du kannst der/die Erste sein!</div>`}
         <h3>🧑 Einzelpersonen</h3>
         <div class="chips"><button data-t="" class="${!gid ? "on" : ""}">⭐ Alle Spiele</button>${games.map(x => `<button data-t="${x.id}" class="${gid === x.id ? "on" : ""}">${x.icon} ${esc(x.name)}</button>`).join("")}</div>
         <div class="sub" style="margin:2px 0 4px">${g ? "Bestes Ergebnis im Spiel " + esc(g.name) : "Spielpunkte aus allen Spielen zusammen"}</div>
-        ${people.map((x, i) => `<div class="row${x.id === me.id ? " me" : ""}"><span class="rank">${medal(i)}</span><div class="grow">${esc(x.name)} <span class="sub">(${esc(x.family_name)})</span></div><span class="sub">${x.plays}×</span><span class="val">${esc(x.val)}</span></div>`).join("") || `<div class="empty">Noch kein Ergebnis</div>`}
+        ${podium(pitems)}
+        ${people.slice(3).map((x, j) => { const i = j + 3; return `<div class="row${x.id === me.id ? " me" : ""}"><span class="rank">${medal(i)}</span><div class="grow">${esc(x.name)} <span class="sub">(${esc(x.family_name)})</span></div><span class="sub">${x.plays}×</span><span class="val">${esc(x.val)}</span></div>`; }).join("")}${people.length ? "" : `<div class="empty">Noch kein Ergebnis</div>`}
         <div class="sub" style="margin-top:8px">Es zählen die eigene und die verbundenen Familien.</div></div>
       <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b></button>`).join("")}</div></div>
       <nav class="nav"><button id="n-app">🏠<span>App</span></button><button id="n-rank">🏆<span>Bestenliste</span></button><button id="n-play">🎮<span>Spiele</span></button></nav>`;
+    if ($("#cd")) tick = setInterval(() => { const e = $("#cd"); if (e) e.textContent = left(); else clearInterval(tick); }, 1000);
     $("#home").onclick = $("#n-app").onclick = () => (location.href = "../");
     $("#n-rank").onclick = () => $("#rank").scrollIntoView({ behavior: "smooth" });
     $("#n-play").onclick = () => $("#spiele").scrollIntoView({ behavior: "smooth" });

@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.8", date: "16.11.2026", items: [
+    "Spielhalle: Siegertreppchen mit Animation für Familien und Einzelpersonen. Dazu die Wochen-Challenge mit Countdown, wie lange die Woche noch läuft. Die Woche beginnt jeden Montag um 0 Uhr bei Null.",
+  ] },
   { v: "20.7", date: "16.11.2026", items: [
     "Spielhalle sieht jetzt aus wie eine Handy-App: Oben die Bestenliste mit Familien und Einzelpersonen (Woche oder Gesamt, auch pro Spiel), darunter die Spiele als App-Symbole, unten eine Leiste zum Umschalten.",
   ] },
