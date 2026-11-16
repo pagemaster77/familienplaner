@@ -1,0 +1,2 @@
+-- Version 20.0: Spielhalle. Tabelle arcade_scores, Funktionen submit_score (prueft Werte), arcade_board, arcade_battle, arcade_me.
+-- Neues Spiel: Datei in site/spielhalle/spiele/, in index.html einbinden, in submit_score freischalten. (Migration "spielhalle" bereits eingespielt.)

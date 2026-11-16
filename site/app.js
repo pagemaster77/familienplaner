@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "19.0 (16.11.)";
+const VERSION = "20.0 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -253,6 +253,7 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
+  arcade: async () => { const { data } = await sb.rpc("arcade_me"); const r = data && data[0]; S.arc = r ? { total: Number(r.total), week: Number(r.week) } : null; },
   jobs: async () => (S.jobs = await q(sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(100))),
   family_links: async () => {
     S.links = await q(sb.from("family_links").select("*"));
@@ -662,7 +663,15 @@ function cardMood() {
     `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
     <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal in 24 Stunden.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
 }
-function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardChat(true); }
+/* Spielhalle: eigene Seite (spielhalle/). Spielpunkte haben nichts mit den Aufgaben-Punkten zu tun. */
+function cardArcade() {
+  if (isDisplay()) return "";
+  const a = S.arc;
+  return `<div class="card"><h2>🎮 Spielhalle</h2>
+    <p class="sub" style="margin:0 0 8px">${a ? `Deine Spielpunkte: <b>${a.total}</b> ⭐ · diese Woche <b>${a.week}</b>` : "Minispiele und Bestenlisten mit den verbundenen Familien."}</p>
+    <a class="btn block" href="spielhalle/" style="display:block;text-align:center;text-decoration:none">Zur Spielhalle</a></div>`;
+}
+function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardArcade() + cardChat(true); }
 
 /* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {

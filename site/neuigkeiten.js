@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.0", date: "16.11.2026", items: [
+    "Neu: Spielhalle! Auf der Startseite gibt es den Button „Zur Spielhalle“ mit den Minispielen Snake, Memory und Reaktion.",
+    "Es gibt Bestenlisten und einen Familien-Battle mit den verbundenen Familien. Die Spielpunkte haben nichts mit den Aufgaben-Punkten zu tun.",
+  ] },
   { v: "19.0", date: "16.11.2026", items: [
     "Neu: Reiter „Jobs“. Admins vergeben Aufgaben mit Punkten an Mitglieder verbundener Familien. Die Eltern des Empfängers nehmen den Job an, nach dem Erledigen bestätigt der Auftraggeber und die Punkte werden gutgeschrieben.",
   ] },

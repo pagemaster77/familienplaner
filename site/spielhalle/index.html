@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0f1623">
+  <link rel="icon" href="../icon.svg">
+  <link rel="stylesheet" href="spielhalle.css">
+  <title>Spielhalle</title>
+</head>
+<body>
+  <div id="arc"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="spielhalle.js"></script>
+  <!-- Jedes Spiel ist eine eigene Datei. Neues Spiel: Datei in spiele/ anlegen, hier einbinden, in der Datenbank (Funktion submit_score) freischalten. -->
+  <script src="spiele/snake.js"></script>
+  <script src="spiele/memory.js"></script>
+  <script src="spiele/reaktion.js"></script>
+  <script>ARCADE.boot();</script>
+</body>
+</html>
