@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "18.4 (16.11.)";
+const VERSION = "19.0 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -9,12 +9,12 @@ const COLORS = ["#4f8cff", "#e5484d", "#2f9e5b", "#d9822b", "#8e4ec6", "#12a594"
 const EMOJIS = ["🙂", "😎", "🦸", "👩", "👨", "👧", "👦", "👵", "👴", "🐶", "🐱", "🦊", "🐼", "🦁", "⚽", "🎸"];
 const TABS = [
   ["home", "🏠", "Start"], ["todo", "✅", "To-Do"], ["shop", "🛒", "Einkauf"], ["meals", "🍽️", "Essen"],
-  ["cal", "📅", "Termine"], ["wish", "🎁", "Wünsche"], ["chat", "💬", "Chat"], ["family", "👪", "Familie"],
+  ["cal", "📅", "Termine"], ["wish", "🎁", "Wünsche"], ["jobs", "💼", "Jobs"], ["chat", "💬", "Chat"], ["family", "👪", "Familie"],
 ];
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], links: [], lprof: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -253,6 +253,7 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
+  jobs: async () => (S.jobs = await q(sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(100))),
   family_links: async () => {
     S.links = await q(sb.from("family_links").select("*"));
     const { data } = await sb.rpc("linked_profiles"); S.lprof = data || [];
@@ -372,6 +373,47 @@ function evModal() {
     <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEvEdit">Abbrechen</button><button type="button" class="btn danger" data-act="delEvent" data-id="${e.id}">Löschen</button></div></form></div></div>`;
 }
 
+/* Jobs: Admins vergeben Aufgaben mit Punkten an Mitglieder verbundener Familien.
+   Ablauf: Anfrage -> Admin der Empfänger-Familie nimmt an -> Empfänger erledigt -> Auftraggeber bestätigt -> Punkte. */
+const JOB_ST = { requested: "⏳ wartet auf Zusage", accepted: "🛠 läuft", done: "✔ erledigt – wartet auf Bestätigung", paid: "⭐ bezahlt", declined: "✗ abgelehnt", cancelled: "↩ zurückgezogen" };
+const jobIsGiver = j => j.from_profile === S.me.id || (S.me.is_admin && j.from_family === S.me.family_id);
+const jobIsTakerFam = j => S.me.is_admin && j.to_family === S.me.family_id;
+const jobNeedsMe = j => (j.status === "requested" && jobIsTakerFam(j)) || (j.status === "accepted" && j.to_profile === S.me.id) || (j.status === "done" && jobIsGiver(j));
+const jobsNeedMe = () => S.jobs.filter(jobNeedsMe).length;
+const famOf = id => { const x = prof(id); return x ? S.family.name : ((S.lprof.find(p => p.id === id) || {}).family_name || ""); };
+function jobRow(j) {
+  const mk = (act, v, label, cls) => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${j.id}" ${v !== undefined ? `data-v="${v}"` : ""}>${label}</button>`;
+  const btns = [];
+  if (j.status === "requested" && jobIsTakerFam(j)) btns.push(mk("jobAnswer", 1, "✔ Annehmen"), mk("jobAnswer", 0, "Ablehnen", "ghost"));
+  if (j.status === "accepted" && (j.to_profile === S.me.id || jobIsTakerFam(j))) btns.push(mk("jobDone", undefined, "✔ Erledigt"));
+  if (j.status === "done" && jobIsGiver(j)) btns.push(mk("jobPay", undefined, `✔ Bestätigen${j.points ? ` (+${j.points} ⭐)` : ""}`), mk("jobReopen", undefined, "↩ Nochmal", "ghost"));
+  if ((j.status === "requested" || j.status === "accepted") && jobIsGiver(j)) btns.push(mk("jobCancel", undefined, "Zurückziehen", "ghost"));
+  const f = wprof(j.from_profile), t = wprof(j.to_profile);
+  return `<div class="row ${jobNeedsMe(j) ? "hl" : ""}" style="flex-wrap:wrap"><div class="grow"><div class="t">💼 ${esc(j.title)} <span class="sub">· ${j.points} ⭐</span></div>
+    <div class="sub">${esc(f ? f.name : "?")} <span class="sub">(${esc(famOf(j.from_profile))})</span> → ${esc(t ? t.name : "?")} <span class="sub">(${esc(famOf(j.to_profile))})</span></div>
+    ${j.note ? `<div class="sub">${esc(j.note)}</div>` : ""}<div><span class="tag">${JOB_ST[j.status] || j.status}</span></div></div>
+    ${btns.length ? `<div class="add" style="margin:6px 0 0;flex-basis:100%">${btns.join("")}</div>` : ""}</div>`;
+}
+function viewJobs() {
+  const groups = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name, people: S.lprof.filter(p => p.family_id === id) }));
+  const need = S.jobs.filter(jobNeedsMe), run = S.jobs.filter(j => !jobNeedsMe(j) && ["requested", "accepted", "done"].includes(j.status)), old = S.jobs.filter(j => ["paid", "declined", "cancelled"].includes(j.status)).slice(0, 8);
+  const form = S.me.is_admin
+    ? groups.length ? `<form class="add evf" data-form="job" style="flex-wrap:wrap">
+        <select id="jw" name="to" required aria-label="Für wen">${groups.map(g => `<optgroup label="${esc(g.name)}">${g.people.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</optgroup>`).join("")}</select>
+        <input id="jt" name="title" placeholder="Was soll erledigt werden?" required maxlength="120">
+        <input id="jn" name="note" placeholder="Notiz (optional)" maxlength="300">
+        <label class="field" style="margin:0"><span>Punkte (0–20)</span><input id="jp" class="pt" name="points" type="number" min="0" max="20" value="5"></label>
+        <button class="btn">Job vergeben</button></form>
+        <div class="sub" style="margin-top:6px">Die Eltern des Empfängers müssen den Job erst annehmen. Die Punkte bekommt der Empfänger, wenn du die Erledigung bestätigst.</div>`
+      : `<div class="empty">Noch keine Familie verbunden. Das geht unter „Familie → Mit anderen Familien verbinden“.</div>`
+    : `<div class="sub">Jobs vergeben nur Admins. Hier siehst du Jobs, die für dich bestimmt sind.</div>`;
+  return `<div class="card"><h2>💼 Jobs</h2>${form}</div>
+    ${need.length ? `<div class="card"><h2>👉 Wartet auf dich <span class="tag">${need.length}</span></h2>${need.map(jobRow).join("")}</div>` : ""}
+    ${run.length ? `<div class="card"><h2>Laufende Jobs</h2>${run.map(jobRow).join("")}</div>` : ""}
+    ${old.length ? `<div class="card"><h2>Abgeschlossen</h2>${old.map(jobRow).join("")}</div>` : ""}
+    ${S.jobs.length ? "" : `<div class="card"><div class="empty">Noch keine Jobs</div></div>`}`;
+}
+
 /* ⚙️ Verwalten: alles, was nur Admins tun – Freigeben, Punkte, Belohnungen, Familie, Technik */
 const rewardsReached = () => S.rewards.filter(r => !r.claimed && prof(r.profile_id) && ptsOf(prof(r.profile_id)) >= r.points);
 const adminOpenCount = () => S.tasks.filter(t => t.done && !t.approved).length + rewardsReached().length;
@@ -424,11 +466,11 @@ function viewAdmin() {
 }
 
 function viewShell() {
-  const body = (S.tab === "admin" && S.me.is_admin ? viewAdmin : { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, wish: viewWishes, chat: cardChat, family: viewFamily }[S.tab] || viewHome)();
+  const body = (S.tab === "admin" && S.me.is_admin ? viewAdmin : { home: viewHome, todo: cardTodo, shop: cardShop, meals: viewMeals, cal: viewCal, wish: viewWishes, jobs: viewJobs, chat: cardChat, family: viewFamily }[S.tab] || viewHome)();
   return `<div class="shell">
     <div class="top-wrap">
       <div class="top"><h1>${esc(S.family.name)}</h1><div class="who">${S.me.is_admin ? `<button class="gear ${S.tab === "admin" ? "on" : ""}" data-act="tab" data-v="admin" title="Verwalten" aria-label="Verwalten">⚙️${adminOpenCount() ? `<i>${adminOpenCount()}</i>` : ""}</button>` : ""}${avatar(S.me, 28)} ${esc(S.me.name)}</div></div>
-      <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}</button>`).join("")}</nav>
+      <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}${k === "jobs" && jobsNeedMe() ? `<i class="tb">${jobsNeedMe()}</i>` : ""}</button>`).join("")}</nav>
     </div>
     <div class="main">${body}</div>
   </div>${evModal()}`;
@@ -972,6 +1014,11 @@ const ACT = {
     if (!confirm("Neuen Code erzeugen? Der alte Code funktioniert danach nicht mehr (bestehende Verbindungen bleiben).")) return;
     S.family.link_code = await q(sb.rpc("new_link_code")); render();
   },
+  async jobAnswer(d) { await q(sb.rpc("answer_job", { p_id: d.id, p_accept: d.v === "1" })); await LOAD.jobs(); render(); toast(d.v === "1" ? "Job angenommen ✔" : "Job abgelehnt"); },
+  async jobDone(d) { await q(sb.rpc("finish_job", { p_id: d.id })); await LOAD.jobs(); render(); toast("Als erledigt gemeldet ✔"); },
+  async jobPay(d) { await q(sb.rpc("pay_job", { p_id: d.id })); await LOAD.jobs(); render(); toast("Bestätigt – Punkte gutgeschrieben ⭐"); },
+  async jobReopen(d) { await q(sb.rpc("reopen_job", { p_id: d.id })); await LOAD.jobs(); render(); },
+  async jobCancel(d) { if (!confirm("Job wirklich zurückziehen?")) return; await q(sb.rpc("cancel_job", { p_id: d.id })); await LOAD.jobs(); render(); },
   async delMsg(d) {
     if (!confirm("Nachricht wirklich löschen?")) return;
     await q(sb.from("messages").delete().eq("id", d.id));
@@ -1181,6 +1228,10 @@ const FORMS = {
     const who = f.getAll("who");
     await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points: Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)), assignees: who, assigned_to: who.length === 1 ? who[0] : null }));
     toast("Aufgabe angelegt ✔");
+  },
+  async job(f) {
+    await q(sb.rpc("create_job", { p_to: f.get("to"), p_title: String(f.get("title") || ""), p_note: String(f.get("note") || ""), p_points: Math.max(0, Math.min(20, parseInt(f.get("points"), 10) || 0)) }));
+    await LOAD.jobs(); render(); toast("Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
   },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
   async event(f) {

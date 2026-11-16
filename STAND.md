@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 19.0: Reiter Jobs (Tabelle jobs, Funktionen create/answer/finish/pay/reopen/cancel_job, Push, push-send user_ids)
+
 ## Version 18.3: Termin-Formular mit Auswahl Termin / Geburtstag
 
 ## Version 18.2: Termin-Formular aufgeraeumt (Haken Mehrere Tage / Mit Uhrzeit, Geburtsjahr nur bei jaehrlich)

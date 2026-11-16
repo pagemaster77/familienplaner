@@ -1,0 +1,2 @@
+-- Version 19.0: Jobs zwischen verbundenen Familien. Tabelle jobs, Funktionen create_job/answer_job/finish_job/pay_job/reopen_job/cancel_job, Trigger notify_job.
+-- (Migration "jobs_zwischen_familien" bereits eingespielt.)

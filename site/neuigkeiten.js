@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "19.0", date: "16.11.2026", items: [
+    "Neu: Reiter „Jobs“. Admins vergeben Aufgaben mit Punkten an Mitglieder verbundener Familien. Die Eltern des Empfängers nehmen den Job an, nach dem Erledigen bestätigt der Auftraggeber und die Punkte werden gutgeschrieben.",
+  ] },
   { v: "18.4", date: "16.11.2026", items: [
     "Punktekonto: Die Liste zeigt nur noch die letzten 10 Einträge. Admins können jeden Eintrag mit × aus der Liste ausblenden – die Punkte bleiben dabei erhalten.",
   ] },
