@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.1 (16.11.)";
+const VERSION = "21.2 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -1430,6 +1430,7 @@ function render() {
   else if (!S.me) $app.innerHTML = viewOnboarding();
   else $app.innerHTML = isDisplay() ? viewBoard() : viewShell();
   restoreInputs(saved);
+  { const tw = document.querySelector(".top-wrap"); document.documentElement.style.setProperty("--twh", (tw ? tw.offsetHeight : 0) + "px"); }
   setTimeout(checkRewards, 0);
   setTimeout(() => { if (window.checkNews) checkNews(); }, 0);
   if (S.me && !isDisplay() && S.tab === "chat" && (S.chatRoom || !S.lprof.length)) window.scrollTo(0, document.body.scrollHeight);

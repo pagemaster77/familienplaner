@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.2: Chat: Kopfleiste mit Zurueck-Pfeil bleibt sichtbar (sticky unter der oberen Leiste, --twh)
+
 ## Version 21.1: Chat im WhatsApp-Stil (Chat-Liste, Raum oeffnen, Sprechblasen, Ungelesen-Zaehler per localStorage chatseen_<raum>); S.chatRoom null=Liste
 
 ## Version 21.0: Chat-Raeume (messages.scope family|all, RLS: all sichtbar fuer verbundene Familien; Umschalter nur bei verbundener Familie; Wandanzeige/Push nur Familienraum) – sql/update-15-chat-raeume.sql

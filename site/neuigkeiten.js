@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.2", date: "16.11.2026", items: [
+    "Chat: Der Zurück-Pfeil im Chatraum bleibt jetzt immer sichtbar oben stehen. Man muss nicht mehr hochscrollen, um zurückzukommen.",
+  ] },
   { v: "21.1", date: "16.11.2026", items: [
     "Der Chat sieht jetzt aus wie WhatsApp: Zuerst kommt die Chat-Liste mit „Familie“ und „Alle Verbundenen“, mit letzter Nachricht und Zähler für Ungelesenes. Antippen öffnet den Raum mit Sprechblasen, Tagesangabe und Uhrzeit. Mit dem Pfeil oben links geht es zurück zur Liste.",
   ] },
