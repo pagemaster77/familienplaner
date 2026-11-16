@@ -1,0 +1,3 @@
+-- Update 14 (bereits eingespielt): Spielhalle um flappy, frogger, pong erweitert.
+-- arcade_scores.game erlaubt jetzt snake, memory, reaktion, flappy, frogger, pong.
+-- submit_score: flappy 0..500 -> Punkte min(score,300); frogger 0..200 -> score*2; pong 0..1000 -> min(score/2,300).

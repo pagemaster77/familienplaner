@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.2", date: "16.11.2026", items: [
+    "Spielhalle: 3 neue Spiele! Flappy (durch die Lücken fliegen), Frogger (Straße und Fluss überqueren) und Pong (gegen den Computer).",
+  ] },
   { v: "20.1", date: "16.11.2026", items: [
     "Wandpanel: Das Bild des Tages ist kein Bildschirmschoner mehr. Es erscheint klein oben links im Kalender. Antippen zeigt es 3 Minuten groß, nochmal tippen schließt es. Der Kalender bleibt immer vorne.",
   ] },

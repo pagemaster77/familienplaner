@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.2: Spielhalle um Flappy, Frogger, Pong erweitert (spiele/flappy.js, frogger.js, pong.js; Punkte-Regeln in submit_score)
+
 ## Version 20.1: Wandpanel: Bild des Tages klein im Eck oben links statt automatischem Bildschirmschoner (Antippen = 3 Min gross)
 
 ## Version 20.0: Spielhalle (eigene Seite site/spielhalle/, Spiele in spiele/, Tabelle arcade_scores, Funktionen submit_score/arcade_board/arcade_battle/arcade_me)

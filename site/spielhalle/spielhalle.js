@@ -6,7 +6,7 @@ const ARCADE = (() => {
   const games = [], $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let me = null, stopGame = null, S = { tab: null, range: 7, bRange: 7 };
-  const fmt = (g, v) => g.lower ? v + " ms" : g.id === "snake" ? v + " 🍎" : v + " P.";
+  const fmt = (g, v) => g.fmt ? g.fmt(v) : g.lower ? v + " ms" : g.id === "snake" ? v + " 🍎" : v + " P.";
   const medal = i => ["🥇", "🥈", "🥉"][i] || i + 1;
 
   async function lobby() {
