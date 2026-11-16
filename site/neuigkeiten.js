@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.1", date: "16.11.2026", items: [
+    "Der Chat sieht jetzt aus wie WhatsApp: Zuerst kommt die Chat-Liste mit „Familie“ und „Alle Verbundenen“, mit letzter Nachricht und Zähler für Ungelesenes. Antippen öffnet den Raum mit Sprechblasen, Tagesangabe und Uhrzeit. Mit dem Pfeil oben links geht es zurück zur Liste.",
+  ] },
   { v: "21.0", date: "16.11.2026", items: [
     "Chat mit zwei Räumen: Sobald eine Familie verbunden ist, kannst du im Chat zwischen „Eigene Familie“ und „Alle Verbundenen“ umschalten. Im Raum für alle schreiben die verbundenen Familien miteinander, der Familien-Chat bleibt privat.",
     "Der Text unter „Mit anderen Familien verbinden“ stimmt wieder: Verbunden heißt Wunschlisten, Chat, Jobs und Spielhalle.",

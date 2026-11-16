@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.0 (16.11.)";
+const VERSION = "21.1 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: "family", meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -587,22 +587,54 @@ function cardShop(compact) {
       <input id="sa" class="pt" name="amount" placeholder="Menge"><button class="btn">+</button></form>`}</div>`;
 }
 
-/* Chat mit zwei Räumen: "family" = nur die eigene Familie, "all" = alle verbundenen Familien.
-   Der Umschalter erscheint nur, wenn mindestens eine Familie verbunden ist. Kompakt (Startseite) zeigt immer die eigene Familie. */
+/* Chat wie WhatsApp: Chat-Liste mit zwei Räumen ("family" = eigene Familie, "all" = alle verbundenen Familien),
+   Antippen öffnet den Raum mit Sprechblasen. Ohne verbundene Familie gibt es nur einen Raum, der gleich offen ist.
+   S.chatRoom: null = Liste, sonst der geöffnete Raum. Kompakt (Startseite) zeigt immer die letzten Nachrichten der eigenen Familie. */
+const CHAT_ROOMS = { family: { ic: "👪", title: () => S.family.name || "Familie", sub: "Nur eure Familie" }, all: { ic: "🌍", title: () => "Alle Verbundenen", sub: "Alle verbundenen Familien" } };
+const chatSeenKey = r => "chatseen_" + r;
+function chatSeen(r) { try { return +localStorage.getItem(chatSeenKey(r)) || 0; } catch (_e) { return 0; } }
+function chatMarkSeen(r) { try { localStorage.setItem(chatSeenKey(r), String(Date.now())); } catch (_e) { /* egal */ } }
+const roomMsgs = r => S.msgs.filter(m => (m.scope || "family") === r);
+function chatDay(d) {
+  const k = dkey(d), t = new Date(), y = new Date(Date.now() - 864e5);
+  return k === dkey(t) ? "Heute" : k === dkey(y) ? "Gestern" : d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "numeric" });
+}
+function chatList() {
+  return `<div class="card chatlist"><h2>💬 Chats</h2>${["family", "all"].map(r => {
+    const ms = roomMsgs(r), last = ms[ms.length - 1], seen = chatSeen(r);
+    const unread = ms.filter(m => m.author !== S.me.id && new Date(m.created_at).getTime() > seen).length;
+    const who = last ? (last.author === S.me.id ? "Du" : (wprof(last.author)?.name || "?")) : "";
+    return `<button class="crow" data-act="room" data-v="${r}"><span class="cav">${CHAT_ROOMS[r].ic}</span>
+      <span class="cmid"><b>${esc(CHAT_ROOMS[r].title())}</b><span class="cprev ${unread ? "un" : ""}">${last ? esc(who) + ": " + esc(last.body) : esc(CHAT_ROOMS[r].sub)}</span></span>
+      <span class="cside"><small>${last ? (dkey(new Date(last.created_at)) === dkey(new Date()) ? fmtTime(new Date(last.created_at)) : chatDay(new Date(last.created_at))) : ""}</small>${unread ? `<i class="cbadge">${unread}</i>` : ""}</span></button>`;
+  }).join("")}</div>`;
+}
 function cardChat(compact) {
   const canAll = S.lprof.length > 0;
-  const room = !compact && canAll && S.chatRoom === "all" ? "all" : "family";
-  const list = S.msgs.filter(m => (m.scope || "family") === room);
-  const shown = compact ? list.slice(-4) : list;
-  const switcher = compact || !canAll ? "" : `<div class="chat-rooms" style="display:flex;gap:6px;margin:0 0 10px">
-      <button class="btn small ${room === "family" ? "" : "ghost"}" data-act="room" data-v="family">👪 Eigene Familie</button>
-      <button class="btn small ${room === "all" ? "" : "ghost"}" data-act="room" data-v="all">🌍 Alle Verbundenen</button></div>`;
-  return `<div class="card"><h2>💬 ${room === "all" ? "Alle verbundenen Familien" : "Nachrichten"}</h2>${switcher}<div class="chat">
-    ${shown.map(m => { const p = wprof(m.author); const me = m.author === S.me.id;
-      const fam = room === "all" && p && p.family_name ? ` <span class="sub">· ${esc(p.family_name)}</span>` : "";
-      const del = S.me.is_admin && !compact && m.family_id === S.me.family_id;
-      return `<div class="msg ${me ? "me" : ""}"><small>${esc(p?.name || "?")}${fam} · ${fmtTime(new Date(m.created_at))}</small>${esc(m.body)}${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`; }).join("") || `<div class="empty">Noch keine Nachrichten</div>`}
-    </div>${compact ? "" : `<form class="add" data-form="msg"><input id="mi" name="body" placeholder="${room === "all" ? "An alle verbundenen Familien …" : "Nachricht schreiben …"}" autocomplete="off" required><button class="btn">Senden</button></form>`}</div>`;
+  if (compact) {
+    const shown = roomMsgs("family").slice(-4);
+    return `<div class="card"><h2>💬 Nachrichten</h2><div class="chat">
+      ${shown.map(m => `<div class="msg ${m.author === S.me.id ? "me" : ""}"><small>${esc(prof(m.author)?.name || "?")} · ${fmtTime(new Date(m.created_at))}</small>${esc(m.body)}</div>`).join("") || `<div class="empty">Noch keine Nachrichten</div>`}
+      </div></div>`;
+  }
+  if (canAll && !S.chatRoom) return chatList();
+  const room = canAll && S.chatRoom === "all" ? "all" : "family";
+  chatMarkSeen(room);
+  const ms = roomMsgs(room);
+  let lastDay = "", lastAuthor = "";
+  const bubbles = ms.map(m => {
+    const d = new Date(m.created_at), day = dkey(d), p = wprof(m.author), me = m.author === S.me.id;
+    const sep = day !== lastDay ? `<div class="dsep"><span>${chatDay(d)}</span></div>` : "";
+    const head = !me && (day !== lastDay || m.author !== lastAuthor)
+      ? `<b class="who" style="color:${esc(p?.color || "inherit")}">${esc(p?.name || "?")}${room === "all" && p?.family_name ? ` <span class="sub">· ${esc(p.family_name)}</span>` : ""}</b>` : "";
+    lastDay = day; lastAuthor = m.author;
+    const del = S.me.is_admin && m.family_id === S.me.family_id;
+    return `${sep}<div class="msg wa ${me ? "me" : ""}">${head}${esc(m.body)}<small class="tm">${fmtTime(d)}</small>${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`;
+  }).join("") || `<div class="empty">Noch keine Nachrichten</div>`;
+  return `<div class="chatview"><div class="chathead">${canAll ? `<button class="cback" data-act="room" data-v="list" aria-label="Zurück zu den Chats">‹</button>` : ""}
+      <span class="cav">${CHAT_ROOMS[room].ic}</span><span class="cmid"><b>${esc(CHAT_ROOMS[room].title())}</b><small>${esc(CHAT_ROOMS[room].sub)}</small></span></div>
+    <div class="chat wachat">${bubbles}</div>
+    <form class="add chatbar" data-form="msg"><input id="mi" name="body" placeholder="${room === "all" ? "An alle verbundenen Familien …" : "Nachricht schreiben …"}" autocomplete="off" required><button class="btn">Senden</button></form></div>`;
 }
 
 function cardToday() {
@@ -992,8 +1024,8 @@ const ACT = {
   backLogin() { S.authMode = "login"; S.err = ""; S.info = ""; render(); },
   async switchAuth() { S.authMode = S.authMode === "login" ? "signup" : "login"; S.err = ""; render(); },
   async logout() { await sb.auth.signOut(); },
-  tab(d) { S.tab = d.v; render(); window.scrollTo(0, 0); },
-  room(d) { S.chatRoom = d.v === "all" ? "all" : "family"; render(); window.scrollTo(0, document.body.scrollHeight); },
+  tab(d) { if (d.v === "chat" && S.tab !== "chat") S.chatRoom = null; S.tab = d.v; render(); window.scrollTo(0, 0); },
+  room(d) { S.chatRoom = d.v === "all" ? "all" : d.v === "family" ? "family" : null; render(); window.scrollTo(0, S.chatRoom ? document.body.scrollHeight : 0); },
   obMode(d) { S.ob.mode = d.v; render(); },
   ob(d) { S.ob[d.k] = d.v; render(); },
   pe(d) { S.pe[d.k] = d.v; render(); },
@@ -1400,7 +1432,7 @@ function render() {
   restoreInputs(saved);
   setTimeout(checkRewards, 0);
   setTimeout(() => { if (window.checkNews) checkNews(); }, 0);
-  if (S.me && !isDisplay() && S.tab === "chat") window.scrollTo(0, document.body.scrollHeight);
+  if (S.me && !isDisplay() && S.tab === "chat" && (S.chatRoom || !S.lprof.length)) window.scrollTo(0, document.body.scrollHeight);
 }
 
 async function start() {
