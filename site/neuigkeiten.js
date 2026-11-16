@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.4", date: "16.11.2026", items: [
+    "Admins: Auf der Seite ⚙️ Verwalten gibt es bei wartenden Aufgaben jetzt den Knopf „↩ Nicht ok“. Damit geht eine nicht richtig erledigte Aufgabe wieder auf offen. Das Kind bekommt keine Punkte.",
+  ] },
   { v: "21.3", date: "16.11.2026", items: [
     "Stimmung: Die 5 ⭐ gibt es jetzt einmal pro Tag. Um 0 Uhr geht es von vorne los, du musst nicht mehr 24 Stunden warten.",
   ] },

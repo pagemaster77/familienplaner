@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.3 (16.11.)";
+const VERSION = "21.4 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -433,6 +433,7 @@ function viewAdmin() {
       ${wait.map(t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
         <div class="sub">erledigt von ${esc(prof(t.done_by)?.name || "?")} · ⏳ wartet auf Freigabe</div></div>
         <button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button>
+        <button class="btn small ghost" data-act="reopenTask" data-id="${t.id}" title="Nicht richtig erledigt – wieder auf offen setzen">↩ Nicht ok</button>
         <button class="btn small" data-act="approveTask" data-id="${t.id}">✔ Freigeben</button></div>`).join("")}
       ${reached.map(r => `<div class="row"><div class="grow"><div class="t">🎁 ${esc(r.title)}</div>
         <div class="sub">${esc(prof(r.profile_id)?.name || "?")} hat ${r.points} ⭐ erreicht</div></div>
@@ -1038,6 +1039,13 @@ const ACT = {
     await q(sb.from("tasks").update({ done }).eq("id", d.id)); // Datenbank setzt Erledigt-von und Freigabe
     await LOAD.tasks(); render();
     if (done) toast(S.me.is_admin ? (t.points ? `+${t.points} Punkte für ${S.me.name} ⭐` : "Erledigt ✔") : "Erledigt – ein Admin muss noch die Punkte freigeben ⏳");
+  },
+  async reopenTask(d) {
+    if (!S.me.is_admin) return;
+    const t = S.tasks.find(x => x.id === d.id);
+    await q(sb.from("tasks").update({ done: false }).eq("id", d.id)); // Datenbank nimmt Erledigt-von, Freigabe und evtl. Punkte zurück
+    await LOAD.tasks(); render();
+    toast(`„${t?.title || "Aufgabe"}“ ist wieder offen ↩`);
   },
   async approveTask(d) {
     if (!S.me.is_admin) return;
