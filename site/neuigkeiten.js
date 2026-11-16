@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.9", date: "16.11.2026", items: [
+    "Spielhalle: Neues Spiel „Bonbon-Match“. Tausche Nachbar-Bonbons, 3 gleiche in einer Reihe verschwinden. 4er-Reihe = Streifen-Bonbon, 5er = Regenbogen, L- oder T-Form = Bombe. 25 Züge, Ketten geben mehr Punkte.",
+  ] },
   { v: "20.8", date: "16.11.2026", items: [
     "Spielhalle: Siegertreppchen mit Animation für Familien und Einzelpersonen. Dazu die Wochen-Challenge mit Countdown, wie lange die Woche noch läuft. Die Woche beginnt jeden Montag um 0 Uhr bei Null.",
   ] },

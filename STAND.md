@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.9: Spielhalle: Bonbon-Match (spiele/bonbon.js, game-ID bonbon, Punkte = Score/100 max 300)
+
 ## Version 20.8: Spielhalle: Siegertreppchen + Wochen-Countdown; Woche = Kalenderwoche ab Montag 0 Uhr Berlin (arcade_*-Funktionen, p_days=7)
 
 ## Version 20.7: Spielhalle als App-Layout, Bestenliste Familien+Personen (Funktion arcade_people)
