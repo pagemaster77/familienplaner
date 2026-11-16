@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.6", date: "16.11.2026", items: [
+    "Spielhalle: Neues Spiel „Farbenspiel“. Der Computer zeigt eine Reihenfolge aus Farben und Tönen, du tippst sie nach. Jede Runde kommt eine Farbe dazu.",
+  ] },
   { v: "20.5", date: "16.11.2026", items: [
     "Spielhalle: Die Pfeiltasten sind jetzt als Kreuz angeordnet. Hoch oben, links und rechts daneben, runter unten. Die Mitte bleibt frei, so drückt man seltener daneben.",
   ] },

@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.6: Spielhalle: Farbenspiel (spiele/farben.js, game-ID farben, Punkte = Runden*2 max 200)
+
 ## Version 20.5: Spielhalle: Pfeiltasten als Kreuz (runter unten)
 
 ## Version 20.4: Spielhalle: grosse Steuerungstasten mit mehr Abstand, Pong mit Links/Rechts-Tasten

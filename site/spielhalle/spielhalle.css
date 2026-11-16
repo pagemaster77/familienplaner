@@ -42,6 +42,8 @@ a{color:var(--pri);text-decoration:none}
 .mem button.open{background:#2f4a86}.mem button.done{background:#1f5f46;opacity:.8}
 .react{height:48vh;min-height:260px;border-radius:20px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:26px;font-weight:700;padding:16px;cursor:pointer;user-select:none;background:#2f4a86}
 .react.wait{background:#a83b3b}.react.go{background:#1f9d62}
+.fb{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:340px;margin:0 auto;touch-action:manipulation}
+.fb button{aspect-ratio:1;border:0;border-radius:24px;transition:background .08s,transform .08s;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .result{text-align:center}
 .result .big{font-size:44px;margin:6px 0}
 .result .btns{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
