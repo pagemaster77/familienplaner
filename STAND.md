@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.3: Startseite: Spielhalle-Karte mit Familien-Bestenliste (7 Tage) und weiter oben
+
 ## Version 20.2: Spielhalle um Flappy, Frogger, Pong erweitert (spiele/flappy.js, frogger.js, pong.js; Punkte-Regeln in submit_score)
 
 ## Version 20.1: Wandpanel: Bild des Tages klein im Eck oben links statt automatischem Bildschirmschoner (Antippen = 3 Min gross)

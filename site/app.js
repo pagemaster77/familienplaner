@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "20.2 (16.11.)";
+const VERSION = "20.3 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -253,7 +253,8 @@ const LOAD = {
   tasks: async () => (S.tasks = await q(sb.from("tasks").select("*").order("created_at", { ascending: false }))),
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
-  arcade: async () => { const { data } = await sb.rpc("arcade_me"); const r = data && data[0]; S.arc = r ? { total: Number(r.total), week: Number(r.week) } : null; },
+  arcade: async () => { const { data } = await sb.rpc("arcade_me"); const r = data && data[0]; S.arc = r ? { total: Number(r.total), week: Number(r.week) } : null;
+    const bt = await sb.rpc("arcade_battle", { p_days: 7 }); S.arcBat = (bt.data || []).slice(0, 4); },
   jobs: async () => (S.jobs = await q(sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(100))),
   family_links: async () => {
     S.links = await q(sb.from("family_links").select("*"));
@@ -669,9 +670,10 @@ function cardArcade() {
   const a = S.arc;
   return `<div class="card"><h2>🎮 Spielhalle</h2>
     <p class="sub" style="margin:0 0 8px">${a ? `Deine Spielpunkte: <b>${a.total}</b> ⭐ · diese Woche <b>${a.week}</b>` : "Minispiele und Bestenlisten mit den verbundenen Familien."}</p>
+    ${(S.arcBat && S.arcBat.length) ? `<div class="sub" style="margin:0 0 4px"><b>🏆 Familien-Bestenliste (7 Tage)</b></div>${S.arcBat.map((f, i) => `<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${["🥇", "🥈", "🥉", "4."][i]} ${esc(f.family_name)}</span><b>${Number(f.pts)} ⭐</b></div>`).join("")}<div style="height:8px"></div>` : ""}
     <a class="btn block" href="spielhalle/" style="display:block;text-align:center;text-decoration:none">Zur Spielhalle</a></div>`;
 }
-function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardShop(true) + cardArcade() + cardChat(true); }
+function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardArcade() + cardShop(true) + cardChat(true); }
 
 /* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {
