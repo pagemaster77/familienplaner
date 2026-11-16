@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.3", date: "16.11.2026", items: [
+    "Stimmung: Die 5 ⭐ gibt es jetzt einmal pro Tag. Um 0 Uhr geht es von vorne los, du musst nicht mehr 24 Stunden warten.",
+  ] },
   { v: "21.2", date: "16.11.2026", items: [
     "Chat: Der Zurück-Pfeil im Chatraum bleibt jetzt immer sichtbar oben stehen. Man muss nicht mehr hochscrollen, um zurückzukommen.",
   ] },

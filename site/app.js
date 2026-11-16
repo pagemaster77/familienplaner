@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.2 (16.11.)";
+const VERSION = "21.3 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -703,7 +703,7 @@ function cardMood() {
   const cur = moodOf(S.me);
   return `<div class="card"><h2>Wie geht’s dir heute?</h2><div class="moods">${Object.entries(MOODS).map(([k, [e, l]]) =>
     `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
-    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal in 24 Stunden.${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
+    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal pro Tag (um 0 Uhr geht es von vorne los).${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
 }
 /* Spielhalle: eigene Seite (spielhalle/). Spielpunkte haben nichts mit den Aufgaben-Punkten zu tun. */
 function cardArcade() {

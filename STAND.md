@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.3: Stimmungs-Punkte (5 Stk.) werden um 0 Uhr (Europe/Berlin) zurueckgesetzt statt 24-Std-Sperre (DB-Funktion mood_award, sql/update-8-stimmung.sql)
+
 ## Version 21.2: Chat: Kopfleiste mit Zurueck-Pfeil bleibt sichtbar (sticky unter der oberen Leiste, --twh)
 
 ## Version 21.1: Chat im WhatsApp-Stil (Chat-Liste, Raum oeffnen, Sprechblasen, Ungelesen-Zaehler per localStorage chatseen_<raum>); S.chatRoom null=Liste
