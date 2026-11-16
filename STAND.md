@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.5: Spielhalle: "Jetzt online / spielt gerade" (Tabelle arcade_presence, Ping alle 20 Sek., online = Ping < 60 Sek.) und "zuletzt gespielt von" pro Spiel (Funktionen arcade_ping/arcade_leave/arcade_online/arcade_last) - sql/update-16-spielhalle-online.sql
+
 ## Version 21.4: Verwalten: Knopf Nicht ok (Aufgabe zurueck auf offen)
 
 ## Version 21.3: Stimmungs-Punkte (5 Stk.) werden um 0 Uhr (Europe/Berlin) zurueckgesetzt statt 24-Std-Sperre (DB-Funktion mood_award, sql/update-8-stimmung.sql)

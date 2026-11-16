@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.5", date: "16.11.2026", items: [
+    "Spielhalle: Ganz oben steht jetzt, wer gerade online ist und wer was spielt (🟢). Unter jedem Spiel steht außerdem, wer es zuletzt gespielt hat und wann.",
+  ] },
   { v: "21.4", date: "16.11.2026", items: [
     "Admins: Auf der Seite ⚙️ Verwalten gibt es bei wartenden Aufgaben jetzt den Knopf „↩ Nicht ok“. Damit geht eine nicht richtig erledigte Aufgabe wieder auf offen. Das Kind bekommt keine Punkte.",
   ] },

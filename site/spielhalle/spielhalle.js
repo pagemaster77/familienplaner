@@ -6,6 +6,35 @@ const ARCADE = (() => {
   const games = [], $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let me = null, stopGame = null, S = { tab: null, range: 7 };
+  // Online-Anzeige: curGame = Spiel, das ich gerade spiele (null = nur in der Spielhalle). Ping alle 20 Sek., "online" = Ping jünger als 60 Sek.
+  let curGame = null, onlineTimer = 0, L = { last: [], online: [] };
+  const ping = () => { if (me) sb.rpc("arcade_ping", { p_game: curGame }).then(() => {}, () => {}); };
+  const ago = t => { const m = Math.floor((Date.now() - new Date(t)) / 60000);
+    return m < 1 ? "gerade eben" : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.floor(m / 60)} Std` : `vor ${Math.floor(m / 1440)} Tg`; };
+  const gname = id => { const g = games.find(x => x.id === id); return g ? `${g.icon} ${g.name}` : id; };
+  // Zeichnet "Jetzt online" und die Zeile "zuletzt gespielt" unter jedem Spiel neu (ohne die ganze Seite neu zu laden)
+  function paintLive() {
+    const o = (L.online || []).filter(x => x.profile_id !== me.id), last = L.last || [];
+    const box = $("#online");
+    if (box) {
+      const newest = last.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      box.innerHTML = `<h2>🟢 Jetzt online</h2>` + (o.length
+        ? `<div class="onl">${o.map(x => `<span class="who${x.game ? " play" : ""}"><i></i><b>${esc(x.name)}</b> <span class="sub">${x.game ? "spielt " + esc(gname(x.game)) : "in der Spielhalle"}</span></span>`).join("")}</div>`
+        : `<div class="sub">Gerade ist sonst niemand in der Spielhalle.</div>`)
+        + (newest ? `<div class="sub lastp">🕒 Zuletzt gespielt: <b>${esc(newest.name)}</b> – ${esc(gname(newest.game))}, ${ago(newest.created_at)}</div>` : "");
+    }
+    games.forEach(g => {
+      const e = document.querySelector(`[data-gs="${g.id}"]`); if (!e) return;
+      const now = o.filter(x => x.game === g.id), l = last.find(x => x.game === g.id);
+      e.innerHTML = (now.length ? `<span class="live">🟢 ${esc(now.map(x => x.name).join(", "))} spielt</span>` : "")
+        + (l ? `<span>Zuletzt: ${esc(l.name)}<br>${ago(l.created_at)}</span>` : `<span>Noch nie gespielt</span>`);
+    });
+  }
+  async function loadLive() {
+    const [a, b] = await Promise.all([sb.rpc("arcade_online"), sb.rpc("arcade_last")]);
+    L = { online: a.data || [], last: b.data || [] };
+    if ($("#online")) paintLive();
+  }
   const fmt = (g, v) => g.fmt ? g.fmt(v) : g.lower ? v + " ms" : g.id === "snake" ? v + " 🍎" : v + " P.";
   const medal = i => ["🥇", "🥈", "🥉"][i] || i + 1;
 
@@ -22,6 +51,7 @@ const ARCADE = (() => {
   };
   async function lobby() {
     if (stopGame) { stopGame(); stopGame = null; }
+    curGame = null; ping();
     const days = S.range || null, gid = S.tab; // gid: null = alle Spiele zusammen
     const [mine, fam, ppl, brd] = await Promise.all([sb.rpc("arcade_me"), sb.rpc("arcade_battle", { p_days: days }), sb.rpc("arcade_people", { p_days: days }),
       gid ? sb.rpc("arcade_board", { p_game: gid, p_days: days }) : Promise.resolve({ data: null })]);
@@ -34,6 +64,7 @@ const ARCADE = (() => {
     const fitems = f.map(x => ({ name: x.family_name, sub: x.players + " Spieler", val: x.pts + " ⭐" })), pitems = people.map(x => ({ name: x.name, sub: x.family_name, val: x.val }));
     $("#arc").innerHTML = `<div class="top"><button class="back" id="home">← App</button><h1>🎮 Spielhalle</h1><span></span></div>
       <div class="pts"><span>Hallo <b>${esc(me.name)}</b></span><span>⭐ <b>${m.total}</b> gesamt · <b>${m.week}</b> diese Woche${mineIdx >= 0 ? ` · Platz <b>${mineIdx + 1}</b>` : ""}</span></div>
+      <div class="card online" id="online"><h2>🟢 Jetzt online</h2><div class="sub">Lädt …</div></div>
       <div class="card" id="rank"><h2>🏆 Bestenliste</h2>
         <div class="seg"><button data-r="7" class="${S.range === 7 ? "on" : ""}">Diese Woche</button><button data-r="0" class="${S.range === 0 ? "on" : ""}">Gesamt</button></div>
         ${S.range === 7 ? `<div class="chal">🏁 <b>Wochen-Challenge</b><span>endet in <b id="cd">${left()}</b></span></div>` : `<div class="chal">🏆 <b>Gesamtwertung</b><span>seit Beginn der Spielhalle</span></div>`}
@@ -46,8 +77,9 @@ const ARCADE = (() => {
         ${podium(pitems)}
         ${people.slice(3).map((x, j) => { const i = j + 3; return `<div class="row${x.id === me.id ? " me" : ""}"><span class="rank">${medal(i)}</span><div class="grow">${esc(x.name)} <span class="sub">(${esc(x.family_name)})</span></div><span class="sub">${x.plays}×</span><span class="val">${esc(x.val)}</span></div>`; }).join("")}${people.length ? "" : `<div class="empty">Noch kein Ergebnis</div>`}
         <div class="sub" style="margin-top:8px">Es zählen die eigene und die verbundenen Familien.</div></div>
-      <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b></button>`).join("")}</div></div>
+      <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b><span class="gs" data-gs="${x.id}"></span></button>`).join("")}</div></div>
       <nav class="nav"><button id="n-app">🏠<span>App</span></button><button id="n-rank">🏆<span>Bestenliste</span></button><button id="n-play">🎮<span>Spiele</span></button></nav>`;
+    clearInterval(onlineTimer); loadLive(); onlineTimer = setInterval(loadLive, 15000);
     if ($("#cd")) tick = setInterval(() => { const e = $("#cd"); if (e) e.textContent = left(); else clearInterval(tick); }, 1000);
     $("#home").onclick = $("#n-app").onclick = () => (location.href = "../");
     $("#n-rank").onclick = () => $("#rank").scrollIntoView({ behavior: "smooth" });
@@ -59,6 +91,7 @@ const ARCADE = (() => {
 
   function play(id) {
     const g = games.find(x => x.id === id);
+    clearInterval(onlineTimer); curGame = id; ping();
     $("#arc").innerHTML = `<div class="top"><button class="back" id="back">← Spielhalle</button><h1>${g.icon} ${esc(g.name)}</h1><span></span></div><div id="stage"></div>`;
     $("#back").onclick = lobby;
     const run = () => {
@@ -87,7 +120,11 @@ const ARCADE = (() => {
       if (!session) { $("#arc").innerHTML = `<div class="card"><h2>🎮 Spielhalle</h2><p>Bitte melde dich zuerst in der Familien-App an.</p><a class="btn" href="../" style="display:inline-block">Zur App</a></div>`; return; }
       const { data } = await sb.from("profiles").select("id,name,family_id").eq("id", session.user.id).maybeSingle();
       if (!data) { $("#arc").innerHTML = `<div class="card"><p>Dein Profil wurde nicht gefunden.</p><a class="btn" href="../">Zur App</a></div>`; return; }
-      me = data; lobby();
+      me = data;
+      setInterval(ping, 20000);
+      document.addEventListener("visibilitychange", () => { if (document.hidden) sb.rpc("arcade_leave").then(() => {}, () => {}); else ping(); });
+      addEventListener("pagehide", () => { sb.rpc("arcade_leave").then(() => {}, () => {}); });
+      lobby();
     }
   };
 })();

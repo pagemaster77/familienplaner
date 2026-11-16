@@ -96,3 +96,13 @@ a{color:var(--pri);text-decoration:none}
 .bb .sp-r{background:conic-gradient(#e5484d,#f5a524,#f2d33c,#3ecf8e,#4f8cff,#a35cf0,#e5484d)!important;box-shadow:0 0 12px #fffa;animation:pulse 1s infinite}
 .bb .sp-r i{font-size:1.2em}
 @keyframes pulse{50%{transform:scale(1.07)}}
+
+/* Online-Anzeige (21.5) */
+.online h2{margin-bottom:8px}
+.onl{display:flex;flex-wrap:wrap;gap:8px}
+.onl .who{display:inline-flex;align-items:center;gap:6px;background:#111a2b;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:14px}
+.onl .who i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px #3ecf8e33;flex:none}
+.onl .who.play{border-color:var(--ok)}
+.online .lastp{margin-top:10px}
+.app .gs{display:flex;flex-direction:column;gap:1px;font-size:11px;line-height:1.25;color:var(--muted);text-align:center;max-width:100%}
+.app .gs .live{color:var(--ok);font-weight:600}
