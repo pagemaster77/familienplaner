@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.0", date: "16.11.2026", items: [
+    "Chat mit zwei Räumen: Sobald eine Familie verbunden ist, kannst du im Chat zwischen „Eigene Familie“ und „Alle Verbundenen“ umschalten. Im Raum für alle schreiben die verbundenen Familien miteinander, der Familien-Chat bleibt privat.",
+    "Der Text unter „Mit anderen Familien verbinden“ stimmt wieder: Verbunden heißt Wunschlisten, Chat, Jobs und Spielhalle.",
+  ] },
   { v: "20.9", date: "16.11.2026", items: [
     "Spielhalle: Neues Spiel „Bonbon-Match“. Tausche Nachbar-Bonbons, 3 gleiche in einer Reihe verschwinden. 4er-Reihe = Streifen-Bonbon, 5er = Regenbogen, L- oder T-Form = Bombe. 25 Züge, Ketten geben mehr Punkte.",
   ] },

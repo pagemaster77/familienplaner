@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
       db.from("shopping_items").select("id,title,amount,checked").eq("family_id", fam.id).order("created_at").limit(300),
       db.from("events").select("id,title,starts_at,ends_at,owner,recurrence,all_day,birth_year").eq("family_id", fam.id).lte("starts_at", to).or(`starts_at.gte.${from},recurrence.neq.none`).order("starts_at").limit(500),
       db.from("meals").select("id,title,plan_date,image_url,wished_by").eq("family_id", fam.id).or(`plan_date.gte.${today},plan_date.is.null`).order("plan_date", { nullsFirst: false }).limit(60),
-      db.from("messages").select("id,author,body,created_at").eq("family_id", fam.id).order("created_at", { ascending: false }).limit(20),
+      db.from("messages").select("id,author,body,created_at").eq("family_id", fam.id).eq("scope", "family").order("created_at", { ascending: false }).limit(20),
       db.from("point_log").select("profile_id,points").eq("family_id", fam.id).limit(20000),
       db.from("rewards").select("id,profile_id,points,title,claimed").eq("family_id", fam.id).limit(200),
       db.from("daily_posts").select("id,author,yt_id,has_photo,updated_at").eq("family_id", fam.id).eq("day", berlin).maybeSingle(),

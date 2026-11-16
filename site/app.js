@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "20.9 (16.11.)";
+const VERSION = "21.0 (16.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,7 +14,7 @@ const TABS = [
 
 const S = {
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: "family", meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -587,13 +587,22 @@ function cardShop(compact) {
       <input id="sa" class="pt" name="amount" placeholder="Menge"><button class="btn">+</button></form>`}</div>`;
 }
 
+/* Chat mit zwei Räumen: "family" = nur die eigene Familie, "all" = alle verbundenen Familien.
+   Der Umschalter erscheint nur, wenn mindestens eine Familie verbunden ist. Kompakt (Startseite) zeigt immer die eigene Familie. */
 function cardChat(compact) {
-  const list = compact ? S.msgs.slice(-4) : S.msgs;
-  const adm = S.me.is_admin && !compact;
-  return `<div class="card"><h2>💬 Nachrichten</h2><div class="chat">
-    ${list.map(m => { const p = prof(m.author); const me = m.author === S.me.id;
-      return `<div class="msg ${me ? "me" : ""}"><small>${esc(p?.name || "?")} · ${fmtTime(new Date(m.created_at))}</small>${esc(m.body)}${adm ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`; }).join("") || `<div class="empty">Noch keine Nachrichten</div>`}
-    </div>${compact ? "" : `<form class="add" data-form="msg"><input id="mi" name="body" placeholder="Nachricht schreiben …" autocomplete="off" required><button class="btn">Senden</button></form>`}</div>`;
+  const canAll = S.lprof.length > 0;
+  const room = !compact && canAll && S.chatRoom === "all" ? "all" : "family";
+  const list = S.msgs.filter(m => (m.scope || "family") === room);
+  const shown = compact ? list.slice(-4) : list;
+  const switcher = compact || !canAll ? "" : `<div class="chat-rooms" style="display:flex;gap:6px;margin:0 0 10px">
+      <button class="btn small ${room === "family" ? "" : "ghost"}" data-act="room" data-v="family">👪 Eigene Familie</button>
+      <button class="btn small ${room === "all" ? "" : "ghost"}" data-act="room" data-v="all">🌍 Alle Verbundenen</button></div>`;
+  return `<div class="card"><h2>💬 ${room === "all" ? "Alle verbundenen Familien" : "Nachrichten"}</h2>${switcher}<div class="chat">
+    ${shown.map(m => { const p = wprof(m.author); const me = m.author === S.me.id;
+      const fam = room === "all" && p && p.family_name ? ` <span class="sub">· ${esc(p.family_name)}</span>` : "";
+      const del = S.me.is_admin && !compact && m.family_id === S.me.family_id;
+      return `<div class="msg ${me ? "me" : ""}"><small>${esc(p?.name || "?")}${fam} · ${fmtTime(new Date(m.created_at))}</small>${esc(m.body)}${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`; }).join("") || `<div class="empty">Noch keine Nachrichten</div>`}
+    </div>${compact ? "" : `<form class="add" data-form="msg"><input id="mi" name="body" placeholder="${room === "all" ? "An alle verbundenen Familien …" : "Nachricht schreiben …"}" autocomplete="off" required><button class="btn">Senden</button></form>`}</div>`;
 }
 
 function cardToday() {
@@ -785,7 +794,7 @@ function cardLink(admin) {
   const adm = !!admin && S.me.is_admin, code = String(S.family.link_code || ""), nice = code.slice(0, 5) + "-" + code.slice(5);
   const names = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name }));
   return `<div class="card"><h2>🔗 Mit anderen Familien verbinden</h2>
-    <p class="sub">Verbundene Familien sehen gegenseitig ihre Wunschlisten (sonst nichts) und können „Gekauft“ abhaken.</p>
+    <p class="sub">Verbundene Familien sehen gegenseitig ihre Wunschlisten und können „Gekauft“ abhaken, schreiben im Chat-Raum „Alle Verbundenen“ miteinander, vergeben Jobs und spielen in der Spielhalle gegeneinander. Kalender, Aufgaben, Einkauf und der Familien-Chat bleiben privat.</p>
     ${names.map(f => `<div class="row"><div class="grow"><div class="t">${esc(f.name)}</div><div class="sub">verbunden</div></div>${adm ? `<button class="btn small ghost" data-act="unlink" data-id="${f.id}">Trennen</button>` : ""}</div>`).join("") || `<div class="empty">Noch mit keiner Familie verbunden</div>`}
     ${adm ? `<div class="sub" style="margin-top:10px">Euer Verbindungs-Code (den gebt ihr der anderen Familie):</div>
     <div style="font-size:24px;font-weight:700;letter-spacing:.1em;margin:4px 0 6px">${esc(nice)}</div>
@@ -984,6 +993,7 @@ const ACT = {
   async switchAuth() { S.authMode = S.authMode === "login" ? "signup" : "login"; S.err = ""; render(); },
   async logout() { await sb.auth.signOut(); },
   tab(d) { S.tab = d.v; render(); window.scrollTo(0, 0); },
+  room(d) { S.chatRoom = d.v === "all" ? "all" : "family"; render(); window.scrollTo(0, document.body.scrollHeight); },
   obMode(d) { S.ob.mode = d.v; render(); },
   ob(d) { S.ob[d.k] = d.v; render(); },
   pe(d) { S.pe[d.k] = d.v; render(); },
@@ -1244,7 +1254,7 @@ const FORMS = {
     await q(sb.rpc("create_job", { p_to: f.get("to"), p_title: String(f.get("title") || ""), p_note: String(f.get("note") || ""), p_points: Math.max(0, Math.min(20, parseInt(f.get("points"), 10) || 0)) }));
     await LOAD.jobs(); render(); toast("Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
   },
-  async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body") })); },
+  async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body"), scope: S.chatRoom === "all" && S.lprof.length ? "all" : "family" })); },
   async event(f) {
     const bd = f.get("kind") === "geburtstag", allDay = bd || f.get("withtime") !== "on";
     const starts = new Date(`${f.get("date")}T${allDay ? "12:00" : f.get("time") || "12:00"}`);
