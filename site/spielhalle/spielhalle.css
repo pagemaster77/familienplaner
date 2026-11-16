@@ -30,8 +30,11 @@ a{color:var(--pri);text-decoration:none}
 .empty{color:var(--muted);padding:8px 0}
 .stage{text-align:center}
 .stage canvas{background:#0b1220;border:2px solid var(--line);border-radius:14px;touch-action:none;max-width:100%}
-.dpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:6px;justify-content:center;margin-top:10px}
-.dpad button{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:14px;font-size:24px}
+.dpad{display:grid;grid-template-columns:repeat(3,minmax(0,96px));grid-template-rows:repeat(2,78px);gap:18px;justify-content:center;margin-top:16px;touch-action:manipulation}
+.dpad button{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.lr{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:16px;touch-action:manipulation}
+.lr button{height:78px;background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:16px;font-size:30px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.dpad button{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:16px;font-size:30px}
 .dpad .u{grid-column:2}.dpad .l{grid-row:2;grid-column:1}.dpad .d{grid-row:2;grid-column:2}.dpad .r{grid-row:2;grid-column:3}
 .hud{display:flex;justify-content:space-around;margin:6px 0 10px;font-size:18px;font-weight:700}
 .mem{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:0 auto}

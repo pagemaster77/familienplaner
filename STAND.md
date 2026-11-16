@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 20.4: Spielhalle: grosse Steuerungstasten mit mehr Abstand, Pong mit Links/Rechts-Tasten
+
 ## Version 20.3: Startseite: Spielhalle-Karte mit Familien-Bestenliste (7 Tage) und weiter oben
 
 ## Version 20.2: Spielhalle um Flappy, Frogger, Pong erweitert (spiele/flappy.js, frogger.js, pong.js; Punkte-Regeln in submit_score)

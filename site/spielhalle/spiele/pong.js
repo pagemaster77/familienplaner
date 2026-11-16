@@ -5,7 +5,7 @@ ARCADE.register({
   desc: "Gegen den Computer – wie lange hältst du durch?",
   start(root, api) {
     const W = Math.min(root.clientWidth || 340, 340), H = Math.round(W * 1.4), k = W / 340;
-    root.innerHTML = `<div class="stage"><div class="hud"><span id="lv">❤️❤️❤️</span><span>🏓 <span id="sc">0</span></span></div><canvas width="${W}" height="${H}"></canvas><div class="sub" style="margin-top:8px">Schläger ziehen oder ◀ ▶ (Pfeiltasten)</div></div>`;
+    root.innerHTML = `<div class="stage"><div class="hud"><span id="lv">❤️❤️❤️</span><span>🏓 <span id="sc">0</span></span></div><canvas width="${W}" height="${H}"></canvas><div class="lr"><button data-k="-1">◀</button><button data-k="1">▶</button></div><div class="sub" style="margin-top:8px">Schläger ziehen oder die großen Tasten halten</div></div>`;
     const cv = root.querySelector("canvas"), g = cv.getContext("2d"), sc = root.querySelector("#sc"), lv = root.querySelector("#lv");
     const PW = 86 * k, PH = 11 * k, R = 7 * k, PY = H - 26 * k, CY = 15 * k;
     let px = W / 2, cx = W / 2, bx = W / 2, by = H / 2, vx = 0, vy = 0, lives = 3, returns = 0, bonus = 0, over = false, last = performance.now(), raf = 0, hold = 0, dirKey = 0;
@@ -18,6 +18,7 @@ ARCADE.register({
     cv.addEventListener("pointerdown", e => { const r = cv.getBoundingClientRect(); px = (e.clientX - r.left) * (W / r.width); });
     const kd = e => { if (e.key === "ArrowLeft" || e.key === "a") dirKey = -1; if (e.key === "ArrowRight" || e.key === "d") dirKey = 1; };
     const ku = e => { if (["ArrowLeft", "a", "ArrowRight", "d"].includes(e.key)) dirKey = 0; };
+    root.querySelectorAll("[data-k]").forEach(b => { b.addEventListener("pointerdown", e => { e.preventDefault(); dirKey = +b.dataset.k; }); ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, () => { dirKey = 0; })); });
     addEventListener("keydown", kd); addEventListener("keyup", ku);
     const loseLife = () => { lives--; hearts(); if (lives <= 0) { over = true; stop(); draw(); api.finish(score(), score() + " Punkte"); } else serve(); };
     const loop = now => {

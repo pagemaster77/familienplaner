@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.4", date: "16.11.2026", items: [
+    "Spielhalle: Die Steuerungstasten sind jetzt viel größer und weiter auseinander. Pong hat jetzt auch zwei große Tasten links und rechts.",
+  ] },
   { v: "20.3", date: "16.11.2026", items: [
     "Spielhalle auf der Startseite: Deine Spielpunkte und die Familien-Bestenliste der letzten 7 Tage stehen jetzt direkt in der App, weiter oben auf der Startseite.",
   ] },
