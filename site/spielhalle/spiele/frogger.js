@@ -1,6 +1,6 @@
 /* Frogger: Straße überqueren, dann mit den Baumstämmen über den Fluss. Jede Rettung ans andere Ufer = 1 Punkt. 3 Leben. */
 ARCADE.register({
-  id: "frogger", name: "Frogger", icon: "🐸", fmt: v => v + " 🐸",
+  id: "frogger", name: "Frogger", color: "linear-gradient(145deg,#66bb6a,#2e7d32)", icon: "🐸", fmt: v => v + " 🐸",
   desc: "Über die Straße und den Fluss – 3 Leben.",
   start(root, api) {
     const COLS = 9, ROWS = 11, S = Math.min(root.clientWidth || 360, 396), C = Math.floor(S / COLS), W = C * COLS, H = C * ROWS;

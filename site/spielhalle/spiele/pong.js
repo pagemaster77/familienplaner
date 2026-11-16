@@ -1,7 +1,7 @@
 /* Pong gegen den Computer: Schläger mit dem Finger/der Maus ziehen (oder ◀ ▶). Jeder abgewehrte Ball = 1 Punkt,
    ein Ball am Computer vorbei = 5 Punkte. 3 Leben. Der Ball wird immer schneller. */
 ARCADE.register({
-  id: "pong", name: "Pong", icon: "🏓", fmt: v => v + " 🏓",
+  id: "pong", name: "Pong", color: "linear-gradient(145deg,#ef5b5b,#b02a4a)", icon: "🏓", fmt: v => v + " 🏓",
   desc: "Gegen den Computer – wie lange hältst du durch?",
   start(root, api) {
     const W = Math.min(root.clientWidth || 340, 340), H = Math.round(W * 1.4), k = W / 340;

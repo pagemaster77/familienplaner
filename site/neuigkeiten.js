@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "20.7", date: "16.11.2026", items: [
+    "Spielhalle sieht jetzt aus wie eine Handy-App: Oben die Bestenliste mit Familien und Einzelpersonen (Woche oder Gesamt, auch pro Spiel), darunter die Spiele als App-Symbole, unten eine Leiste zum Umschalten.",
+  ] },
   { v: "20.6", date: "16.11.2026", items: [
     "Spielhalle: Neues Spiel „Farbenspiel“. Der Computer zeigt eine Reihenfolge aus Farben und Tönen, du tippst sie nach. Jede Runde kommt eine Farbe dazu.",
   ] },

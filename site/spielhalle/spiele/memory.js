@@ -1,6 +1,6 @@
 /* Memory: 8 Paare finden. Wenige Züge und wenig Zeit = viele Punkte (höchstens 1000). */
 ARCADE.register({
-  id: "memory", name: "Memory", icon: "🧠", unit: "Punkte", lower: false,
+  id: "memory", name: "Memory", color: "linear-gradient(145deg,#a35cf0,#6a3cc2)", icon: "🧠", unit: "Punkte", lower: false,
   desc: "Finde alle Paare – mit wenig Zügen und schnell.",
   start(root, api) {
     const faces = ["🍎", "🚀", "🐶", "🎈", "🌟", "🎲", "🍕", "🦄"];

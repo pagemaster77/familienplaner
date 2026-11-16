@@ -1,6 +1,6 @@
 /* Reaktionstest: Wenn das Feld grün wird, so schnell wie möglich tippen. 5 Runden, Durchschnitt in Millisekunden (weniger ist besser). */
 ARCADE.register({
-  id: "reaktion", name: "Reaktion", icon: "⚡", unit: "ms", lower: true,
+  id: "reaktion", name: "Reaktion", color: "linear-gradient(145deg,#f5b02e,#e07a1a)", icon: "⚡", unit: "ms", lower: true,
   desc: "Tippe sofort, wenn es grün wird. 5 Runden.",
   start(root, api) {
     root.innerHTML = `<div class="stage"><div class="hud"><span>Runde <span id="rd">1</span>/5</span><span id="av"></span></div><div class="react" id="pad">Tippe, um zu starten</div></div>`;

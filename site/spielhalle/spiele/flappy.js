@@ -1,6 +1,6 @@
 /* Flappy: Tippen = flattern. Durch die Lücken fliegen, jede Röhre zählt einen Punkt. */
 ARCADE.register({
-  id: "flappy", name: "Flappy", icon: "🐤", fmt: v => v + " 🚧",
+  id: "flappy", name: "Flappy", color: "linear-gradient(145deg,#4fc3f7,#1e88e5)", icon: "🐤", fmt: v => v + " 🚧",
   desc: "Tippen = flattern. Fliege durch die Lücken.",
   start(root, api) {
     const W = Math.min(root.clientWidth || 360, 360), H = Math.round(W * 1.4), k = W / 320;

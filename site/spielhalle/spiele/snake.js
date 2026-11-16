@@ -1,6 +1,6 @@
 /* Snake: Äpfel fressen, nicht gegen Wand oder sich selbst stoßen. Steuerung: Wischen, Pfeiltasten/WASD oder die Tasten unten. */
 ARCADE.register({
-  id: "snake", name: "Snake", icon: "🐍", unit: "Äpfel", lower: false,
+  id: "snake", name: "Snake", color: "linear-gradient(145deg,#2fae6b,#1c7a4a)", icon: "🐍", unit: "Äpfel", lower: false,
   desc: "Friss Äpfel – wer am längsten überlebt, gewinnt.",
   start(root, api) {
     const N = 20, S = Math.min(root.clientWidth || 360, 380), C = Math.floor(S / N), W = C * N;

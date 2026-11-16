@@ -1,6 +1,6 @@
 /* Farbenspiel: Der Computer zeigt eine Reihenfolge aus Farben und Tönen. Du drückst sie nach. Jede Runde kommt eine Farbe dazu. */
 ARCADE.register({
-  id: "farben", name: "Farbenspiel", icon: "🎨", fmt: v => v + " Runden",
+  id: "farben", name: "Farbenspiel", color: "linear-gradient(145deg,#f06292,#7e57c2)", icon: "🎨", fmt: v => v + " Runden",
   desc: "Merke dir die Farben und tippe sie nach.",
   start(root, api) {
     const COL = [["#2fae6b", "#6cf0a8"], ["#d83a3f", "#ff8084"], ["#e8c21a", "#fff176"], ["#2f6fe0", "#7fb0ff"]], FREQ = [330, 262, 392, 196];
