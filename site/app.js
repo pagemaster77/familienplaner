@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.6 (17.11.)";
+const VERSION = "21.7 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -13,7 +13,7 @@ const TABS = [
 ];
 
 const S = {
-  jobSel: [],
+  jobSel: [], mtSel: [], meetups: [],
   user: null, me: null, family: null,
   profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
@@ -256,6 +256,8 @@ const LOAD = {
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
   arcade: async () => { const { data } = await sb.rpc("arcade_me"); const r = data && data[0]; S.arc = r ? { total: Number(r.total), week: Number(r.week) } : null;
     const bt = await sb.rpc("arcade_battle", { p_days: 7 }); S.arcBat = (bt.data || []).slice(0, 4); },
+  meetups: async () => (S.meetups = await q(sb.from("meetups").select("*, meetup_invites(*)").order("starts_at", { ascending: true }).limit(60))),
+  meetup_invites: async () => LOAD.meetups(),
   jobs: async () => (S.jobs = await q(sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(100))),
   family_links: async () => {
     S.links = await q(sb.from("family_links").select("*"));
@@ -382,7 +384,27 @@ const JOB_ST = { requested: "⏳ wartet auf Zusage", accepted: "🛠 läuft", do
 const jobIsGiver = j => j.from_profile === S.me.id || (S.me.is_admin && j.from_family === S.me.family_id);
 const jobIsTakerFam = j => S.me.is_admin && j.to_family === S.me.family_id;
 const jobNeedsMe = j => (j.status === "requested" && jobIsTakerFam(j)) || (j.status === "accepted" && j.to_profile === S.me.id) || (j.status === "done" && jobIsGiver(j));
-const jobsNeedMe = () => S.jobs.filter(jobNeedsMe).length;
+const meetNeedsMe = m => m.status === "open" && ((m.meetup_invites || []).some(i => i.profile_id === S.me.id && i.answer === "pending") || (meetIsHost(m) && new Date(m.starts_at) < new Date()));
+const meetIsHost = m => m.from_profile === S.me.id || (S.me.is_admin && m.from_family === S.me.family_id);
+const jobsNeedMe = () => S.jobs.filter(jobNeedsMe).length + S.meetups.filter(meetNeedsMe).length;
+const fmtMeet = iso => new Date(iso).toLocaleString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + " Uhr";
+function meetRow(m) {
+  const inv = m.meetup_invites || [], mine = inv.find(i => i.profile_id === S.me.id), open = m.status === "open";
+  const mk = (act, label, cls, extra = "") => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${m.id}" ${extra}>${label}</button>`;
+  const ic = { yes: "✔", no: "✗", pending: "⏳" }, yes = inv.filter(i => i.answer === "yes").length;
+  const btns = [];
+  if (open && mine && !mine.paid) { if (mine.answer !== "yes") btns.push(mk("meetAnswer", "✔ Ich komme", "", `data-p="${mine.profile_id}" data-v="1"`)); if (mine.answer !== "no") btns.push(mk("meetAnswer", "✗ Ich komme nicht", "ghost", `data-p="${mine.profile_id}" data-v="0"`)); }
+  if (open && S.me.is_admin) inv.filter(i => i.family_id === S.me.family_id && i.profile_id !== S.me.id && !i.paid).forEach(i => { const n = esc(wprof(i.profile_id)?.name || "?");
+    if (i.answer !== "yes") btns.push(mk("meetAnswer", `✔ ${n} kommt`, "ghost", `data-p="${i.profile_id}" data-v="1"`)); if (i.answer !== "no") btns.push(mk("meetAnswer", `✗ ${n} kommt nicht`, "ghost", `data-p="${i.profile_id}" data-v="0"`)); });
+  if (open && meetIsHost(m)) btns.push(mk("meetFinish", `✔ Hat stattgefunden (+${m.points} ⭐ für ${yes} Zusage${yes === 1 ? "" : "n"})`), mk("meetCancel", "Treffen absagen", "ghost"));
+  const f = wprof(m.from_profile);
+  return `<div class="row ${meetNeedsMe(m) ? "hl" : ""}" style="flex-wrap:wrap"><div class="grow"><div class="t">🤝 ${esc(m.title)} <span class="sub">· ${m.points} ⭐ fürs Mitmachen</span></div>
+    <div class="sub">📅 ${fmtMeet(m.starts_at)}${m.place ? " · 📍 " + esc(m.place) : ""} · von ${esc(f ? f.name : "?")}</div>
+    ${m.note ? `<div class="sub">${esc(m.note)}</div>` : ""}
+    <div class="sub" style="margin-top:4px">${inv.map(i => `${ic[i.answer]} ${esc(wprof(i.profile_id)?.name || "?")}`).join(" · ")}</div>
+    ${open ? "" : `<div><span class="tag">${m.status === "done" ? "✔ hat stattgefunden" : "↩ abgesagt"}</span></div>`}</div>
+    ${btns.length ? `<div class="add" style="margin:6px 0 0;flex-basis:100%;flex-wrap:wrap">${btns.join("")}</div>` : ""}</div>`;
+}
 const famOf = id => { const x = prof(id); return x ? S.family.name : ((S.lprof.find(p => p.id === id) || {}).family_name || ""); };
 function jobRow(j) {
   const mk = (act, v, label, cls) => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${j.id}" ${v !== undefined ? `data-v="${v}"` : ""}>${label}</button>`;
@@ -411,7 +433,18 @@ function viewJobs() {
         <div class="sub" style="margin-top:6px">Die Eltern des Empfängers müssen den Job erst annehmen. Die Punkte bekommt der Empfänger, wenn du die Erledigung bestätigst.</div>`
       : `<div class="empty">Noch keine Familie verbunden. Das geht unter „Familie → Mit anderen Familien verbinden“.</div>`
     : `<div class="sub">Jobs vergeben nur Admins. Hier siehst du Jobs, die für dich bestimmt sind.</div>`;
+  const meetGroups = [{ name: S.family.name + " (wir)", people: S.profiles }, ...groups];
+  const mform = S.me.is_admin ? `<form class="add evf" data-form="meetup" style="flex-wrap:wrap">
+      <input id="mtt" name="title" placeholder="Wofür treffen wir uns?" required maxlength="120">
+      <input id="mtd" name="date" type="date" required><input id="mtz" name="time" type="time" value="15:00" required>
+      <input id="mtp" name="place" placeholder="Ort (optional)" maxlength="120">
+      <div class="who" style="flex-basis:100%"><span class="sub">Wer soll teilnehmen? Antippen – die Zahl zeigt die Reihenfolge.</span>
+      ${meetGroups.map(g => `<div class="sub" style="margin:8px 0 2px"><b>${esc(g.name)}</b></div><div class="chips">${g.people.map(p => { const n = S.mtSel.indexOf(p.id) + 1; return `<button type="button" class="wchip jchip ${n ? "on" : ""}" data-act="meetPick" data-id="${p.id}"><span>${esc(p.name)}${n ? `<i class="jn">${n}</i>` : ""}</span></button>`; }).join("")}</div>`).join("")}</div>
+      <button class="btn">Treffen anlegen</button></form>
+      <div class="sub" style="margin-top:6px">Jeder bekommt eine Einladung und kann zu- oder absagen. Wer teilnimmt, bekommt 10 ⭐, sobald du bestätigst, dass das Treffen stattgefunden hat.</div>` : `<div class="sub">Treffen anlegen nur Admins. Hier siehst du Einladungen für dich.</div>`;
+  const mOpen = S.meetups.filter(m => m.status === "open"), mOld = S.meetups.filter(m => m.status !== "open").slice(-5).reverse();
   return `<div class="card"><h2>💼 Jobs</h2>${form}</div>
+    <div class="card"><h2>🤝 Treffen</h2>${mform}${mOpen.map(meetRow).join("")}${mOld.length ? `<div class="sub" style="margin:10px 0 2px">Vergangene</div>${mOld.map(meetRow).join("")}` : ""}</div>
     ${need.length ? `<div class="card"><h2>👉 Wartet auf dich <span class="tag">${need.length}</span></h2>${need.map(jobRow).join("")}</div>` : ""}
     ${run.length ? `<div class="card"><h2>Laufende Jobs</h2>${run.map(jobRow).join("")}</div>` : ""}
     ${old.length ? `<div class="card"><h2>Abgeschlossen</h2>${old.map(jobRow).join("")}</div>` : ""}
@@ -1042,6 +1075,10 @@ const ACT = {
     await LOAD.tasks(); render();
     if (done) toast(S.me.is_admin ? (t.points ? `+${t.points} Punkte für ${S.me.name} ⭐` : "Erledigt ✔") : "Erledigt – ein Admin muss noch die Punkte freigeben ⏳");
   },
+  meetPick(d) { const i = S.mtSel.indexOf(d.id); if (i >= 0) S.mtSel.splice(i, 1); else S.mtSel.push(d.id); render(); },
+  async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await LOAD.meetups(); render(); toast(d.v === "1" ? "Zusage gespeichert ✔" : "Absage gespeichert"); },
+  async meetFinish(d) { if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
+  async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); await LOAD.meetups(); render(); toast("Treffen abgesagt"); },
   jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {
     if (!S.me.is_admin) return;
@@ -1293,12 +1330,18 @@ const FORMS = {
     await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points: Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)), assignees: who, assigned_to: who.length === 1 ? who[0] : null }));
     toast("Aufgabe angelegt ✔");
   },
+  async meetup(f) {
+    if (!S.mtSel.length) return toast("Bitte erst Teilnehmer antippen 👆");
+    const starts = new Date(`${f.get("date")}T${f.get("time") || "15:00"}`);
+    await q(sb.rpc("create_meetup", { p_to: S.mtSel, p_title: String(f.get("title") || ""), p_place: String(f.get("place") || ""), p_note: "", p_starts: starts.toISOString() }));
+    S.mtSel = []; await LOAD.meetups(); render(); toast("Treffen angelegt – die Eingeladenen bekommen eine Meldung 🤝");
+  },
   async job(f) {
     const to = S.jobSel.filter(id => S.lprof.some(p => p.id === id));
     if (!to.length) return toast("Bitte erst mindestens ein Mitglied antippen 👆");
     await q(sb.rpc("create_jobs", { p_to: to, p_title: String(f.get("title") || ""), p_note: String(f.get("note") || ""), p_points: Math.max(0, Math.min(20, parseInt(f.get("points"), 10) || 0)) }));
     S.jobSel = [];
-    await LOAD.jobs(); render(); toast(to.length > 1 ? `${to.length} Jobs vergeben (ohne Push) – die Eltern der Empfänger müssen sie annehmen 💼` : "Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
+    await LOAD.jobs(); render(); toast(to.length > 1 ? `${to.length} Jobs vergeben – die Eltern der Empfänger müssen sie annehmen 💼` : "Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
   },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body"), scope: S.chatRoom === "all" && S.lprof.length ? "all" : "family" })); },
   async event(f) {

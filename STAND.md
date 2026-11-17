@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.7: Treffen im Reiter Jobs (meetups, meetup_invites, create_meetup/answer_meetup/finish_meetup/cancel_meetup, 10 Punkte bei Zusage nach Bestaetigung). Bewusst OHNE Neuigkeiten-Fenster (Wunsch). Jobs fuer mehrere Mitglieder: Push wie bei Einzel-Jobs.
+
 ## Version 21.6: Jobs fuer mehrere Mitglieder (create_jobs, app.job_silent = keine Push bei mehreren)
 
 ## Version 21.5: Spielhalle: "Jetzt online / spielt gerade" (Tabelle arcade_presence, Ping alle 20 Sek., online = Ping < 60 Sek.) und "zuletzt gespielt von" pro Spiel (Funktionen arcade_ping/arcade_leave/arcade_online/arcade_last) - sql/update-16-spielhalle-online.sql
