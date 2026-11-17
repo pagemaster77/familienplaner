@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.8 (17.11.)";
+const VERSION = "21.9 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -13,7 +13,7 @@ const TABS = [
 ];
 
 const S = {
-  jobSel: [], mtSel: [], meetups: [],
+  jobSel: [], mtSel: [], mtView: null, meetups: [],
   user: null, me: null, family: null,
   profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
@@ -388,37 +388,43 @@ const meetNeedsMe = m => m.status === "open" && ((m.meetup_invites || []).some(i
 const meetIsHost = m => m.from_profile === S.me.id || (S.me.is_admin && m.from_family === S.me.family_id);
 const jobsNeedMe = () => S.jobs.filter(jobNeedsMe).length + S.meetups.filter(meetNeedsMe).length;
 const fmtMeet = iso => new Date(iso).toLocaleString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + " Uhr";
-function meetRow(m) {
-  const inv = m.meetup_invites || [], mine = inv.find(i => i.profile_id === S.me.id), open = m.status === "open";
-  const mk = (act, label, cls, extra = "") => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${m.id}" ${extra}>${label}</button>`;
-  const ic = { yes: "✔", no: "✗", pending: "⏳" }, yes = inv.filter(i => i.answer === "yes").length;
-  const btns = [];
+function meetRow(m) { // kompakte Zeile, antippen öffnet das Fenster mit Details
+  const inv = m.meetup_invites || [], mine = inv.find(i => i.profile_id === S.me.id), yes = inv.filter(i => i.answer === "yes").length, d = new Date(m.starts_at);
+  const my = mine ? { yes: "✔", no: "✗", pending: "⏳" }[mine.answer] : "";
+  return `<button class="mt ${meetNeedsMe(m) ? "hl" : ""} ${m.status !== "open" ? "past" : ""}" data-act="meetOpen" data-id="${m.id}">
+    <span class="mdate"><b>${d.getDate()}</b><small>${d.toLocaleString("de-DE", { month: "short" })}</small></span>
+    <span class="mbody"><b>${esc(m.title)}</b><small>${d.toLocaleString("de-DE", { weekday: "short" })} ${fmtTime(d)} Uhr${m.place ? " · " + esc(m.place) : ""}</small>
+    <small>${m.status === "done" ? "✔ hat stattgefunden" : m.status === "cancelled" ? "↩ abgesagt" : yes + " von " + inv.length + " zugesagt"}</small></span>
+    <span class="mmy">${m.status === "open" ? my : ""}</span><span class="mgo">›</span></button>`;
+}
+function meetModal() {
+  if (!S.mtView) return "";
+  if (S.mtView === "new") {
+    const groups = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ name: (S.lprof.find(p => p.family_id === id) || {}).family_name, people: S.lprof.filter(p => p.family_id === id) }));
+    const meetGroups = [{ name: S.family.name + " (wir)", people: S.profiles }, ...groups];
+    return `<div class="ovl"><div class="card"><h2>🤝 Neues Treffen</h2><form data-form="meetup" class="evf">
+      <input id="mtt" name="title" placeholder="Wofür treffen wir uns?" required maxlength="120">
+      <div class="add" style="margin:0"><input id="mtd" name="date" type="date" required><input id="mtz" name="time" type="time" value="15:00" required></div>
+      <input id="mtp" name="place" placeholder="Ort (optional)" maxlength="120">
+      <div class="who"><span class="sub">Wer soll teilnehmen? Antippen – die Zahl zeigt die Reihenfolge.</span>
+      ${meetGroups.map(g => `<div class="sub" style="margin:8px 0 2px"><b>${esc(g.name)}</b></div><div class="chips">${g.people.map(p => { const n = S.mtSel.indexOf(p.id) + 1; return `<button type="button" class="wchip jchip ${n ? "on" : ""}" data-act="meetPick" data-id="${p.id}"><span>${esc(p.name)}${n ? `<i class="jn">${n}</i>` : ""}</span></button>`; }).join("")}</div>`).join("")}</div>
+      <p class="sub">Jeder bekommt eine Einladung. Wer teilnimmt, bekommt 10 ⭐, sobald du bestätigst, dass das Treffen stattgefunden hat.</p>
+      <div class="add" style="margin:6px 0 0"><button class="btn">Treffen anlegen</button><button type="button" class="btn ghost" data-act="meetClose">Abbrechen</button></div></form></div></div>`;
+  }
+  const m = S.meetups.find(x => x.id === S.mtView); if (!m) return "";
+  const inv = m.meetup_invites || [], open = m.status === "open", yes = inv.filter(i => i.answer === "yes").length, f = wprof(m.from_profile), d = new Date(m.starts_at);
+  const ic = { yes: "✔", no: "✗", pending: "⏳" };
   const canAns = i => open && !i.paid && (i.profile_id === S.me.id || (S.me.is_admin && i.family_id === S.me.family_id));
-  const mkq = (i, v, label) => `<button class="mq ${(i.answer === "yes") === (v === "1") && i.answer !== "pending" ? "on " + (v === "1" ? "yes" : "no") : ""}" data-act="meetAnswer" data-id="${m.id}" data-p="${i.profile_id}" data-v="${v}" aria-label="${label}">${v === "1" ? "✔" : "✗"}</button>`;
+  const mkq = (i, v, label) => `<button class="mq ${i.answer !== "pending" && (i.answer === "yes") === (v === "1") ? "on " + (v === "1" ? "yes" : "no") : ""}" data-act="meetAnswer" data-id="${m.id}" data-p="${i.profile_id}" data-v="${v}" aria-label="${label}">${v === "1" ? "✔" : "✗"}</button>`;
   const people = inv.map(i => { const n = esc(wprof(i.profile_id)?.name || "?");
     return `<div class="mrow"><span class="mn">${n}</span>${canAns(i) ? `${mkq(i, "1", n + " kommt")}${mkq(i, "0", n + " kommt nicht")}` : `<span class="mst">${ic[i.answer]}</span>`}</div>`; }).join("");
-  if (open && meetIsHost(m)) btns.push(mk("meetFinish", `✔ Hat stattgefunden (+${m.points} ⭐ für ${yes} Zusage${yes === 1 ? "" : "n"})`), mk("meetCancel", "Treffen absagen", "ghost"));
-  const f = wprof(m.from_profile);
-  return `<div class="row ${meetNeedsMe(m) ? "hl" : ""}" style="flex-wrap:wrap"><div class="grow"><div class="t">🤝 ${esc(m.title)} <span class="sub">· ${m.points} ⭐ fürs Mitmachen</span></div>
-    <div class="sub">📅 ${fmtMeet(m.starts_at)}${m.place ? " · 📍 " + esc(m.place) : ""} · von ${esc(f ? f.name : "?")}</div>
-    ${m.note ? `<div class="sub">${esc(m.note)}</div>` : ""}
-    <div class="mlist">${people}</div>
-    ${open ? "" : `<div><span class="tag">${m.status === "done" ? "✔ hat stattgefunden" : "↩ abgesagt"}</span></div>`}</div>
-    ${btns.length ? `<div class="add" style="margin:6px 0 0;flex-basis:100%;flex-wrap:wrap">${btns.join("")}</div>` : ""}</div>`;
-}
-const famOf = id => { const x = prof(id); return x ? S.family.name : ((S.lprof.find(p => p.id === id) || {}).family_name || ""); };
-function jobRow(j) {
-  const mk = (act, v, label, cls) => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${j.id}" ${v !== undefined ? `data-v="${v}"` : ""}>${label}</button>`;
-  const btns = [];
-  if (j.status === "requested" && jobIsTakerFam(j)) btns.push(mk("jobAnswer", 1, "✔ Annehmen"), mk("jobAnswer", 0, "Ablehnen", "ghost"));
-  if (j.status === "accepted" && (j.to_profile === S.me.id || jobIsTakerFam(j))) btns.push(mk("jobDone", undefined, "✔ Erledigt"));
-  if (j.status === "done" && jobIsGiver(j)) btns.push(mk("jobPay", undefined, `✔ Bestätigen${j.points ? ` (+${j.points} ⭐)` : ""}`), mk("jobReopen", undefined, "↩ Nochmal", "ghost"));
-  if ((j.status === "requested" || j.status === "accepted") && jobIsGiver(j)) btns.push(mk("jobCancel", undefined, "Zurückziehen", "ghost"));
-  const f = wprof(j.from_profile), t = wprof(j.to_profile);
-  return `<div class="row ${jobNeedsMe(j) ? "hl" : ""}" style="flex-wrap:wrap"><div class="grow"><div class="t">💼 ${esc(j.title)} <span class="sub">· ${j.points} ⭐</span></div>
-    <div class="sub">${esc(f ? f.name : "?")} <span class="sub">(${esc(famOf(j.from_profile))})</span> → ${esc(t ? t.name : "?")} <span class="sub">(${esc(famOf(j.to_profile))})</span></div>
-    ${j.note ? `<div class="sub">${esc(j.note)}</div>` : ""}<div><span class="tag">${JOB_ST[j.status] || j.status}</span></div></div>
-    ${btns.length ? `<div class="add" style="margin:6px 0 0;flex-basis:100%">${btns.join("")}</div>` : ""}</div>`;
+  return `<div class="ovl"><div class="card mdet"><button class="mx2" data-act="meetClose" aria-label="Schließen">✕</button>
+    <h2>🤝 ${esc(m.title)}</h2>
+    <div class="mfacts"><div>📅 ${d.toLocaleString("de-DE", { weekday: "long", day: "2-digit", month: "long" })}, ${fmtTime(d)} Uhr</div>${m.place ? `<div>📍 ${esc(m.place)}</div>` : ""}<div>👤 Eingeladen von ${esc(f ? f.name : "?")}</div><div>⭐ ${m.points} Punkte fürs Mitmachen</div>
+      ${open ? "" : `<div><span class="tag">${m.status === "done" ? "✔ hat stattgefunden" : "↩ abgesagt"}</span></div>`}</div>
+    <h3 class="mh">Wer kommt? <small>${yes} von ${inv.length} zugesagt</small></h3><div class="mlist">${people}</div>
+    ${open && meetIsHost(m) ? `<div class="mhost"><button class="btn" data-act="meetFinish" data-id="${m.id}">✔ Hat stattgefunden (+${m.points} ⭐ für ${yes})</button><button class="btn ghost" data-act="meetCancel" data-id="${m.id}">Treffen absagen</button></div>` : ""}
+    </div></div>`;
 }
 function viewJobs() {
   const groups = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name, people: S.lprof.filter(p => p.family_id === id) }));
@@ -434,22 +440,14 @@ function viewJobs() {
         <div class="sub" style="margin-top:6px">Die Eltern des Empfängers müssen den Job erst annehmen. Die Punkte bekommt der Empfänger, wenn du die Erledigung bestätigst.</div>`
       : `<div class="empty">Noch keine Familie verbunden. Das geht unter „Familie → Mit anderen Familien verbinden“.</div>`
     : `<div class="sub">Jobs vergeben nur Admins. Hier siehst du Jobs, die für dich bestimmt sind.</div>`;
-  const meetGroups = [{ name: S.family.name + " (wir)", people: S.profiles }, ...groups];
-  const mform = S.me.is_admin ? `<form class="add evf" data-form="meetup" style="flex-wrap:wrap">
-      <input id="mtt" name="title" placeholder="Wofür treffen wir uns?" required maxlength="120">
-      <input id="mtd" name="date" type="date" required><input id="mtz" name="time" type="time" value="15:00" required>
-      <input id="mtp" name="place" placeholder="Ort (optional)" maxlength="120">
-      <div class="who" style="flex-basis:100%"><span class="sub">Wer soll teilnehmen? Antippen – die Zahl zeigt die Reihenfolge.</span>
-      ${meetGroups.map(g => `<div class="sub" style="margin:8px 0 2px"><b>${esc(g.name)}</b></div><div class="chips">${g.people.map(p => { const n = S.mtSel.indexOf(p.id) + 1; return `<button type="button" class="wchip jchip ${n ? "on" : ""}" data-act="meetPick" data-id="${p.id}"><span>${esc(p.name)}${n ? `<i class="jn">${n}</i>` : ""}</span></button>`; }).join("")}</div>`).join("")}</div>
-      <button class="btn">Treffen anlegen</button></form>
-      <div class="sub" style="margin-top:6px">Jeder bekommt eine Einladung und kann zu- oder absagen. Wer teilnimmt, bekommt 10 ⭐, sobald du bestätigst, dass das Treffen stattgefunden hat.</div>` : `<div class="sub">Treffen anlegen nur Admins. Hier siehst du Einladungen für dich.</div>`;
   const mOpen = S.meetups.filter(m => m.status === "open"), mOld = S.meetups.filter(m => m.status !== "open").slice(-5).reverse();
   return `<div class="card"><h2>💼 Jobs</h2>${form}</div>
-    <div class="card"><h2>🤝 Treffen</h2>${mform}${mOpen.map(meetRow).join("")}${mOld.length ? `<div class="sub" style="margin:10px 0 2px">Vergangene</div>${mOld.map(meetRow).join("")}` : ""}</div>
+    <div class="card"><div class="mhead"><h2>🤝 Treffen</h2>${S.me.is_admin ? `<button class="btn small" data-act="meetNew">+ Neues Treffen</button>` : ""}</div>
+      ${mOpen.length ? mOpen.map(meetRow).join("") : `<div class="empty">Keine Treffen geplant</div>`}${mOld.length ? `<div class="sub" style="margin:10px 0 4px">Vergangene</div>${mOld.map(meetRow).join("")}` : ""}</div>
     ${need.length ? `<div class="card"><h2>👉 Wartet auf dich <span class="tag">${need.length}</span></h2>${need.map(jobRow).join("")}</div>` : ""}
     ${run.length ? `<div class="card"><h2>Laufende Jobs</h2>${run.map(jobRow).join("")}</div>` : ""}
     ${old.length ? `<div class="card"><h2>Abgeschlossen</h2>${old.map(jobRow).join("")}</div>` : ""}
-    ${S.jobs.length ? "" : `<div class="card"><div class="empty">Noch keine Jobs</div></div>`}`;
+    ${S.jobs.length ? "" : `<div class="card"><div class="empty">Noch keine Jobs</div></div>`}${meetModal()}`;
 }
 
 /* ⚙️ Verwalten: alles, was nur Admins tun – Freigeben, Punkte, Belohnungen, Familie, Technik */
@@ -1076,10 +1074,13 @@ const ACT = {
     await LOAD.tasks(); render();
     if (done) toast(S.me.is_admin ? (t.points ? `+${t.points} Punkte für ${S.me.name} ⭐` : "Erledigt ✔") : "Erledigt – ein Admin muss noch die Punkte freigeben ⏳");
   },
+  meetOpen(d) { S.mtView = d.id; render(); },
+  meetNew() { S.mtView = "new"; S.mtSel = []; render(); },
+  meetClose() { S.mtView = null; render(); },
   meetPick(d) { const i = S.mtSel.indexOf(d.id); if (i >= 0) S.mtSel.splice(i, 1); else S.mtSel.push(d.id); render(); },
   async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await LOAD.meetups(); render(); toast(d.v === "1" ? "Zusage gespeichert ✔" : "Absage gespeichert"); },
-  async meetFinish(d) { if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
-  async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); await LOAD.meetups(); render(); toast("Treffen abgesagt"); },
+  async meetFinish(d) { if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
+  async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); S.mtView = null; await LOAD.meetups(); render(); toast("Treffen abgesagt"); },
   jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {
     if (!S.me.is_admin) return;
@@ -1335,7 +1336,7 @@ const FORMS = {
     if (!S.mtSel.length) return toast("Bitte erst Teilnehmer antippen 👆");
     const starts = new Date(`${f.get("date")}T${f.get("time") || "15:00"}`);
     await q(sb.rpc("create_meetup", { p_to: S.mtSel, p_title: String(f.get("title") || ""), p_place: String(f.get("place") || ""), p_note: "", p_starts: starts.toISOString() }));
-    S.mtSel = []; await LOAD.meetups(); render(); toast("Treffen angelegt – die Eingeladenen bekommen eine Meldung 🤝");
+    S.mtSel = []; S.mtView = null; await LOAD.meetups(); render(); toast("Treffen angelegt – die Eingeladenen bekommen eine Meldung 🤝");
   },
   async job(f) {
     const to = S.jobSel.filter(id => S.lprof.some(p => p.id === id));

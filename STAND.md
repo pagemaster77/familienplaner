@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.9: Treffen: kompakte Liste, Details und Neu-Anlegen in eigenen Fenstern
+
 ## Version 21.8: Treffen: Teilnehmerliste mit Name + zwei Haken (kommt / kommt nicht), ohne Neuigkeiten-Fenster
 
 ## Version 21.7: Treffen im Reiter Jobs (meetups, meetup_invites, create_meetup/answer_meetup/finish_meetup/cancel_meetup, 10 Punkte bei Zusage nach Bestaetigung). Bewusst OHNE Neuigkeiten-Fenster (Wunsch). Jobs fuer mehrere Mitglieder: Push wie bei Einzel-Jobs.
