@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.9 (17.11.)";
+const VERSION = "21.10 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -423,7 +423,10 @@ function meetModal() {
     <div class="mfacts"><div>📅 ${d.toLocaleString("de-DE", { weekday: "long", day: "2-digit", month: "long" })}, ${fmtTime(d)} Uhr</div>${m.place ? `<div>📍 ${esc(m.place)}</div>` : ""}<div>👤 Eingeladen von ${esc(f ? f.name : "?")}</div><div>⭐ ${m.points} Punkte fürs Mitmachen</div>
       ${open ? "" : `<div><span class="tag">${m.status === "done" ? "✔ hat stattgefunden" : "↩ abgesagt"}</span></div>`}</div>
     <h3 class="mh">Wer kommt? <small>${yes} von ${inv.length} zugesagt</small></h3><div class="mlist">${people}</div>
-    ${open && meetIsHost(m) ? `<div class="mhost"><button class="btn" data-act="meetFinish" data-id="${m.id}">✔ Hat stattgefunden (+${m.points} ⭐ für ${yes})</button><button class="btn ghost" data-act="meetCancel" data-id="${m.id}">Treffen absagen</button></div>` : ""}
+    ${open && meetIsHost(m) ? (() => { const started = d <= new Date(); return `<div class="mhost">
+      <button class="btn" data-act="meetFinish" data-id="${m.id}" ${started ? "" : "disabled"}>✔ Teilnahme bestätigen</button>
+      <div class="sub" style="text-align:center">${started ? `${yes} Zusage${yes === 1 ? "" : "n"}: Jeder davon bekommt ${m.points} ⭐ für die Teilnahme.` : `Erst ab Beginn des Treffens möglich (${d.toLocaleString("de-DE", { weekday: "short" })} ${fmtTime(d)} Uhr).`}</div>
+      <button class="btn ghost" data-act="meetCancel" data-id="${m.id}">Treffen absagen</button></div>`; })() : ""}
     </div></div>`;
 }
 function viewJobs() {
@@ -1079,7 +1082,7 @@ const ACT = {
   meetClose() { S.mtView = null; render(); },
   meetPick(d) { const i = S.mtSel.indexOf(d.id); if (i >= 0) S.mtSel.splice(i, 1); else S.mtSel.push(d.id); render(); },
   async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await LOAD.meetups(); render(); toast(d.v === "1" ? "Zusage gespeichert ✔" : "Absage gespeichert"); },
-  async meetFinish(d) { if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
+  async meetFinish(d) { const mm = S.meetups.find(x => x.id === d.id); if (mm && new Date(mm.starts_at) > new Date()) return toast("Erst ab Beginn des Treffens möglich"); if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
   async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); S.mtView = null; await LOAD.meetups(); render(); toast("Treffen abgesagt"); },
   jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {

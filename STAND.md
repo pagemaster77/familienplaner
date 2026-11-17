@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.10: Treffen: Teilnahme bestaetigen erst ab Beginn (auch in finish_meetup), Push-Titel "Neuer Job wurde eingestellt" (Jobs + Treffen-Einladung)
+
 ## Version 21.9: Treffen: kompakte Liste, Details und Neu-Anlegen in eigenen Fenstern
 
 ## Version 21.8: Treffen: Teilnehmerliste mit Name + zwei Haken (kommt / kommt nicht), ohne Neuigkeiten-Fenster
