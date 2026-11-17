@@ -262,3 +262,11 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .jchip{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
 .jchip.on span{background:var(--primary);border-color:var(--primary);color:#fff}
 .jn{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:7px;border-radius:99px;background:#fff;color:var(--primary);font-size:12px;font-weight:700}
+
+.mlist{margin-top:6px;max-width:420px}
+.mrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mq{width:46px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--muted);font-size:20px;cursor:pointer;touch-action:manipulation}
+.mq.on.yes{background:#2fae6b;border-color:#2fae6b;color:#fff}.mq.on.no{background:#e5484d;border-color:#e5484d;color:#fff}
+.mst{width:46px;text-align:center;font-size:18px}

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.7 (17.11.)";
+const VERSION = "21.8 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -393,15 +393,16 @@ function meetRow(m) {
   const mk = (act, label, cls, extra = "") => `<button class="btn small ${cls || ""}" data-act="${act}" data-id="${m.id}" ${extra}>${label}</button>`;
   const ic = { yes: "✔", no: "✗", pending: "⏳" }, yes = inv.filter(i => i.answer === "yes").length;
   const btns = [];
-  if (open && mine && !mine.paid) { if (mine.answer !== "yes") btns.push(mk("meetAnswer", "✔ Ich komme", "", `data-p="${mine.profile_id}" data-v="1"`)); if (mine.answer !== "no") btns.push(mk("meetAnswer", "✗ Ich komme nicht", "ghost", `data-p="${mine.profile_id}" data-v="0"`)); }
-  if (open && S.me.is_admin) inv.filter(i => i.family_id === S.me.family_id && i.profile_id !== S.me.id && !i.paid).forEach(i => { const n = esc(wprof(i.profile_id)?.name || "?");
-    if (i.answer !== "yes") btns.push(mk("meetAnswer", `✔ ${n} kommt`, "ghost", `data-p="${i.profile_id}" data-v="1"`)); if (i.answer !== "no") btns.push(mk("meetAnswer", `✗ ${n} kommt nicht`, "ghost", `data-p="${i.profile_id}" data-v="0"`)); });
+  const canAns = i => open && !i.paid && (i.profile_id === S.me.id || (S.me.is_admin && i.family_id === S.me.family_id));
+  const mkq = (i, v, label) => `<button class="mq ${(i.answer === "yes") === (v === "1") && i.answer !== "pending" ? "on " + (v === "1" ? "yes" : "no") : ""}" data-act="meetAnswer" data-id="${m.id}" data-p="${i.profile_id}" data-v="${v}" aria-label="${label}">${v === "1" ? "✔" : "✗"}</button>`;
+  const people = inv.map(i => { const n = esc(wprof(i.profile_id)?.name || "?");
+    return `<div class="mrow"><span class="mn">${n}</span>${canAns(i) ? `${mkq(i, "1", n + " kommt")}${mkq(i, "0", n + " kommt nicht")}` : `<span class="mst">${ic[i.answer]}</span>`}</div>`; }).join("");
   if (open && meetIsHost(m)) btns.push(mk("meetFinish", `✔ Hat stattgefunden (+${m.points} ⭐ für ${yes} Zusage${yes === 1 ? "" : "n"})`), mk("meetCancel", "Treffen absagen", "ghost"));
   const f = wprof(m.from_profile);
   return `<div class="row ${meetNeedsMe(m) ? "hl" : ""}" style="flex-wrap:wrap"><div class="grow"><div class="t">🤝 ${esc(m.title)} <span class="sub">· ${m.points} ⭐ fürs Mitmachen</span></div>
     <div class="sub">📅 ${fmtMeet(m.starts_at)}${m.place ? " · 📍 " + esc(m.place) : ""} · von ${esc(f ? f.name : "?")}</div>
     ${m.note ? `<div class="sub">${esc(m.note)}</div>` : ""}
-    <div class="sub" style="margin-top:4px">${inv.map(i => `${ic[i.answer]} ${esc(wprof(i.profile_id)?.name || "?")}`).join(" · ")}</div>
+    <div class="mlist">${people}</div>
     ${open ? "" : `<div><span class="tag">${m.status === "done" ? "✔ hat stattgefunden" : "↩ abgesagt"}</span></div>`}</div>
     ${btns.length ? `<div class="add" style="margin:6px 0 0;flex-basis:100%;flex-wrap:wrap">${btns.join("")}</div>` : ""}</div>`;
 }
