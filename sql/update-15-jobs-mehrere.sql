@@ -1,0 +1,3 @@
+-- Update 15 (bereits eingespielt): Jobs fuer mehrere Mitglieder.
+-- create_jobs(p_to uuid[], p_title, p_note, p_points): legt je Mitglied einen eigenen Job an.
+-- Bei mehr als einem Mitglied setzt die Funktion app.job_silent=1; notify_job schickt dann keine Push bei neuen Jobs.

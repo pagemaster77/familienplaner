@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.5 (16.11.)";
+const VERSION = "21.6 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -13,6 +13,7 @@ const TABS = [
 ];
 
 const S = {
+  jobSel: [],
   user: null, me: null, family: null,
   profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
@@ -401,7 +402,8 @@ function viewJobs() {
   const need = S.jobs.filter(jobNeedsMe), run = S.jobs.filter(j => !jobNeedsMe(j) && ["requested", "accepted", "done"].includes(j.status)), old = S.jobs.filter(j => ["paid", "declined", "cancelled"].includes(j.status)).slice(0, 8);
   const form = S.me.is_admin
     ? groups.length ? `<form class="add evf" data-form="job" style="flex-wrap:wrap">
-        <select id="jw" name="to" required aria-label="Für wen">${groups.map(g => `<optgroup label="${esc(g.name)}">${g.people.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</optgroup>`).join("")}</select>
+        <div class="who" style="flex-basis:100%"><span class="sub">Für wen? Mitglieder antippen – mehrere gehen auch, die Zahl zeigt die Reihenfolge.</span>
+          ${groups.map(g => `<div class="sub" style="margin:8px 0 2px"><b>${esc(g.name)}</b></div><div class="chips">${g.people.map(p => { const n = S.jobSel.indexOf(p.id) + 1; return `<button type="button" class="wchip jchip ${n ? "on" : ""}" data-act="jobPick" data-id="${p.id}"><span>${esc(p.name)}${n ? `<i class="jn">${n}</i>` : ""}</span></button>`; }).join("")}</div>`).join("")}</div>
         <input id="jt" name="title" placeholder="Was soll erledigt werden?" required maxlength="120">
         <input id="jn" name="note" placeholder="Notiz (optional)" maxlength="300">
         <label class="field" style="margin:0"><span>Punkte (0–20)</span><input id="jp" class="pt" name="points" type="number" min="0" max="20" value="5"></label>
@@ -1040,6 +1042,7 @@ const ACT = {
     await LOAD.tasks(); render();
     if (done) toast(S.me.is_admin ? (t.points ? `+${t.points} Punkte für ${S.me.name} ⭐` : "Erledigt ✔") : "Erledigt – ein Admin muss noch die Punkte freigeben ⏳");
   },
+  jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {
     if (!S.me.is_admin) return;
     const t = S.tasks.find(x => x.id === d.id);
@@ -1291,8 +1294,11 @@ const FORMS = {
     toast("Aufgabe angelegt ✔");
   },
   async job(f) {
-    await q(sb.rpc("create_job", { p_to: f.get("to"), p_title: String(f.get("title") || ""), p_note: String(f.get("note") || ""), p_points: Math.max(0, Math.min(20, parseInt(f.get("points"), 10) || 0)) }));
-    await LOAD.jobs(); render(); toast("Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
+    const to = S.jobSel.filter(id => S.lprof.some(p => p.id === id));
+    if (!to.length) return toast("Bitte erst mindestens ein Mitglied antippen 👆");
+    await q(sb.rpc("create_jobs", { p_to: to, p_title: String(f.get("title") || ""), p_note: String(f.get("note") || ""), p_points: Math.max(0, Math.min(20, parseInt(f.get("points"), 10) || 0)) }));
+    S.jobSel = [];
+    await LOAD.jobs(); render(); toast(to.length > 1 ? `${to.length} Jobs vergeben (ohne Push) – die Eltern der Empfänger müssen sie annehmen 💼` : "Job vergeben – die Eltern des Empfängers müssen ihn annehmen 💼");
   },
   async msg(f) { await q(sb.from("messages").insert({ family_id: S.me.family_id, author: S.me.id, body: f.get("body"), scope: S.chatRoom === "all" && S.lprof.length ? "all" : "family" })); },
   async event(f) {

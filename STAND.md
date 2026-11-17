@@ -2,6 +2,8 @@
 
 Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüssel hier drin.
 
+## Version 21.6: Jobs fuer mehrere Mitglieder (create_jobs, app.job_silent = keine Push bei mehreren)
+
 ## Version 21.5: Spielhalle: "Jetzt online / spielt gerade" (Tabelle arcade_presence, Ping alle 20 Sek., online = Ping < 60 Sek.) und "zuletzt gespielt von" pro Spiel (Funktionen arcade_ping/arcade_leave/arcade_online/arcade_last) - sql/update-16-spielhalle-online.sql
 
 ## Version 21.4: Verwalten: Knopf Nicht ok (Aufgabe zurueck auf offen)
