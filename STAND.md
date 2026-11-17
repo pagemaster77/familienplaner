@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 21.11: Treffen: Zusage legt automatisch Termin im Kalender an (events.meetup_id, Trigger meetup_invite_event / meetup_cancel_events, keine Push dafuer)
+
 ## Version 21.10: Treffen: Teilnahme bestaetigen erst ab Beginn (auch in finish_meetup), Push-Titel "Neuer Job wurde eingestellt" (Jobs + Treffen-Einladung)
 
 ## Version 21.9: Treffen: kompakte Liste, Details und Neu-Anlegen in eigenen Fenstern

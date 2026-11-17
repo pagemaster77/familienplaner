@@ -2,3 +2,5 @@
 -- Tabellen meetups + meetup_invites (RLS ueber meetup_can_see), Funktionen create_meetup / answer_meetup / finish_meetup / cancel_meetup,
 -- Trigger meetup_invite_notify (Push an Eingeladene) und meetup_cancel_notify (Push bei Absage).
 -- finish_meetup bucht je Zusage 10 Punkte (point_log kind 'manual'). create_jobs: Push wie bei Einzel-Jobs.
+-- Version 21.11 (bereits eingespielt): events.meetup_id; Trigger meetup_invite_event legt bei Zusage einen Kalendertermin fuer die Person an,
+-- loescht ihn bei Absage; meetup_cancel_events loescht alle Termine bei Absage des Treffens. notify_push ueberspringt solche Termine.

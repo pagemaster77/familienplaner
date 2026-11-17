@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "21.11", date: "17.11.2026", items: [
+    "Jobs: Wer bei einem Treffen zusagt, hat den Termin jetzt automatisch im eigenen Kalender. Bei einer Absage verschwindet er wieder.",
+  ] },
   { v: "21.5", date: "16.11.2026", items: [
     "Spielhalle: Ganz oben steht jetzt, wer gerade online ist und wer was spielt (🟢). Unter jedem Spiel steht außerdem, wer es zuletzt gespielt hat und wann.",
   ] },

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.10 (17.11.)";
+const VERSION = "21.11 (17.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -408,7 +408,7 @@ function meetModal() {
       <input id="mtp" name="place" placeholder="Ort (optional)" maxlength="120">
       <div class="who"><span class="sub">Wer soll teilnehmen? Antippen – die Zahl zeigt die Reihenfolge.</span>
       ${meetGroups.map(g => `<div class="sub" style="margin:8px 0 2px"><b>${esc(g.name)}</b></div><div class="chips">${g.people.map(p => { const n = S.mtSel.indexOf(p.id) + 1; return `<button type="button" class="wchip jchip ${n ? "on" : ""}" data-act="meetPick" data-id="${p.id}"><span>${esc(p.name)}${n ? `<i class="jn">${n}</i>` : ""}</span></button>`; }).join("")}</div>`).join("")}</div>
-      <p class="sub">Jeder bekommt eine Einladung. Wer teilnimmt, bekommt 10 ⭐, sobald du bestätigst, dass das Treffen stattgefunden hat.</p>
+      <p class="sub">Jeder bekommt eine Einladung. Wer zusagt, hat den Termin automatisch im Kalender. Wer teilnimmt, bekommt 10 ⭐, sobald du die Teilnahme bestätigst.</p>
       <div class="add" style="margin:6px 0 0"><button class="btn">Treffen anlegen</button><button type="button" class="btn ghost" data-act="meetClose">Abbrechen</button></div></form></div></div>`;
   }
   const m = S.meetups.find(x => x.id === S.mtView); if (!m) return "";
@@ -1081,9 +1081,9 @@ const ACT = {
   meetNew() { S.mtView = "new"; S.mtSel = []; render(); },
   meetClose() { S.mtView = null; render(); },
   meetPick(d) { const i = S.mtSel.indexOf(d.id); if (i >= 0) S.mtSel.splice(i, 1); else S.mtSel.push(d.id); render(); },
-  async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await LOAD.meetups(); render(); toast(d.v === "1" ? "Zusage gespeichert ✔" : "Absage gespeichert"); },
+  async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast(d.v === "1" ? "Zusage gespeichert – steht jetzt im Kalender 📅" : "Absage gespeichert"); },
   async meetFinish(d) { const mm = S.meetups.find(x => x.id === d.id); if (mm && new Date(mm.starts_at) > new Date()) return toast("Erst ab Beginn des Treffens möglich"); if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
-  async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); S.mtView = null; await LOAD.meetups(); render(); toast("Treffen abgesagt"); },
+  async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast("Treffen abgesagt"); },
   jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {
     if (!S.me.is_admin) return;
@@ -1339,7 +1339,7 @@ const FORMS = {
     if (!S.mtSel.length) return toast("Bitte erst Teilnehmer antippen 👆");
     const starts = new Date(`${f.get("date")}T${f.get("time") || "15:00"}`);
     await q(sb.rpc("create_meetup", { p_to: S.mtSel, p_title: String(f.get("title") || ""), p_place: String(f.get("place") || ""), p_note: "", p_starts: starts.toISOString() }));
-    S.mtSel = []; S.mtView = null; await LOAD.meetups(); render(); toast("Treffen angelegt – die Eingeladenen bekommen eine Meldung 🤝");
+    S.mtSel = []; S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast("Treffen angelegt – die Eingeladenen bekommen eine Meldung 🤝");
   },
   async job(f) {
     const to = S.jobSel.filter(id => S.lprof.some(p => p.id === id));
