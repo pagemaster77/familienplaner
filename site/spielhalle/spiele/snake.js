@@ -5,7 +5,7 @@ ARCADE.register({
   start(root, api) {
     const N = 20, S = Math.min(root.clientWidth || 360, 380), C = Math.floor(S / N), W = C * N;
     root.innerHTML = `<div class="stage"><div class="hud"><span>🍎 <span id="sc">0</span></span></div><canvas width="${W}" height="${W}"></canvas>
-      <div class="dpad"><button class="u" data-d="u">▲</button><button class="l" data-d="l">◀</button><button class="d" data-d="d">▼</button><button class="r" data-d="r">▶</button></div></div>`;
+      <div class="dpad tight"><button class="u" data-d="u">▲</button><button class="l" data-d="l">◀</button><button class="d" data-d="d">▼</button><button class="r" data-d="r">▶</button></div></div>`;
     const cv = root.querySelector("canvas"), g = cv.getContext("2d"), sc = root.querySelector("#sc");
     const V = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
     let snake = [[10, 10], [9, 10], [8, 10]], dir = "r", queue = [], apple = null, score = 0, over = false, timer = null;

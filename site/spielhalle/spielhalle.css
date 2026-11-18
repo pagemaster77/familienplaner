@@ -123,3 +123,4 @@ a{color:var(--pri);text-decoration:none}
 .cd-who{display:block;width:100%;margin:6px 0;text-align:left}
 .cd-inv{border:2px solid var(--pri);margin:8px 0;text-align:center}
 .btn:disabled{opacity:.45}
+.dpad.tight{gap:5px}

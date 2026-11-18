@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.4: Snake: Pfeiltasten naeher beisammen (gleiche Groesse und Anordnung). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.3: Flammen/Herz/Haufen auch an kleinen Profilbildern (Kopfzeile, Belohnungen, Wandanzeige-Überschriften; Klasse .flw.sm, kleinere Symbole und Glühen) und in der Pyramide (Symbole unter dem Namen, window.flameInfo / flameInfoW). Kein Neuigkeiten-Eintrag.
 
 ## Version 22.2: Avatar glueht/brennt nur noch, wenn alle 3 Flammen da sind (Flammen 1-3 zeigen sich weiter einzeln als Symbole). Kein Neuigkeiten-Eintrag.
