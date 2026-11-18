@@ -5,6 +5,37 @@
 ARCADE.register({
   id: "code", name: "Code knacken", icon: "🔐", color: "linear-gradient(145deg,#7a5cff,#4f8cff)", fmt: v => v + " P.",
   desc: "Duell: Knacke den Code vor dem Gegner.",
+  help() {
+    const C = ["#e5484d", "#f5a524", "#f2d33c", "#3ecf8e", "#4f8cff", "#a35cf0"];
+    const d = c => `<i class="cd-dot" style="background:${C[c]}"></i>`, q = `<i class="cd-dot hx-q">?</i>`, row = h => `<div class="hx-row">${h}</div>`;
+    const pegs = (b, w) => `<span class="cd-pegs">${"<b class=bk>●</b>".repeat(b)}${"<b class=wh>●</b>".repeat(w)}</span>`;
+    return `<h2>🔐 So geht Code knacken</h2>
+      <p><b>Ziel:</b> Knacke deinen <b>geheimen Farbcode</b> schneller als dein Gegner seinen. Jeder hat einen eigenen Code aus <b>4 Feldern</b> mit <b>6 möglichen Farben</b>. Eine Farbe kann auch mehrfach vorkommen.</p>
+      <h3>So startest du</h3>
+      <ol><li>Beide Spieler müssen gleichzeitig in der Spielhalle sein.</li>
+      <li>Tippe auf eine Person mit 🟢. Sie bekommt eine Einladung, die 3 Minuten gilt.</li>
+      <li>Nimmt sie an, bekommt jeder seinen geheimen Code. Den sieht niemand, auch du nicht.</li></ol>
+      <h3>So rätst du</h3>
+      <p>Tippe 4 Farben an und drücke <b>Raten</b>. Du hast <b>10 Versuche</b>. Dein Gegner rät gleichzeitig, du siehst bei ihm nur, wie viele Punkte er bekommt, nicht seine Farben.</p>
+      <h3>Die schwarzen und weißen Punkte</h3>
+      <p>Beispiel: Der geheime Code ist</p>
+      ${row(q + q + q + q)}<div class="hx-cap">(in Wirklichkeit: rot · gelb · blau · grün, aber das siehst du nicht)</div>
+      <p>Du rätst:</p>
+      ${row(d(0) + d(4) + d(3) + d(5) + `<span class="hx-ar">➜</span>` + pegs(1, 2))}
+      <ul><li><b class="bk">●</b> <b>Schwarz</b> = Farbe und Platz stimmen. Hier: <b>rot</b> steht an Platz 1, das passt.</li>
+      <li><b class="wh">●</b> <b>Weiß</b> = Farbe stimmt, aber der Platz nicht. Hier: <b>blau</b> und <b>grün</b> gibt es im Code, sie stehen aber woanders.</li>
+      <li>Kein Punkt = diese Farbe gibt es nicht im Code. Hier: <b>lila</b>.</li></ul>
+      <p>Der nächste Versuch könnte sein:</p>
+      ${row(d(0) + d(1) + d(4) + d(3) + `<span class="hx-ar">➜</span>` + pegs(4, 0))}
+      <p><b>4 schwarze Punkte</b> = Code geknackt, du hast gewonnen! 🎉</p>
+      <h3>Punkte ⭐</h3>
+      <ul><li><b>Sieg: 30</b> · Unentschieden (beide schaffen es nicht in 10 Versuchen): <b>10</b> · Niederlage: <b>5</b></li>
+      <li>Gibt dein Gegner auf, bekommst du <b>15</b>.</li></ul>
+      <h3>Tipps</h3>
+      <ul><li>Rate im ersten Versuch am besten 2 Farben je zweimal, z. B. rot rot gelb gelb. So siehst du schnell, welche Farben im Code stecken.</li>
+      <li>Merke dir, was jeder Punkt aussagt, und rate nie etwas, das schon ausgeschlossen ist.</li>
+      <li>Bleib in der Spielhalle, solange das Duell läuft.</li></ul>`;
+  },
   start(root, api) {
     const sb = api.sb, me = api.me, esc = api.esc;
     const COL = ["#e5484d", "#f5a524", "#f2d33c", "#3ecf8e", "#4f8cff", "#a35cf0"];

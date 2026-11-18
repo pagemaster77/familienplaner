@@ -4,6 +4,35 @@
 ARCADE.register({
   id: "bonbon", name: "Bonbon-Match", icon: "🍬", color: "linear-gradient(145deg,#ff7eb3,#ff5e62)", fmt: v => v + " P.",
   desc: "Schiebe gleiche Bonbons zusammen.",
+  help() {
+    const C = ["#e5484d", "#f5a524", "#f2d33c", "#3ecf8e", "#4f8cff", "#a35cf0"], S = ["●", "◆", "▲", "■", "★", "♥"];
+    const t = (c, x = "") => `<i class="hx-t ${x}" style="background:${C[c]}">${S[c]}</i>`, sp = (c, g, x) => `<i class="hx-t ${x}" style="background:${C[c]}">${g}</i>`;
+    const rb = `<i class="hx-t hx-rb">✨</i>`, ar = `<span class="hx-ar">➜</span>`, row = h => `<div class="hx-row">${h}</div>`;
+    return `<h2>🍬 So geht Bonbon-Match</h2>
+      <p><b>Ziel:</b> Möglichst viele Punkte in <b>25 Zügen</b>. Du tauschst immer zwei Bonbons, die direkt nebeneinander oder untereinander liegen. Entstehen dadurch <b>3 oder mehr gleiche</b> in einer Reihe, verschwinden sie, und von oben fallen neue nach.</p>
+      <h3>1 · Bonbons tauschen</h3>
+      <p>Wische ein Bonbon in die gewünschte Richtung, oder tippe erst das eine und dann das Nachbar-Bonbon an. Der Tausch zählt nur, wenn danach 3 gleiche in einer Reihe liegen. Sonst springt es zurück, und du verlierst keinen Zug.</p>
+      ${row(t(0) + t(0) + t(4, "hit2") + t(0, "hit2"))}<div class="hx-cap">Das blaue Bonbon und das rote rechts daneben tauschen …</div>
+      ${row(t(0, "hit") + t(0, "hit") + t(0, "hit") + t(4))}<div class="hx-cap">… schon liegen 3 rote nebeneinander und verschwinden.</div>
+      <p class="hx-tip">Jede Farbe hat auch ein eigenes Zeichen (● ◆ ▲ ■ ★ ♥), falls du Farben schwer unterscheidest.</p>
+      <h3>2 · Streifen-Bonbon (4 gleiche)</h3>
+      ${row(t(3, "hit") + t(3, "hit") + t(3, "hit") + t(3, "hit") + ar + sp(3, "↔", "hx-sp"))}
+      <p>Bei 4 gleichen entsteht ein <b>Streifen-Bonbon</b> mit weißem Rand. Kommt es später in eine Reihe oder wird getroffen, räumt es die <b>ganze Zeile</b> (↔) oder die <b>ganze Spalte</b> (↕) leer.</p>
+      <h3>3 · Regenbogen-Bonbon (5 gleiche)</h3>
+      ${row(t(1, "hit") + t(1, "hit") + t(1, "hit") + t(1, "hit") + t(1, "hit") + ar + rb)}
+      <p>Bei 5 gleichen entsteht ein <b>Regenbogen-Bonbon</b>. Tausche es mit irgendeinem Nachbarn, dann verschwinden <b>alle Bonbons dieser Farbe</b> auf dem ganzen Feld.</p>
+      ${row(rb + `<span class="hx-ar">⇄</span>` + t(2) + ar + `<span class="hx-cap" style="margin:0">alle ${"🟡"} weg</span>`)}
+      <h3>4 · Bombe (L- oder T-Form)</h3>
+      <div class="hx-grid">${[1, 0, 0, 1, 0, 0, 1, 1, 1].map(k => (k ? t(4, "hit") : `<i class="hx-t hx-e"></i>`)).join("")}</div>
+      <div class="hx-row">${ar}${sp(4, "💥", "hx-bomb")}</div>
+      <p>Liegen 3 gleiche in einer Reihe <b>und</b> 3 in einer Spalte, die sich in einem Bonbon kreuzen (L oder T), entsteht eine <b>Bombe 💥</b>. Sie sprengt ein <b>3×3-Feld</b> um sich herum weg.</p>
+      <h3>Punkte &amp; Tipps</h3>
+      <ul><li>Jedes Bonbon gibt 10 Punkte. Spezial-Bonbons geben beim Auslösen Extrapunkte.</li>
+      <li><b>Ketten:</b> Fallen beim Nachrutschen von allein wieder 3 gleiche zusammen, zählt das doppelt, dreifach … Das bringt die meisten Punkte.</li>
+      <li>Spiele eher <b>unten</b>: Dann rutscht viel nach, und es entstehen Ketten.</li>
+      <li>Hebe dir Streifen, Bomben und Regenbogen für volle Bereiche auf.</li>
+      <li>Geht nichts mehr, mischt das Spiel von selbst neu.</li></ul>`;
+  },
   start(root, api) {
     const N = 8, MOVES = 25, COLORS = ["#e5484d", "#f5a524", "#f2d33c", "#3ecf8e", "#4f8cff", "#a35cf0"], SHAPES = ["●", "◆", "▲", "■", "★", "♥"];
     const W = Math.min(root.clientWidth || 360, 400), cs = Math.floor(W / N), BW = cs * N;

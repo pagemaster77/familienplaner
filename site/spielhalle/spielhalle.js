@@ -109,8 +109,16 @@ const ARCADE = (() => {
   function play(id, opts) {
     const g = games.find(x => x.id === id);
     clearInterval(onlineTimer); clearInterval(inviteTimer); curGame = id; ping();
-    $("#arc").innerHTML = `<div class="top"><button class="back" id="back">← Spielhalle</button><h1>${g.icon} ${esc(g.name)}</h1><span></span></div><div id="stage"></div>`;
+    $("#arc").innerHTML = `<div class="top"><button class="back" id="back">← Spielhalle</button><h1>${g.icon} ${esc(g.name)}</h1>${g.help ? `<button class="hbtn" id="hp" aria-label="Anleitung" title="Anleitung">ⓘ</button>` : "<span></span>"}</div><div id="stage"></div>`;
     $("#back").onclick = lobby;
+    const showHelp = () => {
+      const o = document.createElement("div"); o.className = "hlp";
+      o.innerHTML = `<div class="hlpbox">${g.help()}<div class="btns"><button class="btn" id="hp-x">Verstanden</button></div></div>`;
+      document.body.appendChild(o); o.querySelector(".hlpbox").scrollTop = 0;
+      const close = () => { o.remove(); try { localStorage.setItem("arcade_help_" + g.id, "1"); } catch (_e) { /* egal */ } };
+      o.querySelector("#hp-x").onclick = close; o.addEventListener("click", e => { if (e.target === o) close(); });
+    };
+    if (g.help) { $("#hp").onclick = showHelp; try { if (!localStorage.getItem("arcade_help_" + g.id)) setTimeout(showHelp, 400); } catch (_e) { /* egal */ } }
     const run = () => {
       if (stopGame) stopGame();
       stopGame = g.start($("#stage"), {

@@ -124,3 +124,22 @@ a{color:var(--pri);text-decoration:none}
 .cd-inv{border:2px solid var(--pri);margin:8px 0;text-align:center}
 .btn:disabled{opacity:.45}
 .dpad.tight{gap:5px}
+
+.hbtn{justify-self:end;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:22px;cursor:pointer}
+.hlp{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.hlpbox{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom));line-height:1.45;font-size:15px}
+.hlpbox h2{margin:0 0 8px;font-size:21px}.hlpbox h3{margin:18px 0 4px;font-size:16px;color:var(--gold)}.hlpbox p{margin:6px 0}.hlpbox ul,.hlpbox ol{margin:6px 0;padding-left:20px}.hlpbox li{margin:4px 0}
+.hlpbox .btns{position:sticky;bottom:-18px;background:var(--card);padding:10px 0 4px;margin-top:12px}
+.hx-row{display:flex;align-items:center;gap:4px;margin:10px 0 2px;flex-wrap:wrap}
+.hx-cap{font-size:13px;color:var(--muted);margin:2px 0 6px}.hx-tip{font-size:13px;color:var(--muted)}
+.hx-ar{font-size:22px;color:var(--muted);margin:0 6px}
+.hx-t{width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#ffffffcc;font-style:normal;font-size:17px;box-shadow:inset 0 -3px 0 #0003}
+.hx-t.hit{outline:3px solid #fff;outline-offset:-1px}.hx-t.hit2{outline:3px dashed #fff;outline-offset:-1px}
+.hx-t.hx-sp{box-shadow:inset 0 0 0 3px #ffffffcc,0 0 10px #fff8;color:#fff;font-weight:900}
+.hx-t.hx-rb{background:conic-gradient(#e5484d,#f5a524,#f2d33c,#3ecf8e,#4f8cff,#a35cf0,#e5484d);box-shadow:0 0 12px #fffa}
+.hx-t.hx-bomb{box-shadow:inset 0 0 0 3px #ffd75e,0 0 12px #ffd75e}
+.hx-t.hx-e{background:#111a2b;box-shadow:none}
+.hx-grid{display:grid;grid-template-columns:repeat(3,36px);gap:4px;margin:10px 0 2px}
+.hx-q{background:#2a3350!important;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:700}
+.hlpbox .cd-dot{width:32px;height:32px;display:inline-block;border-radius:50%;vertical-align:middle}
+.hlpbox b.bk{color:#000;background:#fff;border-radius:50%;padding:0 3px;line-height:1}.hlpbox .cd-pegs .bk{background:#fff;border-radius:50%;padding:0 2px}
