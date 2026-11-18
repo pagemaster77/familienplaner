@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.2 (18.11.)";
+const VERSION = "22.3 (18.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -1456,7 +1456,7 @@ document.addEventListener("pointerdown", e => {
 ["pointerup", "pointercancel", "pointerleave", "scroll", "touchmove"].forEach(t => document.addEventListener(t, lpStop, true));
 document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("[data-ev]")) e.preventDefault(); });
 /* Versteckt: 5x schnell auf die Überschrift "Punktestand" tippen -> Gipfelstürmer-Pyramide */
-const pyrTap = pyrTrigger(() => showPyramid(S.profiles.map(p => ({ name: p.name, color: p.color, avatar: p.avatar, photo: safePhoto(p.photo), points: ptsOf(p) }))));
+const pyrTap = pyrTrigger(() => showPyramid(S.profiles.map(p => ({ name: p.name, color: p.color, avatar: p.avatar, photo: safePhoto(p.photo), points: ptsOf(p), ...(window.flameInfo ? (f => ({ flameN: f.n, flameSym: f.sym }))(flameInfo(p)) : {}) }))));
 document.addEventListener("click", e => { const h = e.target.closest && e.target.closest("h2"); if (h && h.textContent.includes("Punktestand")) pyrTap(); });
 /* Wischen im Kalender: links = nächste Woche, rechts = vorherige */
 let sw = null;

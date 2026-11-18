@@ -82,7 +82,7 @@
       figs += `<g class="fig" data-x="${x.toFixed(1)}" data-y="${y}" data-d="${(i * 0.18).toFixed(2)}" style="transform:translate(${x.toFixed(1)}px,${GY + 6}px)">
         <g transform="scale(${scale.toFixed(2)})">${k >= TOP ? sitter(p, i) : climber(p, i)}</g>
         <text y="${(22 * Math.max(scale, 0.8)).toFixed(0)}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" stroke="#000a" stroke-width="3" paint-order="stroke">${name}</text>
-        <text y="${(38 * Math.max(scale, 0.8)).toFixed(0)}" text-anchor="middle" font-size="13" fill="#ffe9a8" stroke="#000a" stroke-width="3" paint-order="stroke">⭐ ${p.points}</text></g>`;
+        <text y="${(38 * Math.max(scale, 0.8)).toFixed(0)}" text-anchor="middle" font-size="13" fill="#ffe9a8" stroke="#000a" stroke-width="3" paint-order="stroke">⭐ ${p.points}</text>${p.flameN ? `<text y="${(55 * Math.max(scale, 0.8)).toFixed(0)}" text-anchor="middle" font-size="15">${esc(p.flameSym).repeat(Math.min(3, p.flameN))}</text>` : ""}</g>`;
     });
     // Sterne
     let stars = ""; for (let s = 0; s < 40; s++) stars += `<circle class="star" cx="${(s * 197 % 800)}" cy="${(s * 83 % 230) + 8}" r="${1 + (s % 3) * 0.6}" fill="#fff" style="animation-delay:${(s % 7) * 0.3}s"/>`;

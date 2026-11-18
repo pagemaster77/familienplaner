@@ -26,19 +26,23 @@ function avatar(p, small) {
   const ph = safePhoto(p.photo);
   const html = `<span class="avatar${small ? " s" : ""}" style="background:${colorOf(p.color)}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar || "🙂")}</span>`;
   const wrapped = window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, !small) : html, p, !!small) : html;
-  return small ? wrapped : flameWrapW(wrapped, p);
+  return flameWrapW(wrapped, p, small);
 }
 /* Flammen (gleiche Regeln wie in der App, Daten kommen von wall-data) */
 const FLAME_SYMS = { flame: "🔥", heart: "❤️", poop: "💩" };
-function flameWrapW(html, p) {
-  const F = W.data && W.data.flames; if (!F || !F.cfg || !F.cfg.flame_on || !p) return html;
+function flameInfoW(p) {
+  const F = W.data && W.data.flames; if (!F || !F.cfg || !F.cfg.flame_on || !p) return null;
   const s = (F.st || []).find(r => r.profile_id === p.id), now = Date.now(), H48 = 48 * 3600e3, t = x => new Date(x).getTime();
   const f1 = !!(s && s.open_at && now - t(s.open_at) < H48 && s.open_streak >= F.cfg.flame1_days);
   const f2 = !!(s && s.act_at && now - t(s.act_at) < H48 && s.act_streak >= F.cfg.flame2_days);
   const f3 = ((F.wk || {})[p.id] || 0) >= F.cfg.flame3_tasks, n = (f1 ? 1 : 0) + (f2 ? 1 : 0) + (f3 ? 1 : 0);
-  if (!n) return html;
-  const key = FLAME_SYMS[F.cfg.flame_symbol] ? F.cfg.flame_symbol : "flame", sym = FLAME_SYMS[key];
-  return `<span class="flw${n === 3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[f1, f2, f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
+  if (!n) return null;
+  const key = FLAME_SYMS[F.cfg.flame_symbol] ? F.cfg.flame_symbol : "flame";
+  return { f1, f2, f3, n, key, sym: FLAME_SYMS[key] };
+}
+function flameWrapW(html, p, small) {
+  const c = flameInfoW(p); if (!c) return html;
+  return `<span class="flw${small ? " sm" : ""}${c.n === 3 ? " fx fx-" + c.key : ""}" data-s="${c.sym}">${html}<span class="flr">${[c.f1, c.f2, c.f3].filter(Boolean).map(() => `<i>${c.sym}</i>`).join("")}</span></span>`;
 }
 
 /* ---------- Kalender-Inhalte auswerten (gleiche Logik wie in der App) ---------- */
@@ -411,7 +415,7 @@ function render() {
 }
 
 /* Versteckt: 5x schnell auf die Uhr tippen -> Gipfelstürmer-Pyramide */
-const pyrTap = pyrTrigger(() => showPyramid((W.data?.profiles || []).map(p => ({ name: p.name, color: colorOf(p.color), avatar: p.avatar, photo: safePhoto(p.photo), points: p.points }))));
+const pyrTap = pyrTrigger(() => showPyramid((W.data?.profiles || []).map(p => ({ name: p.name, color: colorOf(p.color), avatar: p.avatar, photo: safePhoto(p.photo), points: p.points, ...(c => (c ? { flameN: c.n, flameSym: c.sym } : {}))(flameInfoW(p)) }))));
 document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".clock")) pyrTap(); });
 /* Verstecktes Menü: 1x auf den Familiennamen oben links tippen -> Seite neu laden / Kiosk beenden / Rechner neu starten.
    "Kiosk beenden" und "Neustart" erledigt ein kleines Hilfsprogramm auf dem Pi (nur lokal erreichbar, Port 8765). */

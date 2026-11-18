@@ -90,10 +90,14 @@ function flameCount(p) {
   return { f1, f2, f3, n: (f1 ? 1 : 0) + (f2 ? 1 : 0) + (f3 ? 1 : 0) };
 }
 window.flameWrap = (html, p, big) => {
-  if (!big) return html;
   const c = flameCount(p); if (!c || !c.n) return html;
   const key = window.FLAME.cfg.flame_symbol || "flame", sym = FLAME_SYMS[key] || "🔥";
-  return `<span class="flw${c.n === 3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[c.f1, c.f2, c.f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
+  return `<span class="flw${big ? "" : " sm"}${c.n === 3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[c.f1, c.f2, c.f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
+};
+/* Für die Pyramide u. ä.: Anzahl und Symbol der Flammen einer Person */
+window.flameInfo = p => {
+  const c = flameCount(p); if (!c || !c.n) return { n: 0, sym: "" };
+  return { n: c.n, sym: FLAME_SYMS[window.FLAME.cfg.flame_symbol || "flame"] || "🔥" };
 };
 let flameAt = 0;
 async function flameOpen() {

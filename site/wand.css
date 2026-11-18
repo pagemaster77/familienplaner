@@ -174,3 +174,8 @@ body:has(.nightscr){background:#000}
 .fx::before,.fx::after{content:attr(data-s);position:absolute;top:-4px;font-size:15px;line-height:1;z-index:5;pointer-events:none;animation:fxup 1.2s ease-in infinite}
 .fx::before{left:-4px}.fx::after{right:-4px;animation-delay:.6s}
 @keyframes fxup{0%{transform:translateY(8px) scale(.6);opacity:0}30%{opacity:1}100%{transform:translateY(-12px) scale(1.1);opacity:0}}
+.flw.sm .flr{font-size:8px;bottom:-6px}
+.flw.sm.fx::before,.flw.sm.fx::after{font-size:10px;top:-2px}
+.flw.sm.fx-flame .avatar{box-shadow:0 0 5px 2px #ffb300,0 -2px 8px 3px #ff5a00}
+.flw.sm.fx-heart .avatar{box-shadow:0 0 5px 2px #ff8fb1,0 -2px 8px 3px #ff2d6f}
+.flw.sm.fx-poop .avatar{box-shadow:0 0 5px 2px #b07a3c,0 -2px 8px 3px #6b4423}
