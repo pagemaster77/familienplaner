@@ -301,7 +301,8 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .tabs button.nw .ic{animation:tabpulse 1.1s ease-in-out infinite}
 .top-wrap .tabs button.nw{box-shadow:inset 0 -3px 0 #e5252b}
 @keyframes tabpulse{50%{transform:scale(1.25)}}
-.blinkme{animation:blinkred .5s ease-in-out 6;border-radius:6px}
+.blinkme{animation:blinkbig 1s ease-in-out 10;border-radius:10px;position:relative;z-index:2}
+@keyframes blinkbig{0%,100%{box-shadow:0 0 0 0 #ffc10000;background-color:transparent;transform:scale(1)}50%{box-shadow:0 0 0 4px #ffc107,0 0 22px 8px #ff9800aa;background-color:#fff3c4;transform:scale(1.03)}}
 @keyframes blinkred{0%,100%{box-shadow:0 3px 0 0 transparent;background:transparent}50%{box-shadow:0 3px 0 0 #e5252b;background:#e5252b1f}}
 /* Flammen */
 .flw{position:relative;display:inline-flex;flex:none;vertical-align:middle}

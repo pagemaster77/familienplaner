@@ -68,8 +68,18 @@ function applyFocus() {
   if (!el) { if (++S.focusTries > 4) S.focus = null; return; }
   S.focus = null;
   el.scrollIntoView({ block: "center" });
-  if (S.family && S.family.push_blink_on) { el.classList.add("blinkme"); setTimeout(() => el.classList.remove("blinkme"), 3600); }
+  if (S.family && S.family.push_blink_on) { el.classList.add("blinkme"); setTimeout(() => el.classList.remove("blinkme"), 10500); }
 }
+
+/* ---------- Zurück-Taste: erst zurück zum Home-Reiter ---------- */
+let navPushed = false;
+window.navSync = () => { if (S.me && S.tab !== "home" && !navPushed) { try { history.pushState({ fp: 1 }, ""); navPushed = true; } catch (_e) { /* egal */ } } };
+window.addEventListener("popstate", () => {
+  navPushed = false;
+  if (!S.me || S.tab === "home") return;
+  S.tab = "home"; S.chatRoom = null; S.mtView = null; S.passTask = null; S.focus = null;
+  render(); window.scrollTo(0, 0);
+});
 
 /* ---------- Flammen ---------- */
 const FLAME_SYMS = { flame: "🔥", heart: "❤️", poop: "💩" };
