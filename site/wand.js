@@ -38,7 +38,7 @@ function flameWrapW(html, p) {
   const f3 = ((F.wk || {})[p.id] || 0) >= F.cfg.flame3_tasks, n = (f1 ? 1 : 0) + (f2 ? 1 : 0) + (f3 ? 1 : 0);
   if (!n) return html;
   const key = FLAME_SYMS[F.cfg.flame_symbol] ? F.cfg.flame_symbol : "flame", sym = FLAME_SYMS[key];
-  return `<span class="flw${f3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[f1, f2, f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
+  return `<span class="flw${n === 3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[f1, f2, f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
 }
 
 /* ---------- Kalender-Inhalte auswerten (gleiche Logik wie in der App) ---------- */

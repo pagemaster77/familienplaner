@@ -93,7 +93,7 @@ window.flameWrap = (html, p, big) => {
   if (!big) return html;
   const c = flameCount(p); if (!c || !c.n) return html;
   const key = window.FLAME.cfg.flame_symbol || "flame", sym = FLAME_SYMS[key] || "🔥";
-  return `<span class="flw${c.f3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[c.f1, c.f2, c.f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
+  return `<span class="flw${c.n === 3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[c.f1, c.f2, c.f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
 };
 let flameAt = 0;
 async function flameOpen() {
