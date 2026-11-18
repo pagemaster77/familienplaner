@@ -25,7 +25,20 @@ function avatar(p, small) {
   if (!p) return `<span class="avatar${small ? " s" : ""}" style="background:#999">?</span>`;
   const ph = safePhoto(p.photo);
   const html = `<span class="avatar${small ? " s" : ""}" style="background:${colorOf(p.color)}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar || "🙂")}</span>`;
-  return window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, !small) : html, p, !!small) : html;
+  const wrapped = window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, !small) : html, p, !!small) : html;
+  return small ? wrapped : flameWrapW(wrapped, p);
+}
+/* Flammen (gleiche Regeln wie in der App, Daten kommen von wall-data) */
+const FLAME_SYMS = { flame: "🔥", heart: "❤️", poop: "💩" };
+function flameWrapW(html, p) {
+  const F = W.data && W.data.flames; if (!F || !F.cfg || !F.cfg.flame_on || !p) return html;
+  const s = (F.st || []).find(r => r.profile_id === p.id), now = Date.now(), H48 = 48 * 3600e3, t = x => new Date(x).getTime();
+  const f1 = !!(s && s.open_at && now - t(s.open_at) < H48 && s.open_streak >= F.cfg.flame1_days);
+  const f2 = !!(s && s.act_at && now - t(s.act_at) < H48 && s.act_streak >= F.cfg.flame2_days);
+  const f3 = ((F.wk || {})[p.id] || 0) >= F.cfg.flame3_tasks, n = (f1 ? 1 : 0) + (f2 ? 1 : 0) + (f3 ? 1 : 0);
+  if (!n) return html;
+  const key = FLAME_SYMS[F.cfg.flame_symbol] ? F.cfg.flame_symbol : "flame", sym = FLAME_SYMS[key];
+  return `<span class="flw${f3 ? " fx fx-" + key : ""}" data-s="${sym}">${html}<span class="flr">${[f1, f2, f3].filter(Boolean).map(() => `<i>${sym}</i>`).join("")}</span></span>`;
 }
 
 /* ---------- Kalender-Inhalte auswerten (gleiche Logik wie in der App) ---------- */

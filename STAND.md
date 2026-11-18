@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.1: Flammen auch auf der Wandanzeige (wall-data v12 liefert flames, wand.js flameWrapW, wand.css). Kein Neuigkeiten-Eintrag (Wunsch).
+
 ## Version 22.0 (18.11.2026): Grosses Update – sql/update-17-flammen-karte-duell.sql, neue Datei site/extra.js (vor app.js geladen)
 - Ladebalken beim Start (S.booting, viewLoading) statt flackerndem Reiter. Chat nicht mehr auf der Startseite (Wandanzeige behaelt ihn).
 - "i"-Knopf (info(key), Texte in extra.js INFO) ersetzt die kleinen Hinweistexte in den Reitern.
@@ -14,7 +16,7 @@ Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN E
 - Weitergeben-Karte (UNO-Look): pass_task(p_task, p_to), Fixpreis families.pass_price (Standard 10), offen oder an Person, bleibt offen bis jemand uebernimmt, nur eigene Familie, point_log kind 'pass'. Schalter families.pass_on.
 - Spielhalle: Duell "Code knacken" (spiele/code.js, Tabellen duels/duel_secrets/duel_guesses, RPC duel_invite/answer/guess/forfeit/poll/state, Polling). Nur live wenn beide online, familienuebergreifend. Punkte vergibt die DB: Sieg 30, Niederlage 5, Unentschieden 10, Aufgabe 15 (arcade_scores game 'code').
 - Admin: Karte "Flammen, Karte & Meldungen" (cardSettings in extra.js).
-- Offen: Alexa-Skill auf Eis, Flammen noch nicht auf der Wandanzeige (wand.js), weitere UNO-Karten, wochenweise neue Spiele.
+- Offen: Alexa-Skill auf Eis, weitere UNO-Karten, wochenweise neue Spiele.
 
 ## Version 21.11: Treffen: Zusage legt automatisch Termin im Kalender an (events.meetup_id, Trigger meetup_invite_event / meetup_cancel_events, keine Push dafuer)
 

@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (typeof token !== "string" || !/^[0-9a-f]{32}$/.test(token)) return json({ ok: false, error: "invalid" }, 403);
-    const { data: fam } = await db.from("families").select("id,name,chef_order").eq("wall_token", token).maybeSingle();
+    const { data: fam } = await db.from("families").select("id,name,chef_order,flame_on,flame_symbol,flame1_days,flame2_days,flame3_tasks").eq("wall_token", token).maybeSingle();
     if (!fam) return json({ ok: false, error: "invalid" }, 403);
 
     // Datum in Berlin, Tages-Chef (Reihenfolge rotiert taeglich)
@@ -87,7 +87,7 @@ Deno.serve(async (req: Request) => {
     const from = new Date(now - 2 * 864e5).toISOString();
     const to = new Date(now + 70 * 864e5).toISOString();
     const today = new Date(now - 864e5).toISOString().slice(0, 10);
-    const [pr, tk, sh, ev, ml, ms, pl, rw, dp] = await Promise.all([
+    const [pr, tk, sh, ev, ml, ms, pl, rw, dp, fs, wk] = await Promise.all([
       db.from("profiles").select("id,name,color,avatar,photo,is_admin,mood,mood_at").eq("family_id", fam.id).order("created_at"),
       db.from("tasks").select("id,title,points,assigned_to,assignees,done,done_by,done_at,approved,created_at").eq("family_id", fam.id).limit(2000),
       db.from("shopping_items").select("id,title,amount,checked").eq("family_id", fam.id).order("created_at").limit(300),
@@ -97,6 +97,8 @@ Deno.serve(async (req: Request) => {
       db.from("point_log").select("profile_id,points").eq("family_id", fam.id).limit(20000),
       db.from("rewards").select("id,profile_id,points,title,claimed").eq("family_id", fam.id).limit(200),
       db.from("daily_posts").select("id,author,yt_id,has_photo,updated_at").eq("family_id", fam.id).eq("day", berlin).maybeSingle(),
+      db.from("flame_state").select("profile_id,open_streak,open_at,act_streak,act_at").eq("family_id", fam.id),
+      db.from("point_log").select("profile_id").eq("family_id", fam.id).eq("kind", "task").gt("created_at", new Date(now - 7 * 864e5).toISOString()).limit(5000),
     ]);
     // Reihenfolge: erst die in chef_order genannten, dann alle anderen nach Beitritt (jede Familie)
     const ids: string[] = (pr.data ?? []).map((p: any) => p.id);
@@ -107,6 +109,13 @@ Deno.serve(async (req: Request) => {
     const pts: Record<string, number> = {};
     for (const l of pl.data ?? []) pts[l.profile_id] = (pts[l.profile_id] ?? 0) + (l.points ?? 0); // Punktekonto
     const recent = now - 864e5;
+    // Flammen (wie in der App): Aufgaben der letzten 7 Tage = freigegebene (point_log) + noch wartende
+    const week: Record<string, number> = {};
+    for (const l of wk.data ?? []) week[l.profile_id] = (week[l.profile_id] ?? 0) + 1;
+    for (const t of tasks) if (t.done && !t.approved && t.done_by && t.done_at && new Date(t.done_at).getTime() > now - 7 * 864e5) week[t.done_by] = (week[t.done_by] ?? 0) + 1;
+    const flames = fam.flame_on
+      ? { cfg: { flame_on: true, flame_symbol: fam.flame_symbol, flame1_days: fam.flame1_days, flame2_days: fam.flame2_days, flame3_tasks: fam.flame3_tasks }, st: fs.data ?? [], wk: week }
+      : null;
     return json({
       ok: true,
       family: { name: fam.name },
@@ -119,6 +128,7 @@ Deno.serve(async (req: Request) => {
       rewards: rw.data ?? [],
       chef,
       daily: dp.data ?? null,
+      flames,
       at: new Date().toISOString(),
     });
   } catch (e) {
