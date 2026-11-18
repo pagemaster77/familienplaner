@@ -2,6 +2,14 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.0", date: "18.11.2026", items: [
+    "Aufgeräumt: Die kleinen Erklärtexte stehen jetzt hinter einem eingekreisten „i“ oben rechts in den Karten. Antippen zeigt eine kurze Anleitung. Der Chat ist von der Startseite verschwunden, du findest ihn im Reiter Chat.",
+    "Neues in den Reitern: Ein Reiter leuchtet rot, wenn es dort etwas Neues gibt (Chat, Aufgaben, Einkauf, Termine, Jobs). Sobald du ihn öffnest, ist das Rot weg. Tippst du eine Push-Meldung an, springt die App direkt an die richtige Stelle und der Eintrag blinkt kurz.",
+    "Flammen: Unter deinem Profilbild erscheinen Flammen, wenn du die App mehrere Tage hintereinander öffnest, etwas tust (Stimmung, Aufgabe, Chat, Spielen) und regelmäßig Aufgaben erledigst. Bei der 3. Flamme steht dein Bild in Flammen. Verpasst du etwas, geht nur die betroffene Flamme aus.",
+    "🃏 Weitergeben-Karte: Bei einer Aufgabe, die dir zugeteilt ist, tippst du auf die Karte. Gegen Punkte gibst du sie an eine bestimmte Person oder offen an alle weiter. Wer sie erledigt, bekommt die Punkte der Aufgabe.",
+    "Spielhalle: Neues Duell „Code knacken“. Zwei Spieler sind gleichzeitig online und jeder knackt seinen geheimen Farbcode. Wer ihn zuerst hat, gewinnt. Das geht auch gegen verbundene Familien.",
+    "Admins: Unter ⚙️ Verwalten stellt ihr bei „Flammen, Karte & Meldungen“ ein, was an ist, welches Symbol es gibt (Flamme, Herz oder Haufen) und wie viele Tage oder Aufgaben nötig sind.",
+  ] },
   { v: "21.11", date: "17.11.2026", items: [
     "Jobs: Wer bei einem Treffen zusagt, hat den Termin jetzt automatisch im eigenen Kalender. Bei einer Absage verschwindet er wieder.",
   ] },

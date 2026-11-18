@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "21.11 (17.11.)";
+const VERSION = "22.0 (18.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -14,6 +14,7 @@ const TABS = [
 
 const S = {
   jobSel: [], mtSel: [], mtView: null, meetups: [],
+  booting: false, infoOpen: {}, passTask: null, passTo: null, flames: [], fweek: [], focus: null, focusTries: 0, pending: null,
   user: null, me: null, family: null,
   profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
@@ -50,7 +51,8 @@ function avatar(p, size) {
   const ph = safePhoto(p.photo);
   const html = `<span class="avatar" style="background:${esc(p.color)};${size ? `width:${size}px;height:${size}px` : ""}">${ph ? `<img src="${ph}" alt="">` : esc(p.avatar)}</span>`;
   const big = !size || size >= 30;
-  return window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, big) : html, p, !big) : html;
+  const wrapped = window.crownWrap ? crownWrap(window.moodWrap ? moodWrap(html, p, big) : html, p, !big) : html;
+  return window.flameWrap ? flameWrap(wrapped, p, big) : wrapped;
 }
 /* Profilfoto: quadratisch zuschneiden und auf 128x128 verkleinern (ca. 5-8 KB) */
 function avatarFromFile(file, size = 128) {
@@ -245,6 +247,8 @@ function byDay(list) {
 
 /* ---------- Daten laden ---------- */
 const LOAD = {
+  families: async () => { const f = await sb.from("families").select("*").eq("id", S.me.family_id).maybeSingle(); if (f.data) { S.family = f.data; setFlameData(); } return S.family; },
+  flame_state: async () => { const [a, b] = await Promise.all([sb.from("flame_state").select("*"), sb.rpc("flame_week")]); S.flames = a.data || []; S.fweek = b.data || []; setFlameData(); },
   profiles: async () => {
     S.profiles = await q(sb.from("profiles").select("*").order("created_at"));
     const m = S.me && S.profiles.find(x => x.id === S.me.id);
@@ -275,6 +279,9 @@ const LOAD = {
   },
 };
 async function loadAll() {
+  try { await loadAllInner(); } finally { S.booting = false; render(); applyPending(); }
+}
+async function loadAllInner() {
   const { data: me } = await sb.from("profiles").select("*").eq("id", S.user.id).maybeSingle();
   S.me = me;
   if (!me) return render();
@@ -286,12 +293,13 @@ async function loadAll() {
   render();
   loadIcal(true);
   listen();
+  flameOpen();
 }
 let channel = null;
 function listen() {
   if (channel) sb.removeChannel(channel);
   channel = sb.channel("familie")
-    .on("postgres_changes", { event: "*", schema: "public" }, p => { if (LOAD[p.table]) LOAD[p.table]().then(render); })
+    .on("postgres_changes", { event: "*", schema: "public" }, p => { if (LOAD[p.table]) LOAD[p.table]().then(render); if (p.table === "tasks" || p.table === "point_log") LOAD.flame_state().then(render); })
     .subscribe();
 }
 
@@ -440,11 +448,11 @@ function viewJobs() {
         <input id="jn" name="note" placeholder="Notiz (optional)" maxlength="300">
         <label class="field" style="margin:0"><span>Punkte (0–20)</span><input id="jp" class="pt" name="points" type="number" min="0" max="20" value="5"></label>
         <button class="btn">Job vergeben</button></form>
-        <div class="sub" style="margin-top:6px">Die Eltern des Empfängers müssen den Job erst annehmen. Die Punkte bekommt der Empfänger, wenn du die Erledigung bestätigst.</div>`
+        `
       : `<div class="empty">Noch keine Familie verbunden. Das geht unter „Familie → Mit anderen Familien verbinden“.</div>`
-    : `<div class="sub">Jobs vergeben nur Admins. Hier siehst du Jobs, die für dich bestimmt sind.</div>`;
+    : "";
   const mOpen = S.meetups.filter(m => m.status === "open"), mOld = S.meetups.filter(m => m.status !== "open").slice(-5).reverse();
-  return `<div class="card"><h2>💼 Jobs</h2>${form}</div>
+  return `<div class="card"><h2>💼 Jobs</h2>${info("jobs")}${form}</div>
     <div class="card"><div class="mhead"><h2>🤝 Treffen</h2>${S.me.is_admin ? `<button class="btn small" data-act="meetNew">+ Neues Treffen</button>` : ""}</div>
       ${mOpen.length ? mOpen.map(meetRow).join("") : `<div class="empty">Keine Treffen geplant</div>`}${mOld.length ? `<div class="sub" style="margin:10px 0 4px">Vergangene</div>${mOld.map(meetRow).join("")}` : ""}</div>
     ${need.length ? `<div class="card"><h2>👉 Wartet auf dich <span class="tag">${need.length}</span></h2>${need.map(jobRow).join("")}</div>` : ""}
@@ -464,7 +472,7 @@ function viewAdmin() {
     <button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button></div>`;
   const people = S.profiles;
   return `<div class="card"><button class="btn ghost small" data-act="tab" data-v="home">← Zurück</button>
-      <h2 style="margin-top:10px">⚙️ Verwalten</h2><p class="sub">Nur für Admins. Alle anderen sehen diese Seite nicht.</p></div>
+      <h2 style="margin-top:10px">⚙️ Verwalten</h2>${info("admin")}</div>
 
     <div class="card"><h2>✔ Freigeben${wait.length + reached.length ? ` <span class="tag">${wait.length + reached.length}</span>` : ""}</h2>
       ${wait.map(t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
@@ -476,7 +484,7 @@ function viewAdmin() {
         <div class="sub">${esc(prof(r.profile_id)?.name || "?")} hat ${r.points} ⭐ erreicht</div></div>
         <button class="btn small" data-act="claimReward" data-id="${r.id}">✔ Übergeben</button></div>`).join("")}
       ${wait.length || reached.length ? "" : `<div class="empty">Nichts offen 🎉</div>`}
-      <div class="sub" style="margin-top:6px">Erst nach „Freigeben“ gibt es die Punkte für eine erledigte Aufgabe. Bei einer erreichten Belohnung hakst du mit „Übergeben“ ab, dass sie ausgehändigt wurde.</div></div>
+      </div>
 
     <div class="card"><h2>⭐ Aufgaben &amp; Punkte</h2>
       <form class="add" data-form="admintask">
@@ -485,23 +493,25 @@ function viewAdmin() {
         <button class="btn">+</button>
         <div style="flex-basis:100%">${whoChips([])}</div></form>
       ${open.map(todoRow).join("") || `<div class="empty">Keine offenen Aufgaben</div>`}
-      <div class="sub" style="margin-top:6px">Tippe auf die Punktezahl, um sie zu ändern. Aufgaben, die die anderen anlegen, haben zuerst 0 Punkte.</div></div>
+      </div>
 
     ${cardRewards(true)}
     ${cardPoints(true)}
+
+    ${cardSettings()}
 
     <div class="card"><h2>👪 Familie</h2>
       <div class="sub">Name der Familie:</div>
       <form class="add" data-form="famname" style="margin:4px 0 12px"><input id="fn" name="name" value="${esc(S.family.name)}" required maxlength="40" aria-label="Familienname"><button class="btn">Umbenennen</button></form>
       ${people.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}</div>
         ${x.id !== S.me.id ? `<button class="btn small ghost" data-act="setAdmin" data-id="${x.id}" data-v="${x.is_admin ? 0 : 1}">${x.is_admin ? "Admin entziehen" : "Zum Admin machen"}</button>` : ""}</div>`).join("")}
-      <div class="sub" style="margin-top:6px">Chat-Nachrichten löschen kannst du direkt im Chat (kleines ×).</div></div>
+      </div>
     ${cardLink(true)}
 
     <div class="card"><h2>📺 Wandanzeige</h2>${wallCard()}</div>
     <div class="card"><h2>Alexa</h2>${alexaCard()}</div>
-    <div class="card"><h2>💾 Datensicherung</h2>
-      <p class="sub">Jeden Sonntagmorgen wird automatisch eine Sicherung aller Familien-Daten auf dem Server gespeichert (die letzten 12 bleiben erhalten). Hier kannst du zusätzlich jederzeit eine Datei auf dieses Gerät laden.</p>
+    <div class="card"><h2>💾 Datensicherung</h2>${info("backup")}
+      
       <button class="btn block" data-act="backupDownload">Sicherung jetzt herunterladen</button></div>`;
 }
 
@@ -510,10 +520,10 @@ function viewShell() {
   return `<div class="shell">
     <div class="top-wrap">
       <div class="top"><h1>${esc(S.family.name)}</h1><div class="who">${S.me.is_admin ? `<button class="gear ${S.tab === "admin" ? "on" : ""}" data-act="tab" data-v="admin" title="Verwalten" aria-label="Verwalten">⚙️${adminOpenCount() ? `<i>${adminOpenCount()}</i>` : ""}</button>` : ""}${avatar(S.me, 28)} ${esc(S.me.name)}</div></div>
-      <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}${k === "jobs" && jobsNeedMe() ? `<i class="tb">${jobsNeedMe()}</i>` : ""}</button>`).join("")}</nav>
+      <nav class="tabs">${TABS.map(([k, ic, l]) => `<button class="${S.tab === k ? "on" : ""}${tabNew(k) ? " nw" : ""}" data-act="tab" data-v="${k}"><span class="ic">${ic}</span>${l}${k === "jobs" && jobsNeedMe() ? `<i class="tb">${jobsNeedMe()}</i>` : ""}</button>`).join("")}</nav>
     </div>
     <div class="main">${body}</div>
-  </div>${evModal()}`;
+  </div>${evModal()}${passModal()}`;
 }
 
 /* Punktekonto: Summe aller Gutschriften und Abzüge (bleibt erhalten, auch wenn Aufgaben gelöscht werden) */
@@ -529,11 +539,11 @@ function cardPoints(admin) {
       <input id="pjp" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
       <input id="pjr" name="reason" placeholder="Grund (optional)" maxlength="120">
       <button class="btn">OK</button></form>` : "";
-  return `<div class="card"><h2>📒 Punktekonto</h2>${form}
+  return `<div class="card"><h2>📒 Punktekonto</h2>${info("points")}${form}
     ${log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
       <div class="sub">${fmtShort(l.created_at)} · ${l.kind === "reward" ? "🎁 " : l.kind === "manual" ? "✎ " : "✅ "}${esc(l.reason || (l.kind === "task" ? "Aufgabe" : ""))}</div></div>
       ${adm ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Aus der Liste ausblenden (Punkte bleiben)">×</button>` : ""}</div>`).join("") || `<div class="empty">Keine Einträge in der Liste</div>`}
-    <div class="sub" style="margin-top:6px">Es werden nur die letzten 10 Einträge gezeigt. Mit × blendest du einen Eintrag aus der Liste aus – die Punkte bleiben erhalten. Sie sinken nur, wenn eine Belohnung übergeben wird oder ein Admin Punkte abzieht.</div></div>`;
+    </div>`;
 }
 // Für wen gilt die Aufgabe? (leer = für alle)
 const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
@@ -567,8 +577,8 @@ function cardRewards(admin) {
       <input id="rwx" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
       <input id="rwy" name="title" placeholder="Belohnung, z. B. Eis essen gehen" required maxlength="120">
       <button class="btn">+</button></form>
-      <div class="sub" style="margin-top:6px">Wer die Punktezahl erreicht, bekommt die Belohnung. Ein Admin hakt sie mit „Übergeben“ ab.</div>` : "";
-  return `<div class="card"><h2>🎁 Belohnungen</h2>
+      ` : "";
+  return `<div class="card"><h2>🎁 Belohnungen</h2>${info("rewards")}
     ${people.map(p => { const n = ptsOf(p);
       return `<div class="rw"><div class="rwh">${avatar(p, 28)}<b>${esc(p.name)}</b><span class="sub">${n} ⭐</span></div>${by(p).map(r => row(r, n)).join("")}</div>`; }).join("") || `<div class="empty">Noch keine Belohnungen festgelegt</div>`}
     ${form}</div>`;
@@ -586,22 +596,22 @@ function cardTodo(limit) {
       ${whoChips(whoIds(t))}
       <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
     const ids = whoIds(t);
-    return `<div class="row ${t.done ? "done" : ""}">
+    return `<div class="row ${t.done ? "done" : ""}" data-item="${t.id}">
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}</div></div>
-    <span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>
+      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}${t.passed_by && !t.done ? " · 🃏 von " + esc(prof(t.passed_by)?.name || "?") + " weitergegeben" + (t.pass_open ? " – wer will?" : "") : ""}</div></div>
+    <span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>${passBtn(t)}
     ${canEdit ? `<button class="x" data-act="editTask" data-id="${t.id}" title="Ändern">✎</button><button class="x" data-act="delTask" data-id="${t.id}">×</button>` : ""}</div>`;
   };
   const form = limit || isDisplay() ? "" : `<form class="add" data-form="task">
       <input id="tt" name="title" placeholder="Neue Aufgabe" required>
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
-  const waitCard = wait.length ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}<div class="sub" style="margin-top:6px">Ein Admin schaut nach, ob alles erledigt ist. Dann gibt es die Punkte.</div></div>` : "";
-  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>
+  const waitCard = wait.length ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}</div>` : "";
+  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>${info("todo")}
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
-    ${form}${!limit && !isDisplay() ? `<div class="sub" style="margin-top:8px">Punkte vergibt ein Admin.</div>` : ""}</div>
+    ${form}</div>
     ${limit || !done.length ? "" : `<div class="card"><h2>Zuletzt erledigt</h2>${done.map(row).join("")}</div>`}`;
 }
 
@@ -612,13 +622,13 @@ function cardShop(compact) {
       <input id="set-${i.id}" name="title" value="${esc(i.title)}" required>
       <input id="sea-${i.id}" class="pt" name="amount" value="${esc(i.amount || "")}" placeholder="Menge">
       <button class="btn">${i.checked ? "Wieder auf die Liste" : "Speichern"}</button><button type="button" class="btn ghost" data-act="cancelEdit">×</button></form></div>`;
-    return `<div class="row ${i.checked ? "done" : ""}">
+    return `<div class="row ${i.checked ? "done" : ""}" data-item="${i.id}">
     <button class="chk ${i.checked ? "on" : ""}" data-act="toggleShop" data-id="${i.id}">${i.checked ? "✓" : ""}</button>
     <div class="grow t">${esc(i.title)}${i.amount ? ` <span class="tag">${esc(i.amount)}</span>` : ""}</div>
     ${compact ? "" : `<button class="x" data-act="editShop" data-id="${i.id}" title="${i.checked ? "Wieder auf die Liste / ändern" : "Ändern"}">✎</button><button class="x" data-act="delShop" data-id="${i.id}">×</button>`}</div>`;
   };
   const list = compact ? open.slice(0, 12) : [...open, ...got];
-  return `<div class="card"><h2>🛒 Einkaufsliste ${got.length && !compact ? `<button class="btn small ghost" data-act="clearShop">Erledigte löschen</button>` : ""}</h2>
+  return `<div class="card"><h2>🛒 Einkaufsliste ${got.length && !compact ? `<button class="btn small ghost" data-act="clearShop">Erledigte löschen</button>` : ""}</h2>${info("shop")}
     ${list.map(row).join("") || `<div class="empty">Die Liste ist leer</div>`}
     ${compact && open.length > 12 ? `<div class="sub">… und ${open.length - 12} weitere</div>` : ""}
     ${compact ? "" : `<form class="add" data-form="shop"><input id="si" name="title" placeholder="Was fehlt?" required>
@@ -638,7 +648,7 @@ function chatDay(d) {
   return k === dkey(t) ? "Heute" : k === dkey(y) ? "Gestern" : d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "numeric" });
 }
 function chatList() {
-  return `<div class="card chatlist"><h2>💬 Chats</h2>${["family", "all"].map(r => {
+  return `<div class="card chatlist"><h2>💬 Chats</h2>${info("chat")}${["family", "all"].map(r => {
     const ms = roomMsgs(r), last = ms[ms.length - 1], seen = chatSeen(r);
     const unread = ms.filter(m => m.author !== S.me.id && new Date(m.created_at).getTime() > seen).length;
     const who = last ? (last.author === S.me.id ? "Du" : (wprof(last.author)?.name || "?")) : "";
@@ -667,7 +677,7 @@ function cardChat(compact) {
       ? `<b class="who" style="color:${esc(p?.color || "inherit")}">${esc(p?.name || "?")}${room === "all" && p?.family_name ? ` <span class="sub">· ${esc(p.family_name)}</span>` : ""}</b>` : "";
     lastDay = day; lastAuthor = m.author;
     const del = S.me.is_admin && m.family_id === S.me.family_id;
-    return `${sep}<div class="msg wa ${me ? "me" : ""}">${head}${esc(m.body)}<small class="tm">${fmtTime(d)}</small>${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`;
+    return `${sep}<div class="msg wa ${me ? "me" : ""}" data-item="${m.id}">${head}${esc(m.body)}<small class="tm">${fmtTime(d)}</small>${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`;
   }).join("") || `<div class="empty">Noch keine Nachrichten</div>`;
   return `<div class="chatview"><div class="chathead">${canAll ? `<button class="cback" data-act="room" data-v="list" aria-label="Zurück zu den Chats">‹</button>` : ""}
       <span class="cav">${CHAT_ROOMS[room].ic}</span><span class="cmid"><b>${esc(CHAT_ROOMS[room].title())}</b><small>${esc(CHAT_ROOMS[room].sub)}</small></span></div>
@@ -694,7 +704,7 @@ function untilDate(f, starts, allDay) {
 function evRow(e) {
   const p = prof(e.owner);
   const lp = e.src === "own" && !isDisplay();
-  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""}><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
+  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""} data-item="${e.id}"><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
     <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${evMulti(e) ? " · bis " + evUntil(e) : ""}</div></div></div>`;
 }
 
@@ -739,9 +749,9 @@ function cardChef() {
 function cardMood() {
   if (!S.me || isDisplay()) return "";
   const cur = moodOf(S.me);
-  return `<div class="card"><h2>Wie geht’s dir heute?</h2><div class="moods">${Object.entries(MOODS).map(([k, [e, l]]) =>
+  return `<div class="card"><h2>Wie geht’s dir heute?</h2>${info("mood")}<div class="moods">${Object.entries(MOODS).map(([k, [e, l]]) =>
     `<button class="mbtn${cur === k ? " on" : ""}${k === "help" ? " help" : ""}" data-act="mood" data-v="${k}"><span class="me">${e}</span><span>${l}</span></button>`).join("")}</div>
-    <div class="sub" style="margin-top:6px">Alle sehen einen Ring um dein Bild. „Ich möchte reden“ schickt nur den Eltern eine Meldung. Für den Eintrag gibt es 5 ⭐, aber nur einmal pro Tag (um 0 Uhr geht es von vorne los).${cur ? ` <a href="#" data-act="mood" data-v="clear">Zurücksetzen</a>` : ""}</div></div>`;
+    ${cur ? `<div class="sub" style="margin-top:6px"><a href="#" data-act="mood" data-v="clear">Zurücksetzen</a></div>` : ""}</div>`;
 }
 /* Spielhalle: eigene Seite (spielhalle/). Spielpunkte haben nichts mit den Aufgaben-Punkten zu tun. */
 function cardArcade() {
@@ -752,7 +762,7 @@ function cardArcade() {
     ${(S.arcBat && S.arcBat.length) ? `<div class="sub" style="margin:0 0 4px"><b>🏆 Familien-Bestenliste (7 Tage)</b></div>${S.arcBat.map((f, i) => `<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${["🥇", "🥈", "🥉", "4."][i]} ${esc(f.family_name)}</span><b>${Number(f.pts)} ⭐</b></div>`).join("")}<div style="height:8px"></div>` : ""}
     <a class="btn block" href="spielhalle/" style="display:block;text-align:center;text-decoration:none">Zur Spielhalle</a></div>`;
 }
-function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardArcade() + cardShop(true) + cardChat(true); }
+function viewHome() { return cardMood() + cardChef() + cardRank() + cardToday() + cardTodo(5) + cardArcade() + cardShop(true); }
 
 /* Ansicht: 7 Tage ab HEUTE (heute steht oben); Wischen oder Pfeile springen 7 Tage vor/zurück */
 function weekInfo(off) {
@@ -776,11 +786,11 @@ function viewCal() {
       <button class="btn small ghost" data-act="calNav" data-v="1">›</button></div>
     ${S.cw !== 0 ? `<button class="btn small ghost block" data-act="calNav" data-v="0" style="margin-bottom:4px">Zurück zu heute</button>` : ""}
     ${days}
-    <div class="sub" style="margin-top:10px;text-align:center">← vor · zurück wischen für Rückblick →${S.events.length ? "<br>Eigenen Termin lange gedrückt halten zum Ändern oder Löschen." : ""}</div></div>
-    <div class="card"><h2>Termin eintragen</h2><form data-form="event" class="evf">
+    </div>
+    <div class="card"><h2>Termin eintragen</h2>${info("cal")}<form data-form="event" class="evf">
       ${evFields("e", { kind: "termin", title: "", date: dkey(new Date()), multi: false, withtime: false, until: "", time: "12:00", until_time: "", rec: "none", birth: "" })}
       <button class="btn block">Speichern</button></form>
-      <p class="sub">Eigene Google- oder iCloud-Kalender hängst du unter „Familie“ an.</p></div>`;
+      </div>`;
 }
 
 const safeUrl = u => (/^https?:\/\//i.test(u || "") ? u : "");
@@ -809,8 +819,7 @@ function viewMeals() {
         ${ings.length ? `<div class="ings">${ings.map((t, i) => `<label class="ing"><input type="checkbox" data-meal="${m.id}" data-i="${i}" ${S.uncheck[m.id + ":" + i] ? "" : "checked"}> <span>${esc(t)}</span></label>`).join("")}</div>
           <button class="btn small" data-act="mealToShop" data-id="${m.id}">🛒 Ausgewählte auf die Einkaufsliste</button>` : ""}
         ${m.recipe ? `<pre>${esc(m.recipe)}</pre>` : ""}</details>` : ""}</div>`; };
-  return `<div class="card"><h2>🔗 Rezept per Link holen</h2>
-    <div class="sub">Link von Chefkoch (oder einer anderen Rezeptseite) einfügen. Name, Bild und Zutaten werden übernommen.</div>
+  return `<div class="card"><h2>🔗 Rezept per Link holen</h2>${info("meals")}
     <form class="add" data-form="import"><input id="ru" name="url" type="url" placeholder="https://www.chefkoch.de/rezepte/…" required>
       <input id="rd" name="date" type="date" style="max-width:150px" title="Datum (leer = nur Wunsch)"><button class="btn">Holen</button></form></div>
     <div class="card"><h2>🍽️ Essen planen <button class="btn small" data-act="toggleMealForm">${S.mealOpen ? "Schließen" : "+ Neu"}</button></h2>
@@ -821,7 +830,7 @@ function viewMeals() {
       <label class="field"><span>Link zum Rezept (optional)</span><input id="ms" name="source_url" type="url"></label>
       <label class="field"><span>Zutaten (eine pro Zeile, z. B. „500 g Nudeln“)</span><textarea id="mz" name="ingredients"></textarea></label>
       <label class="field"><span>Rezept</span><textarea id="mr" name="recipe"></textarea></label>
-      <button class="btn block">Speichern</button></form>` : `<div class="sub">Wünsche und geplante Gerichte mit Foto und Rezept.</div>`}</div>
+      <button class="btn block">Speichern</button></form>` : ""}</div>
     ${planned.length ? `<div class="day">Geplant</div>${planned.map(card).join("")}` : ""}
     ${wishes.length ? `<div class="day">Wünsche</div>${wishes.map(card).join("")}` : ""}`;
 }
@@ -853,9 +862,9 @@ function viewWishes() {
     ${S.me.is_admin ? `<select id="wf" name="owner" aria-label="Für wen"><option value="">für mich</option>${others.map(p => `<option value="${p.id}">für ${esc(p.name)}</option>`).join("")}</select>` : ""}
     <input id="wn" name="note" placeholder="Notiz (Größe, Farbe …)" maxlength="300">
     <button class="btn">Wunsch speichern</button></form>`;
-  return `<div class="card"><h2>🎁 Meine Wünsche</h2>${form}
+  return `<div class="card"><h2>🎁 Meine Wünsche</h2>${info("wish")}${form}
     ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}
-    <div class="sub" style="margin-top:6px">Die anderen sehen deine Wünsche und haken ab, was gekauft ist. Du siehst diese Haken nicht – so bleibt es eine Überraschung. 🤫</div></div>
+    </div>
     ${others.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)}</h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}
     ${S.lprof.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)} <span class="sub">· ${esc(p.family_name)}</span></h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
 }
@@ -863,8 +872,7 @@ function viewWishes() {
 function cardLink(admin) {
   const adm = !!admin && S.me.is_admin, code = String(S.family.link_code || ""), nice = code.slice(0, 5) + "-" + code.slice(5);
   const names = [...new Set(S.lprof.map(p => p.family_id))].map(id => ({ id, name: (S.lprof.find(p => p.family_id === id) || {}).family_name }));
-  return `<div class="card"><h2>🔗 Mit anderen Familien verbinden</h2>
-    <p class="sub">Verbundene Familien sehen gegenseitig ihre Wunschlisten und können „Gekauft“ abhaken, schreiben im Chat-Raum „Alle Verbundenen“ miteinander, vergeben Jobs und spielen in der Spielhalle gegeneinander. Kalender, Aufgaben, Einkauf und der Familien-Chat bleiben privat.</p>
+  return `<div class="card"><h2>🔗 Mit anderen Familien verbinden</h2>${info("link")}
     ${names.map(f => `<div class="row"><div class="grow"><div class="t">${esc(f.name)}</div><div class="sub">verbunden</div></div>${adm ? `<button class="btn small ghost" data-act="unlink" data-id="${f.id}">Trennen</button>` : ""}</div>`).join("") || `<div class="empty">Noch mit keiner Familie verbunden</div>`}
     ${adm ? `<div class="sub" style="margin-top:10px">Euer Verbindungs-Code (den gebt ihr der anderen Familie):</div>
     <div style="font-size:24px;font-weight:700;letter-spacing:.1em;margin:4px 0 6px">${esc(nice)}</div>
@@ -875,14 +883,14 @@ function cardLink(admin) {
 
 function viewFamily() {
   const p = S.pe;
-  return `<div class="card"><h2>Familie</h2>
+  return `<div class="card"><h2>Familie</h2>${info("family")}
     <div style="font-size:18px;font-weight:700;margin-bottom:8px">${esc(S.family.name)}</div>
     <div class="sub">Einladungscode zum Beitreten:</div>
     <div style="font-size:26px;font-weight:700;letter-spacing:.1em;margin:4px 0 10px">${esc(S.family.invite_code)}</div>
     ${S.profiles.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}<div class="sub">${x.ical_url ? "Kalender verbunden" : "kein Kalender"}</div></div></div>`).join("")}
-    <p class="sub">Admins verwalten Punkte, Belohnungen und Einstellungen unter dem ⚙️ oben rechts.</p></div>
+    </div>
     ${cardLink(false)}
-    <div class="card"><h2>Mein Profil</h2><form data-form="profile">
+    <div class="card"><h2>Mein Profil</h2>${info("profile")}<form data-form="profile">
       <label class="field"><span>Name</span><input id="pn" name="name" value="${esc(S.me.name)}" required></label>
       <span class="sub">Farbe</span>${swatches(p.color, "pe")}
       <span class="sub">Profilbild</span>
@@ -890,12 +898,11 @@ function viewFamily() {
         <div><input id="pphoto" type="file" accept="image/*">${p.photo ? `<button type="button" class="link" data-act="photoRemove">Foto entfernen</button>` : ""}</div></div>
       <span class="sub">… oder ein Symbol</span>${emojis(p.avatar, "pe")}
       <label class="field"><span>Mein Kalender (iCal-Link)</span><input id="pi" name="ical" value="${esc(S.me.ical_url || "")}" placeholder="https://… oder webcal://…"></label>
-      <p class="sub">Google: Kalender-Einstellungen → „Geheime Adresse im iCal-Format“. iCloud: Kalender teilen → „Öffentlicher Kalender“ → Link kopieren.</p>
+      
       <button class="btn block">Speichern</button></form></div>
     <div class="card"><h2>Benachrichtigungen</h2>${pushCard()}</div>
     <div class="card"><h2>🔑 Passwort ändern</h2><form data-form="changepw"><label class="field"><span>Neues Passwort (mind. 6 Zeichen)</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label><button class="btn block">Passwort ändern</button></form></div>
-    <div class="card"><h2>Anzeige</h2>
-      <p class="sub">Für das Tablet oder den Bildschirm in der Küche: öffnet die große Übersicht, die sich von selbst aktualisiert.</p>
+    <div class="card"><h2>Anzeige</h2>${info("display")}
       <a class="btn block" href="#display">📺 Tablet-Ansicht starten</a></div>
     <button class="btn ghost block" data-act="logout">Abmelden</button>
     <p class="sub" style="text-align:center;margin-top:14px">Version ${VERSION}</p>`;
@@ -1429,11 +1436,11 @@ const FORMS = {
 
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
-  try { await ACT[b.dataset.act]?.(b.dataset, b); } catch (err) { console.error(err); }
+  try { await (ACT[b.dataset.act] || EXTRA_ACT[b.dataset.act])?.(b.dataset, b); } catch (err) { console.error(err); }
 });
 document.addEventListener("submit", async e => {
   e.preventDefault();
-  const form = e.target; const h = FORMS[form.dataset.form]; if (!h) return;
+  const form = e.target; const h = FORMS[form.dataset.form] || EXTRA_FORMS[form.dataset.form]; if (!h) return;
   const data = new FormData(form);
   if (form.dataset.form !== "profile" && form.dataset.form !== "onboard" && form.dataset.form !== "auth") form.reset();
   try { await h(data, form); } catch (err) { console.error(err); }
@@ -1487,28 +1494,40 @@ function checkRewards() {
 
 function render() {
   window.CHEF_ID = (chefFor(new Date()) || {}).id || null;
+  if (S.me && S.tab && S.tab !== "home" && !document.hidden && !isDisplay()) tabMark(S.tab);
   const saved = saveInputs();
-  if (!S.user || S.recovery) $app.innerHTML = viewAuth();
+  if (S.booting) $app.innerHTML = viewLoading();
+  else if (!S.user || S.recovery) $app.innerHTML = viewAuth();
   else if (!S.me) $app.innerHTML = viewOnboarding();
   else $app.innerHTML = isDisplay() ? viewBoard() : viewShell();
   restoreInputs(saved);
   { const tw = document.querySelector(".top-wrap"); document.documentElement.style.setProperty("--twh", (tw ? tw.offsetHeight : 0) + "px"); }
   setTimeout(checkRewards, 0);
   setTimeout(() => { if (window.checkNews) checkNews(); }, 0);
-  if (S.me && !isDisplay() && S.tab === "chat" && (S.chatRoom || !S.lprof.length)) window.scrollTo(0, document.body.scrollHeight);
+  if (S.me && !isDisplay() && S.tab === "chat" && (S.chatRoom || !S.lprof.length) && !S.focus) window.scrollTo(0, document.body.scrollHeight);
+  applyFocus();
 }
 
 async function start() {
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.addEventListener("message", ev => { const d = ev.data || {}; if (d.type !== "go") return; if (S.me && !S.booting) goTo(d.tab, d.item); else S.pending = { tab: d.tab, item: d.item }; });
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden || !S.me || S.booting) return; if (Date.now() - flameAt > 30 * 60e3) flameOpen(); else render(); });
   const { data } = await sb.auth.getSession();
   S.user = data.session?.user || null;
+  S.booting = !!S.user;
+  try { // Sprung aus einer Push-Meldung (?go=Reiter&item=Eintrag)
+    const u = new URL(location.href), go = u.searchParams.get("go");
+    if (go) { S.pending = { tab: go, item: u.searchParams.get("item") }; u.searchParams.delete("go"); u.searchParams.delete("item"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
+  } catch (_e) { /* egal */ }
   render();
   if (S.user) await loadAll();
   sb.auth.onAuthStateChange(async (ev, session) => {
     if (ev === "PASSWORD_RECOVERY") S.recovery = true;
     const was = S.user?.id; S.user = session?.user || null;
     if (!S.user) { S.me = null; if (channel) sb.removeChannel(channel); render(); }
-    else if (S.user.id !== was) await loadAll();
+    else if (S.user.id !== was) { S.booting = true; render(); await loadAll(); }
   });
   // Uhr und Kalender auf dem Tablet aktuell halten
   setInterval(() => { const c = document.getElementById("clock"); if (c) c.textContent = fmtTime(new Date()); }, 15000);

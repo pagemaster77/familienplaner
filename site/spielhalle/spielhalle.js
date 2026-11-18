@@ -49,7 +49,22 @@ const ARCADE = (() => {
     const o = [1, 0, 2].filter(i => items[i]), hh = [0, 118, 84, 62];
     return `<div class="podium">${o.map(i => `<div class="pod p${i + 1}"><div class="who">${i === 0 ? '<span class="crown">👑</span>' : ""}<b>${esc(items[i].name)}</b><span class="sub">${esc(items[i].sub || "")}</span><span class="pv">${esc(items[i].val)}</span></div><div class="step" style="--h:${hh[i + 1]}px">${["🥇", "🥈", "🥉"][i]}</div></div>`).join("")}</div>`;
   };
+  // Duell-Einladungen: in der Lobby alle 4 Sek. nachfragen und oben als Hinweis zeigen
+  let inviteTimer = 0;
+  async function pollInvites() {
+    const { data } = await sb.rpc("duel_poll"); const box = $("#duelbar"); if (!box) return;
+    const inv = (data && data.invites) || [];
+    box.innerHTML = inv.map(i => `<div class="card cd-inv">🔐 <b>${esc(i.name)}</b> (${esc(i.family)}) fordert dich zu <b>Code knacken</b> heraus!
+      <div class="btns"><button class="btn" data-ok="${i.id}">Annehmen</button><button class="btn ghost" data-no="${i.id}">Nein</button></div></div>`).join("");
+    box.querySelectorAll("[data-ok]").forEach(b => b.onclick = async () => {
+      const { error } = await sb.rpc("duel_answer", { p_duel: b.dataset.ok, p_accept: true });
+      if (error) { box.innerHTML = `<div class="card err">${esc(error.message)}</div>`; return; }
+      clearInterval(inviteTimer); play("code", { duel: b.dataset.ok });
+    });
+    box.querySelectorAll("[data-no]").forEach(b => b.onclick = async () => { await sb.rpc("duel_answer", { p_duel: b.dataset.no, p_accept: false }); pollInvites(); });
+  }
   async function lobby() {
+    clearInterval(inviteTimer);
     if (stopGame) { stopGame(); stopGame = null; }
     curGame = null; ping();
     const days = S.range || null, gid = S.tab; // gid: null = alle Spiele zusammen
@@ -64,6 +79,7 @@ const ARCADE = (() => {
     const fitems = f.map(x => ({ name: x.family_name, sub: x.players + " Spieler", val: x.pts + " ⭐" })), pitems = people.map(x => ({ name: x.name, sub: x.family_name, val: x.val }));
     $("#arc").innerHTML = `<div class="top"><button class="back" id="home">← App</button><h1>🎮 Spielhalle</h1><span></span></div>
       <div class="pts"><span>Hallo <b>${esc(me.name)}</b></span><span>⭐ <b>${m.total}</b> gesamt · <b>${m.week}</b> diese Woche${mineIdx >= 0 ? ` · Platz <b>${mineIdx + 1}</b>` : ""}</span></div>
+      <div id="duelbar"></div>
       <div class="card online" id="online"><h2>🟢 Jetzt online</h2><div class="sub">Lädt …</div></div>
       <div class="card" id="rank"><h2>🏆 Bestenliste</h2>
         <div class="seg"><button data-r="7" class="${S.range === 7 ? "on" : ""}">Diese Woche</button><button data-r="0" class="${S.range === 0 ? "on" : ""}">Gesamt</button></div>
@@ -80,6 +96,7 @@ const ARCADE = (() => {
       <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b><span class="gs" data-gs="${x.id}"></span></button>`).join("")}</div></div>
       <nav class="nav"><button id="n-app">🏠<span>App</span></button><button id="n-rank">🏆<span>Bestenliste</span></button><button id="n-play">🎮<span>Spiele</span></button></nav>`;
     clearInterval(onlineTimer); loadLive(); onlineTimer = setInterval(loadLive, 15000);
+    clearInterval(inviteTimer); pollInvites(); inviteTimer = setInterval(pollInvites, 4000);
     if ($("#cd")) tick = setInterval(() => { const e = $("#cd"); if (e) e.textContent = left(); else clearInterval(tick); }, 1000);
     $("#home").onclick = $("#n-app").onclick = () => (location.href = "../");
     $("#n-rank").onclick = () => $("#rank").scrollIntoView({ behavior: "smooth" });
@@ -89,14 +106,15 @@ const ARCADE = (() => {
     document.querySelectorAll("[data-r]").forEach(x => (x.onclick = () => { S.range = +x.dataset.r; lobby(); }));
   }
 
-  function play(id) {
+  function play(id, opts) {
     const g = games.find(x => x.id === id);
-    clearInterval(onlineTimer); curGame = id; ping();
+    clearInterval(onlineTimer); clearInterval(inviteTimer); curGame = id; ping();
     $("#arc").innerHTML = `<div class="top"><button class="back" id="back">← Spielhalle</button><h1>${g.icon} ${esc(g.name)}</h1><span></span></div><div id="stage"></div>`;
     $("#back").onclick = lobby;
     const run = () => {
       if (stopGame) stopGame();
       stopGame = g.start($("#stage"), {
+        sb, me, esc, duel: opts && opts.duel, leaderboard() { S.tab = g.id; lobby(); },
         async finish(score, text) {
           let msg = "", pts = null;
           if (score > 0 || g.lower) {

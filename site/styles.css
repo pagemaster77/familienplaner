@@ -283,3 +283,53 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .mh{font-size:16px;margin:12px 0 2px}.mh small{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
 .mhost{display:flex;flex-direction:column;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}.mhost .btn{width:100%}
 .btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ===== Version 22: Ladebalken, Info-Symbol, rote Reiter, Flammen, Weitergeben-Karte ===== */
+.card{position:relative}
+.ib{position:absolute;top:10px;right:10px;z-index:2;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font:italic 700 15px/1 Georgia,"Times New Roman",serif;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.ib.on{background:var(--primary);color:#fff}
+.infobox{background:rgba(79,140,255,.1);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0 10px;font-size:14px;line-height:1.45}
+.infobox b{display:block;margin-bottom:2px}
+.infobox ul{margin:4px 0 0;padding-left:18px}
+.infobox li{margin:3px 0}
+.loadwrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center}
+.loadlogo{font-size:56px;line-height:1}
+.loadbar{width:min(260px,70vw);height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.loadbar i{display:block;height:100%;width:40%;border-radius:4px;background:var(--primary);animation:ldbar 1.1s ease-in-out infinite}
+@keyframes ldbar{0%{margin-left:-40%}100%{margin-left:100%}}
+.tabs button.nw{color:#e5252b;font-weight:700}
+.tabs button.nw .ic{animation:tabpulse 1.1s ease-in-out infinite}
+.top-wrap .tabs button.nw{box-shadow:inset 0 -3px 0 #e5252b}
+@keyframes tabpulse{50%{transform:scale(1.25)}}
+.blinkme{animation:blinkred .5s ease-in-out 6;border-radius:6px}
+@keyframes blinkred{0%,100%{box-shadow:0 3px 0 0 transparent;background:transparent}50%{box-shadow:0 3px 0 0 #e5252b;background:#e5252b1f}}
+/* Flammen */
+.flw{position:relative;display:inline-flex;flex:none;vertical-align:middle}
+.flr{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);display:flex;font-size:11px;line-height:1;pointer-events:none;white-space:nowrap;z-index:3}
+.flr i{font-style:normal;animation:flk 1.1s ease-in-out infinite alternate}
+.flr i:nth-child(2){animation-delay:.25s}.flr i:nth-child(3){animation-delay:.5s}
+@keyframes flk{from{transform:translateY(0) scale(1)}to{transform:translateY(-2px) scale(1.18)}}
+.fx .avatar{animation:fxg .7s ease-in-out infinite alternate}
+.fx-flame .avatar{box-shadow:0 0 8px 3px #ffb300,0 -3px 14px 5px #ff5a00}
+.fx-heart .avatar{box-shadow:0 0 8px 3px #ff8fb1,0 -3px 14px 5px #ff2d6f}
+.fx-poop .avatar{box-shadow:0 0 8px 3px #b07a3c,0 -3px 14px 5px #6b4423}
+@keyframes fxg{from{filter:brightness(1)}to{filter:brightness(1.18)}}
+.fx::before,.fx::after{content:attr(data-s);position:absolute;top:-4px;font-size:15px;line-height:1;z-index:5;pointer-events:none;animation:fxup 1.2s ease-in infinite}
+.fx::before{left:-4px}.fx::after{right:-4px;animation-delay:.6s}
+@keyframes fxup{0%{transform:translateY(8px) scale(.6);opacity:0}30%{opacity:1}100%{transform:translateY(-12px) scale(1.1);opacity:0}}
+/* Weitergeben-Karte im UNO-Look */
+.row .x.pass{font-size:18px}
+.passm{text-align:center}
+.ucard{width:118px;height:166px;margin:4px auto 14px;border-radius:14px;background:#e5252b;border:6px solid #fff;box-shadow:0 4px 14px #0006;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-4deg);color:#fff;font-weight:800;overflow:hidden}
+.ucard::before{content:"";position:absolute;inset:16px 8px;border-radius:50%;background:#ffd23f;transform:rotate(-24deg)}
+.ucard .u-c{font-size:46px;position:relative;z-index:1}
+.ucard .u-w{font-size:12px;position:relative;z-index:1;letter-spacing:.05em;text-transform:uppercase;color:#7a1014;margin-top:2px}
+.ucard .u-p{position:absolute;top:5px;left:8px;font-size:15px;z-index:1}
+.pchip{border:1.5px solid var(--line);background:var(--card);color:inherit;border-radius:18px;padding:7px 12px;font-size:14px;cursor:pointer}
+.pchip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+/* Admin: Einstellungen */
+.sh{margin:14px 0 2px;font-size:14px}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.srow input[type=checkbox]{width:20px;height:20px;flex:none;margin:0 6px 0 0}
+.srow:has(input[type=checkbox]){justify-content:flex-start}
+.srow input.pt{width:70px;flex:none}

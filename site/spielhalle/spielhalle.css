@@ -106,3 +106,20 @@ a{color:var(--pri);text-decoration:none}
 .online .lastp{margin-top:10px}
 .app .gs{display:flex;flex-direction:column;gap:1px;font-size:11px;line-height:1.25;color:var(--muted);text-align:center;max-width:100%}
 .app .gs .live{color:var(--ok);font-weight:600}
+
+/* Duell: Code knacken */
+.cd-dot{display:inline-block;width:30px;height:30px;border-radius:50%;box-shadow:inset 0 -3px 0 #0003,inset 0 3px 0 #fff4}
+.cd-row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.cd-row.sm{min-height:30px}
+.cd-cols{display:grid;grid-template-columns:1fr auto;gap:14px;text-align:left;margin:8px 0}
+.cd-pegs{font-size:15px;letter-spacing:1px;margin-left:6px}
+.bk{color:#111;text-shadow:0 0 0 #000}.wh{color:#fff}
+.cd .bk{color:#000;-webkit-text-stroke:1px #fff}
+.cd-cur{justify-content:center}
+.cd-slot{width:46px;height:46px;border-radius:50%;border:2px dashed var(--line);background:transparent;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.cd-slot.e{opacity:.7}
+.cd-pal{display:flex;justify-content:center;gap:8px;margin:10px 0;flex-wrap:wrap}
+.cd-pal button{width:44px;height:44px;border-radius:50%;border:2px solid #fff3;cursor:pointer;touch-action:manipulation}
+.cd-who{display:block;width:100%;margin:6px 0;text-align:left}
+.cd-inv{border:2px solid var(--pri);margin:8px 0;text-align:center}
+.btn:disabled{opacity:.45}
