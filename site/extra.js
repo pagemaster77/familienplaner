@@ -53,10 +53,16 @@ function tabNew(k) {
 
 /* ---------- Sprung aus der Push-Meldung: richtiger Reiter, richtige Stelle, kurz blinkend ---------- */
 const TAB_KEYS = ["home", "todo", "shop", "meals", "cal", "wish", "jobs", "chat", "family"];
-function goTo(tab, item) {
+async function goTo(tab, item) {
   if (!TAB_KEYS.includes(tab)) return;
   S.tab = tab; S.chatRoom = tab === "chat" ? "family" : null;
   S.focus = item || null; S.focusTries = 0;
+  /* Termin-Push: Der Kalender zeigt nur eine Woche. Darum erst die Woche des Termins aufschlagen, sonst gibt es nichts zum Blinken. */
+  if (tab === "cal" && item) {
+    try { if (!(S.events || []).some(e => String(e.id) === String(item))) await LOAD.events(); } catch (_e) { /* egal */ }
+    const ev = (S.events || []).find(e => String(e.id) === String(item));
+    if (ev && ev.starts_at) { const a = startOfDay(new Date()), b = startOfDay(new Date(ev.starts_at)); S.cw = Math.floor(Math.round((b - a) / 864e5) / 7); }
+  }
   render(); if (!item) window.scrollTo(0, 0);
 }
 function applyPending() {
