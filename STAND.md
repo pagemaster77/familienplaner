@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.11: Abgesagte Treffen koennen vom Veranstalter (oder Admin seiner Familie) geloescht werden (Knopf im Treffen-Fenster, RPC delete_meetup, sql/update-17). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.10: Push-Tap auf Termin: Kalender springt jetzt in die Woche des Termins (goTo in extra.js), danach blinkt der Eintrag. Vorher zeigte der Kalender nur die aktuelle Woche, der Termin war nicht auf der Seite. Kein Neuigkeiten-Eintrag.
 
 ## Version 22.9: Bild des Tages: Foto-Feld (#chefimg) liegt jetzt dauerhaft ausserhalb der neu gezeichneten Seite (chefInput() in app.js), Knopf "Bild auswaehlen oder aufnehmen" (ACT.chefPick). Ersetzt die Loesung aus 22.8. Kein Neuigkeiten-Eintrag.

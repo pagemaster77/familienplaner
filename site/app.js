@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.10 (19.11.)";
+const VERSION = "22.11 (19.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -451,6 +451,7 @@ function meetModal() {
       <button class="btn" data-act="meetFinish" data-id="${m.id}" ${started ? "" : "disabled"}>✔ Teilnahme bestätigen</button>
       <div class="sub" style="text-align:center">${started ? `${yes} Zusage${yes === 1 ? "" : "n"}: Jeder davon bekommt ${m.points} ⭐ für die Teilnahme.` : `Erst ab Beginn des Treffens möglich (${d.toLocaleString("de-DE", { weekday: "short" })} ${fmtTime(d)} Uhr).`}</div>
       <button class="btn ghost" data-act="meetCancel" data-id="${m.id}">Treffen absagen</button></div>`; })() : ""}
+    ${m.status === "cancelled" && meetIsHost(m) ? `<div class="mhost"><button class="btn ghost" data-act="meetDelete" data-id="${m.id}">🗑 Abgesagtes Treffen löschen</button></div>` : ""}
     </div></div>`;
 }
 function viewJobs() {
@@ -1106,6 +1107,7 @@ const ACT = {
   meetPick(d) { const i = S.mtSel.indexOf(d.id); if (i >= 0) S.mtSel.splice(i, 1); else S.mtSel.push(d.id); render(); },
   async meetAnswer(d) { await q(sb.rpc("answer_meetup", { p_id: d.id, p_profile: d.p, p_yes: d.v === "1" })); await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast(d.v === "1" ? "Zusage gespeichert – steht jetzt im Kalender 📅" : "Absage gespeichert"); },
   async meetFinish(d) { const mm = S.meetups.find(x => x.id === d.id); if (mm && new Date(mm.starts_at) > new Date()) return toast("Erst ab Beginn des Treffens möglich"); if (!confirm("Hat das Treffen stattgefunden? Alle mit Zusage bekommen die Punkte.")) return; const n = await q(sb.rpc("finish_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.point_log()]); render(); toast(`Punkte vergeben an ${n} Teilnehmer ⭐`); },
+  async meetDelete(d) { if (!confirm("Dieses abgesagte Treffen endgültig löschen? Das kann nicht rückgängig gemacht werden.")) return; await q(sb.rpc("delete_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast("Treffen gelöscht"); },
   async meetCancel(d) { if (!confirm("Treffen wirklich absagen? Alle Eingeladenen bekommen eine Meldung.")) return; await q(sb.rpc("cancel_meetup", { p_id: d.id })); S.mtView = null; await Promise.all([LOAD.meetups(), LOAD.events()]); render(); toast("Treffen abgesagt"); },
   jobPick(d) { const i = S.jobSel.indexOf(d.id); if (i >= 0) S.jobSel.splice(i, 1); else S.jobSel.push(d.id); render(); },
   async reopenTask(d) {
