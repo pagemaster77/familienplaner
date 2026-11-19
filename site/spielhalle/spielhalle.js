@@ -8,7 +8,7 @@ const ARCADE = (() => {
   let me = null, stopGame = null, S = { tab: null, range: 7 };
   // Online-Anzeige: curGame = Spiel, das ich gerade spiele (null = nur in der Spielhalle). Ping alle 20 Sek., "online" = Ping jünger als 60 Sek.
   let curGame = null, onlineTimer = 0, L = { last: [], online: [] };
-  const ping = () => { if (me) sb.rpc("arcade_ping", { p_game: curGame }).then(() => {}, () => {}); };
+  const ping = () => { if (me && !document.hidden) sb.rpc("arcade_ping", { p_game: curGame }).then(() => {}, () => {}); };
   const ago = t => { const m = Math.floor((Date.now() - new Date(t)) / 60000);
     return m < 1 ? "gerade eben" : m < 60 ? `vor ${m} Min` : m < 1440 ? `vor ${Math.floor(m / 60)} Std` : `vor ${Math.floor(m / 1440)} Tg`; };
   const gname = id => { const g = games.find(x => x.id === id); return g ? `${g.icon} ${g.name}` : id; };
@@ -95,8 +95,8 @@ const ARCADE = (() => {
         <div class="sub" style="margin-top:8px">Es zählen die eigene und die verbundenen Familien.</div></div>
       <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b><span class="gs" data-gs="${x.id}"></span></button>`).join("")}</div></div>
       <nav class="nav"><button id="n-app">🏠<span>App</span></button><button id="n-rank">🏆<span>Bestenliste</span></button><button id="n-play">🎮<span>Spiele</span></button></nav>`;
-    clearInterval(onlineTimer); loadLive(); onlineTimer = setInterval(loadLive, 15000);
-    clearInterval(inviteTimer); pollInvites(); inviteTimer = setInterval(pollInvites, 4000);
+    clearInterval(onlineTimer); loadLive(); onlineTimer = setInterval(() => { if (!document.hidden) loadLive(); }, 15000);
+    clearInterval(inviteTimer); pollInvites(); inviteTimer = setInterval(() => { if (!document.hidden) pollInvites(); }, 8000);
     if ($("#cd")) tick = setInterval(() => { const e = $("#cd"); if (e) e.textContent = left(); else clearInterval(tick); }, 1000);
     $("#home").onclick = $("#n-app").onclick = () => (location.href = "../");
     $("#n-rank").onclick = () => $("#rank").scrollIntoView({ behavior: "smooth" });

@@ -516,7 +516,7 @@ setInterval(render, 30000);
 function init() {
   loadCore().then(loadIcal);
   clearInterval(init.a); clearInterval(init.b);
-  init.a = setInterval(loadCore, 30000);
+  init.a = setInterval(loadCore, 60000);
   init.b = setInterval(loadIcal, 10 * 60 * 1000);
 }
 if (TOKEN) init(); else startPairing();
