@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.7: Bild des Tages: Foto-Umwandlung robuster (createImageBitmap mit Drehung, Fallback Bild-Element, Meldungen bei leerer Datei/falschem Format, Hinweis "Bild wird verarbeitet" und "Bild ausgewählt"). Kein Neuigkeiten-Eintrag.
+
 ## Spiele-Test (ohne Versionsnummer): eigene Testseite /spiele-test/ (site/spiele-test/index.html, eine Datei) mit Weltraum-Abwehr, Ballon-Pfeil, Reversi, Hühnerjagd. Nicht aus der App verlinkt, nicht in der Spielhalle, kein Neuigkeiten-Eintrag. Noindex.
 
 ## Version 22.6: Spielhalle: Info-Knopf (ⓘ) im Spiel mit Anleitung und Beispielbildern (Spiel-Feld help() in ARCADE.register; derzeit Bonbon-Match und Code knacken). Oeffnet beim ersten Start automatisch (localStorage arcade_help_<id>). Kein Neuigkeiten-Eintrag.

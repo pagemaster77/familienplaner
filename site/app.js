@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.6 (18.11.)";
+const VERSION = "22.7 (19.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -71,19 +71,29 @@ function avatarFromFile(file, size = 128) {
 
 /* Foto für das Tagesbild: längste Seite höchstens 1280 px, JPEG (ca. 150-300 KB) */
 function photoFromFile(file, max = 1280) {
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      let qy = 0.82, out = c.toDataURL("image/jpeg", qy);
-      while (out.length > 1000000 && qy > 0.4) { qy -= 0.1; out = c.toDataURL("image/jpeg", qy); }
-      res(out);
-    };
-    img.onerror = () => rej(new Error("Das Bild konnte nicht gelesen werden"));
-    img.src = URL.createObjectURL(file);
+  const fail = m => { throw new Error(m); };
+  const draw = (src, w, h) => {
+    const k = Math.min(1, max / Math.max(w, h));
+    const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+    let qy = 0.82, out = c.toDataURL("image/jpeg", qy);
+    while (out.length > 1000000 && qy > 0.4) { qy -= 0.1; out = c.toDataURL("image/jpeg", qy); }
+    if (!out.startsWith("data:image/jpeg")) fail("Das Bild konnte nicht umgewandelt werden");
+    return out;
+  };
+  const viaTag = () => new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { try { res(draw(img, img.naturalWidth || img.width, img.naturalHeight || img.height)); } catch (e) { rej(e); } finally { URL.revokeObjectURL(u); } };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error("x")); };
+    img.src = u;
   });
+  return (async () => {
+    if (!file || file.size === 0) fail("Die Datei ist leer. Liegt das Foto nur in der Cloud (z. B. Google Fotos)? Bitte erst auf dem Handy speichern.");
+    if (window.createImageBitmap) {
+      try { const bm = await createImageBitmap(file, { imageOrientation: "from-image" }); try { return draw(bm, bm.width, bm.height); } finally { bm.close && bm.close(); } } catch (e) { /* weiter mit Bild-Element */ }
+    }
+    try { return await viaTag(); } catch (e) { fail("Dieses Bildformat geht nicht. Bitte ein Foto als JPG oder PNG wählen (oder einen Screenshot davon machen)."); }
+  })();
 }
 
 /* Eingaben beim Neuzeichnen retten, damit nichts verloren geht, wenn jemand anderes etwas ändert */
@@ -738,7 +748,7 @@ function cardChef() {
   const form = mine ? `<form data-form="chef" style="margin-top:10px">
       <div class="sub">${post ? "Du kannst dein Bild oder deinen Song noch ändern." : "Du bist heute dran! Stell ein Bild und/oder einen YouTube-Song ein und bekomme <b>5 Punkte</b>."}</div>
       <label class="field"><span>Bild des Tages</span><input id="chefimg" type="file" accept="image/*"></label>
-      ${S.chefPhoto ? `<img class="chefimg" src="${S.chefPhoto}" alt="Vorschau">` : ""}
+      ${S.chefPhoto ? `<div class="sub">✓ Bild ausgewählt (Vorschau). Anderes Bild? Einfach nochmal oben wählen.</div><img class="chefimg" src="${S.chefPhoto}" alt="Vorschau">` : ""}
       <label class="field"><span>YouTube-Link (Song des Tages)</span><input id="chefyt" name="yt" placeholder="https://www.youtube.com/watch?v=…" value="${post && post.yt_id ? `https://youtu.be/${post.yt_id}` : ""}"></label>
       <button class="btn block">${post ? "Speichern" : "Einstellen (+5 Punkte)"}</button></form>` : (post ? "" : `<div class="sub">${esc(chef.name)} hat heute noch nichts eingestellt.</div>`);
   return `<div class="card chefcard"><h2>👑 Tages-Chef heute: ${avatar(chef, 30)} ${esc(chef.name)}</h2>${show}${form}
@@ -1472,7 +1482,8 @@ document.addEventListener("change", async e => {
   if (c.name === "allday" && c.form) { const t = c.form.querySelector('input[name="time"]'); if (t) t.disabled = c.checked; }
   if (c.dataset && c.dataset.meal) S.uncheck[c.dataset.meal + ":" + c.dataset.i] = !c.checked;
   if (c.id === "chefimg" && c.files && c.files[0]) {
-    try { S.chefPhoto = await photoFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
+    toast("Bild wird verarbeitet …");
+    try { S.chefPhoto = await photoFromFile(c.files[0]); render(); toast("Bild ist ausgewählt. Jetzt unten auf Einstellen tippen."); } catch (err) { toast(err.message); }
   }
   if (c.id === "pphoto" && c.files && c.files[0]) {
     try { S.pe.photo = await avatarFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
