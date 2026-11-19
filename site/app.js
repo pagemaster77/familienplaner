@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.8 (19.11.)";
+const VERSION = "22.9 (19.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -96,6 +96,12 @@ function photoFromFile(file, max = 1280) {
   })();
 }
 
+/* Foto-Feld fürs Tagesbild: liegt dauerhaft außerhalb der neu gezeichneten Seite, damit die Auswahl (Samsung/Android meldet sie erst nach der Rückkehr in die App) nie verloren geht */
+function chefInput() {
+  let el = document.getElementById("chefimg");
+  if (!el) { el = document.createElement("input"); el.type = "file"; el.id = "chefimg"; el.accept = "image/*"; el.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0"; document.body.appendChild(el); }
+  return el;
+}
 /* Eingaben beim Neuzeichnen retten, damit nichts verloren geht, wenn jemand anderes etwas ändert */
 function saveInputs() {
   const m = {}, c = {};
@@ -104,22 +110,11 @@ function saveInputs() {
     else if (el.type !== "file") m[el.id] = el.value;
   });
   const a = document.activeElement;
-  /* Foto-Auswahl: Das Handy meldet die gewählte Datei oft erst, wenn die App wieder sichtbar ist. Würde das Feld vorher neu gezeichnet,
-     ginge die Datei verloren (Tages-Chef sah "Keine ausgewählt"). Darum bleibt das alte Feld erhalten. */
-  const files = {};
-  document.querySelectorAll('input[type="file"][id]').forEach(el => { files[el.id] = el; });
-  return { m, c, files, focus: a && a.id, pos: a && a.selectionStart };
+  return { m, c, focus: a && a.id, pos: a && a.selectionStart };
 }
 function restoreInputs(s) {
   Object.entries(s.m).forEach(([id, v]) => { const el = document.getElementById(id); if (el && v !== "") el.value = v; });
   Object.entries(s.c || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el && el.dataset.keep !== undefined) el.checked = v; });
-  Object.entries(s.files || {}).forEach(([id, old]) => {
-    const now = document.getElementById(id);
-    if (id === "chefimg" && now && now !== old && now.type === "file" && old.files && old.files.length) {
-      now.replaceWith(old);
-      if (!old.dataset.done) setTimeout(() => old.dispatchEvent(new Event("change", { bubbles: true })), 0); // Meldung kam, als das Feld schon ersetzt war
-    }
-  });
   if (s.focus) {
     const el = document.getElementById(s.focus);
     if (el) { el.focus(); try { if (s.pos != null) el.setSelectionRange(s.pos, s.pos); } catch (e) {} }
@@ -758,7 +753,7 @@ function cardChef() {
       ${post.yt_id ? `<div class="chefsong"><img src="https://i.ytimg.com/vi/${post.yt_id}/hqdefault.jpg" alt=""><button class="btn" data-act="ytPlay" data-v="${post.yt_id}">▶ Song des Tages anhören</button></div>` : ""}` : "";
   const form = mine ? `<form data-form="chef" style="margin-top:10px">
       <div class="sub">${post ? "Du kannst dein Bild oder deinen Song noch ändern." : "Du bist heute dran! Stell ein Bild und/oder einen YouTube-Song ein und bekomme <b>5 Punkte</b>."}</div>
-      <label class="field"><span>Bild des Tages</span><input id="chefimg" type="file" accept="image/*"></label>
+      <div class="field"><span>Bild des Tages</span><button type="button" class="btn ghost block" data-act="chefPick">📷 Bild auswählen oder aufnehmen</button></div>
       ${S.chefPhoto ? `<div class="sub">✓ Bild ausgewählt (Vorschau). Anderes Bild? Einfach nochmal oben wählen.</div><img class="chefimg" src="${S.chefPhoto}" alt="Vorschau">` : ""}
       <label class="field"><span>YouTube-Link (Song des Tages)</span><input id="chefyt" name="yt" placeholder="https://www.youtube.com/watch?v=…" value="${post && post.yt_id ? `https://youtu.be/${post.yt_id}` : ""}"></label>
       <button class="btn block">${post ? "Speichern" : "Einstellen (+5 Punkte)"}</button></form>` : (post ? "" : `<div class="sub">${esc(chef.name)} hat heute noch nichts eingestellt.</div>`);
@@ -1188,6 +1183,7 @@ const ACT = {
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     toast("Sicherung gespeichert ✔");
   },
+  chefPick() { chefInput().click(); },
   chefPhotoOpen() {
     const p = todayPost(), src = p && S.dailyPhoto[p.id]; if (!src) return;
     const el = document.createElement("div"); el.className = "overlay-img"; el.innerHTML = `<img src="${src}" alt="">`; el.onclick = () => el.remove(); document.body.appendChild(el);
@@ -1321,7 +1317,7 @@ const FORMS = {
     if (!S.chefPhoto && !yt) return toast("Bitte ein Bild oder einen YouTube-Link angeben");
     const { data, error } = await sb.rpc("post_daily", { p_photo: S.chefPhoto || null, p_yt: yt || null });
     if (error) return toast(error.message);
-    S.chefPhoto = null; S.dailyPhoto = {}; { const fi = document.getElementById("chefimg"); if (fi) { fi.value = ""; delete fi.dataset.done; } }
+    S.chefPhoto = null; S.dailyPhoto = {};
     await Promise.all([LOAD.daily_posts(), LOAD.point_log()]); render();
     toast(data && data.points ? `Eingestellt – +${data.points} Punkte 🎉` : "Gespeichert");
   },
@@ -1493,9 +1489,9 @@ document.addEventListener("change", async e => {
   if (c.name === "allday" && c.form) { const t = c.form.querySelector('input[name="time"]'); if (t) t.disabled = c.checked; }
   if (c.dataset && c.dataset.meal) S.uncheck[c.dataset.meal + ":" + c.dataset.i] = !c.checked;
   if (c.id === "chefimg" && c.files && c.files[0]) {
-    if (c.dataset.done === c.files[0].name + c.files[0].size) return; c.dataset.done = c.files[0].name + c.files[0].size;
-    toast("Bild wird verarbeitet …");
-    try { S.chefPhoto = await photoFromFile(c.files[0]); render(); toast("Bild ist ausgewählt. Jetzt unten auf Einstellen tippen."); } catch (err) { toast(err.message); }
+    const f = c.files[0]; toast("Bild wird verarbeitet …");
+    try { S.chefPhoto = await photoFromFile(f); render(); toast("Bild ist ausgewählt. Jetzt unten auf Einstellen tippen."); } catch (err) { toast(err.message); }
+    c.value = "";
   }
   if (c.id === "pphoto" && c.files && c.files[0]) {
     try { S.pe.photo = await avatarFromFile(c.files[0]); render(); } catch (err) { toast(err.message); }
