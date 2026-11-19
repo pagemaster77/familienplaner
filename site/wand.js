@@ -154,12 +154,24 @@ async function post(body) {
   if (!j.ok) throw new Error(j.error || "Fehler");
   return j;
 }
-const call = what => post({ token: TOKEN, what });
+const call = (what, extra) => post({ token: TOKEN, what, ...(extra || {}) });
 /* Die Adresse wurde ungültig gemacht (neue Adresse / ausgeschaltet): neu koppeln */
-function lostAccess() { store.del("wallToken"); TOKEN = ""; W.data = null; W.ical = []; if (location.hash) history.replaceState(null, "", location.pathname); startPairing(); }
+function lostAccess() { store.del("wallToken"); TOKEN = ""; W.data = null; W.etag = null; W.shotKey = null; W.ical = []; if (location.hash) history.replaceState(null, "", location.pathname); startPairing(); }
+/* Profilfotos kommen getrennt und nur bei Aenderung (Schluessel = Person + Foto-Version) */
+function attachPhotos() {
+  W.pc = W.pc || {}; let need = false;
+  (W.data.profiles || []).forEach(p => { if (!p.photo_v) { p.photo = null; return; } const k = p.id + "|" + p.photo_v; if (W.pc[k]) p.photo = W.pc[k]; else need = true; });
+  if (!need || W.pcBusy) return;
+  W.pcBusy = true;
+  call("photos").then(r => { (W.data.profiles || []).forEach(p => { if (p.photo_v && r.photos && r.photos[p.id]) { W.pc[p.id + "|" + p.photo_v] = r.photos[p.id]; p.photo = r.photos[p.id]; } }); W.pcBusy = false; render(); }).catch(() => { W.pcBusy = false; });
+}
 async function loadCore() {
   if (!TOKEN) return;
-  try { const old = W.data; W.data = await call("core"); W.stale = false; announce(old, W.data); loadShot(); }
+  try {
+    const r = await call("core", { etag: W.etag || null }); W.stale = false;
+    if (r.same && W.data) { W.data.at = new Date().toISOString(); } // nichts Neues: Daten behalten, kaum Datenverbrauch
+    else { const old = W.data; W.data = r; W.etag = r.etag || null; attachPhotos(); announce(old, W.data); loadShot(); }
+  }
   catch (e) { if (e.message === "invalid") return lostAccess(); W.stale = true; }
   render();
 }
@@ -261,8 +273,8 @@ async function loadShot() {
   const d = W.data && W.data.daily;
   if (!d || !d.has_photo) { W.shot = null; return; }
   const key = d.id + "|" + d.updated_at;
-  if (W.shot && W.shot.key === key) return;
-  try { const r = await call("daily_photo"); W.shot = r.data && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(r.data) ? { key, src: r.data } : null; } catch (e) { /* naechster Versuch in 30 s */ }
+  if (W.shotKey === key) return; // schon geholt (auch wenn es kein gueltiges Bild war): nicht alle 30 s neu laden
+  try { const r = await call("daily_photo"); W.shotKey = key; W.shot = r.data && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(r.data) ? { key, src: r.data } : null; } catch (e) { /* naechster Versuch in 30 s */ }
 }
 const wantSaver = () => !!(W.data && W.shot && !nightActive() && (W.saverUntil || 0) > Date.now() && !(W.data.profiles || []).some(p => moodOf(p) === "help"));
 

@@ -33,7 +33,7 @@ async function fetchIcal(url: string): Promise<string | null> {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { token, what, nonce } = await req.json();
+    const { token, what, nonce, etag: etag_in } = await req.json();
 
     // Kopplung per kurzem Code (für Displays ohne Tastatur)
     if (what === "pair_start" || what === "pair_poll") {
@@ -71,6 +71,14 @@ Deno.serve(async (req: Request) => {
       if (!post) return json({ ok: true, id: null });
       const { data: ph } = await db.from("daily_photos").select("data").eq("post_id", post.id).maybeSingle();
       return json({ ok: true, id: post.id, updated_at: post.updated_at, data: ph?.data ?? null });
+    }
+
+    // Profilfotos (einmal abgeholt, nur wenn sich ein Foto geaendert hat). Sonst wuerde jede Abfrage alle Fotos mitschleppen.
+    if (what === "photos") {
+      const { data: ps } = await db.from("profiles").select("id,photo").eq("family_id", fam.id);
+      const photos: Record<string, string> = {};
+      for (const p of ps ?? []) if (p.photo) photos[p.id] = p.photo;
+      return json({ ok: true, photos });
     }
 
     // Kalender von Google/iCloud (seltener abgerufen)
@@ -116,10 +124,10 @@ Deno.serve(async (req: Request) => {
     const flames = fam.flame_on
       ? { cfg: { flame_on: true, flame_symbol: fam.flame_symbol, flame1_days: fam.flame1_days, flame2_days: fam.flame2_days, flame3_tasks: fam.flame3_tasks }, st: fs.data ?? [], wk: week }
       : null;
-    return json({
+    const payload = {
       ok: true,
       family: { name: fam.name },
-      profiles: (pr.data ?? []).map((p: any) => ({ ...p, points: pts[p.id] ?? 0 })),
+      profiles: (pr.data ?? []).map((p: any) => { const { photo, ...rest } = p; return { ...rest, photo_v: photo ? photo.length + ":" + photo.slice(-24) : "", points: pts[p.id] ?? 0 }; }),
       tasks: tasks.filter((t: any) => !t.done || !t.approved || (t.done_at && new Date(t.done_at).getTime() > recent)),
       shopping: sh.data ?? [],
       events: ev.data ?? [],
@@ -129,8 +137,13 @@ Deno.serve(async (req: Request) => {
       chef,
       daily: dp.data ?? null,
       flames,
-      at: new Date().toISOString(),
-    });
+    };
+    // Unveraendert? Dann nur ein kurzes "same" zurueckschicken (spart Datenvolumen: die Wand fragt alle 30 s)
+    const txt = JSON.stringify(payload);
+    const dig = new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(txt)));
+    const etag = Array.from(dig).map((b) => b.toString(16).padStart(2, "0")).join("");
+    if (typeof etag_in === "string" && etag_in === etag) return json({ ok: true, same: true });
+    return json({ ...payload, etag, at: new Date().toISOString() });
   } catch (e) {
     return json({ ok: false, error: String(e) }, 500);
   }
