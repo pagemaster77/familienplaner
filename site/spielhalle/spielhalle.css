@@ -1,4 +1,4 @@
-:root{color-scheme:dark;--bg:#0f1623;--card:#1a2233;--line:#2b3750;--text:#eef2fa;--muted:#93a1bd;--pri:#4f8cff;--ok:#3ecf8e;--bad:#ef5b5b;--gold:#ffc93c}
+:root{color-scheme:light dark;--bg:#0f1623;--card:#1a2233;--line:#2b3750;--text:#eef2fa;--muted:#93a1bd;--pri:#4f8cff;--ok:#3ecf8e;--bad:#ef5b5b;--gold:#ffc93c}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,sans-serif;touch-action:manipulation}
 #arc{max-width:560px;margin:0 auto;padding:12px 14px calc(96px + env(safe-area-inset-bottom))}
@@ -143,3 +143,6 @@ a{color:var(--pri);text-decoration:none}
 .hx-q{background:#2a3350!important;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:700}
 .hlpbox .cd-dot{width:32px;height:32px;display:inline-block;border-radius:50%;vertical-align:middle}
 .hlpbox b.bk{color:#000;background:#fff;border-radius:50%;padding:0 3px;line-height:1}.hlpbox .cd-pegs .bk{background:#fff;border-radius:50%;padding:0 2px}
+
+@media (prefers-color-scheme:dark){:root{color-scheme:dark}}
+@media (prefers-color-scheme:light){:root{color-scheme:dark}}

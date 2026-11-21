@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.15: Samsung Internet dunkelt Spielhalle trotz color-scheme ab (Gold wird braun): meta color-scheme "light dark" + supported-color-schemes + prefers-color-scheme-Regeln in der Spielhalle. Falls es nicht hilft: Einstellung auf dem Handy (Samsung Internet Nachtmodus/Dunkelmodus fuer Webseiten). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.14: Farben auf Android im Dunkelmodus (Samsung/Chrome "Webinhalte abdunkeln") verfaelscht (Bonbons braun, Ringe rötlich): meta color-scheme + :root color-scheme gesetzt (App: light dark, Wand: light; Spielhalle, Spiele-Test: dark). Kein Neuigkeiten-Eintrag.
 
 ## Version 22.13: Noch weniger Datenverbrauch: Wand fragt alle 60 s (statt 30 s). Spielhalle fragt im Hintergrund (Tab/Handy gesperrt) nicht mehr nach, Einladungen alle 8 s statt 4 s. Kein Neuigkeiten-Eintrag.
