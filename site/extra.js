@@ -54,6 +54,7 @@ function tabNew(k) {
 /* ---------- Sprung aus der Push-Meldung: richtiger Reiter, richtige Stelle, kurz blinkend ---------- */
 const TAB_KEYS = ["home", "todo", "shop", "meals", "cal", "wish", "jobs", "chat", "family"];
 async function goTo(tab, item) {
+  if (tab === "duell") { location.href = "spielhalle/"; return; } /* Push "Duell-Einladung": direkt in die Spielhalle */
   if (!TAB_KEYS.includes(tab)) return;
   S.tab = tab; S.chatRoom = tab === "chat" ? "family" : null;
   S.focus = item || null; S.focusTries = 0;
@@ -120,6 +121,7 @@ async function flameOpen() {
   if (isDisplay() || !S.me) return;
   flameAt = Date.now();
   try { await sb.rpc("flame_open"); await LOAD.flame_state(); render(); } catch (_e) { /* egal */ }
+  duelCheck();
 }
 
 /* ---------- Weitergeben-Karte ---------- */
@@ -194,3 +196,23 @@ const EXTRA_FORMS = {
     S.family = { ...S.family, ...patch }; setFlameData(); toast("Gespeichert ✔"); render();
   },
 };
+
+/* ---------- Duell-Einladung (Code knacken): Hinweis in der App, auch ausserhalb der Spielhalle ---------- */
+let duelBar = null, duelTimer = 0;
+async function duelCheck() {
+  if (!S.me || S.booting || isDisplay()) return;
+  let inv = [];
+  try { const r = await sb.rpc("duel_poll"); inv = (r.data && r.data.invites) || []; } catch (_e) { return; }
+  if (!duelBar) { duelBar = document.createElement("div"); duelBar.id = "duelnote"; document.body.appendChild(duelBar); }
+  duelBar.hidden = !inv.length;
+  duelBar.innerHTML = inv.slice(0, 1).map(i => `<div class="dn"><span>🔐 <b>${esc(i.name)}</b> (${esc(i.family)}) fordert dich bei <b>Code knacken</b> heraus!</span>
+    <button class="btn" data-dn="go">Zur Spielhalle</button><button class="btn ghost" data-dn="no" data-id="${esc(i.id)}">Nein</button></div>`).join("");
+  duelBar.onclick = async e => {
+    const b = e.target.closest("[data-dn]"); if (!b) return;
+    if (b.dataset.dn === "go") { location.href = "spielhalle/"; return; }
+    try { await sb.rpc("duel_answer", { p_duel: b.dataset.id, p_accept: false }); } catch (_e) { /* egal */ }
+    duelCheck();
+  };
+  clearTimeout(duelTimer); if (inv.length) duelTimer = setTimeout(duelCheck, 185000); /* Einladung gilt 3 Minuten */
+}
+window.duelCheck = duelCheck;

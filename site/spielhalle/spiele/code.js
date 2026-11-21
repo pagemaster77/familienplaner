@@ -12,7 +12,7 @@ ARCADE.register({
     return `<h2>🔐 So geht Code knacken</h2>
       <p><b>Ziel:</b> Knacke deinen <b>geheimen Farbcode</b> schneller als dein Gegner seinen. Jeder hat einen eigenen Code aus <b>4 Feldern</b> mit <b>6 möglichen Farben</b>. Eine Farbe kann auch mehrfach vorkommen.</p>
       <h3>So startest du</h3>
-      <ol><li>Beide Spieler müssen gleichzeitig in der Spielhalle sein.</li>
+      <ol><li>Du kannst auch jemanden einladen, der nicht in der Spielhalle ist: Er oder sie bekommt eine Meldung aufs Handy und einen Hinweis in der App.</li>
       <li>Tippe auf eine Person mit 🟢. Sie bekommt eine Einladung, die 3 Minuten gilt.</li>
       <li>Nimmt sie an, bekommt jeder seinen geheimen Code. Den sieht niemand, auch du nicht.</li></ol>
       <h3>So rätst du</h3>
@@ -48,20 +48,27 @@ ARCADE.register({
     async function pick(msg) {
       stop(); mode = "pick";
       root.innerHTML = `<div class="card"><h2>🔐 Code knacken</h2>
-        <div class="sub">Zwei Spieler knacken gleichzeitig ihren geheimen Farbcode (4 Felder, 6 Farben, 10 Versuche). Wer zuerst knackt, gewinnt: <b>30 ⭐</b>. Das geht nur, wenn beide gerade in der Spielhalle sind.</div>
+        <div class="sub">Zwei Spieler knacken gleichzeitig ihren geheimen Farbcode (4 Felder, 6 Farben, 10 Versuche). Wer zuerst knackt, gewinnt: <b>30 ⭐</b>. Wer nicht in der Spielhalle ist, bekommt eine Meldung aufs Handy.</div>
         ${msg || ""}<div id="cd-list" style="margin-top:12px"><div class="sub">Suche Spieler …</div></div></div>`;
+      let all = null; /* alle verbundenen Personen (auch wer gerade nicht in der Spielhalle ist) */
+      const loadAll = async () => {
+        const [m, l] = await Promise.all([sb.from("profiles").select("id,name,family_id"), sb.rpc("linked_profiles")]);
+        all = [...(m.data || []).map(x => ({ profile_id: x.id, name: x.name, family_name: "" })), ...(l.data || []).map(x => ({ profile_id: x.id, name: x.name, family_name: x.family_name }))].filter(x => x.profile_id !== me.id);
+      };
       const load = async () => {
+        if (!all) { try { await loadAll(); } catch (_e) { all = []; } }
         const [a, b] = await Promise.all([sb.rpc("arcade_online"), sb.rpc("duel_poll")]);
         if (dead || mode !== "pick") return;
         const p = b.data || {};
         if (p.active && p.active.status === "playing") { duel = p.active.id; return wait(); }
         if (p.active && p.active.status === "invite" && p.active.mine) { duel = p.active.id; return wait(); }
-        const o = (a.data || []).filter(x => x.profile_id !== me.id), inv = p.invites || [];
+        const o = (a.data || []).filter(x => x.profile_id !== me.id), inv = p.invites || [], on = new Set(o.map(x => x.profile_id)), off = all.filter(x => !on.has(x.profile_id));
         const box = root.querySelector("#cd-list"); if (!box) return;
         box.innerHTML = (inv.length ? inv.map(i => `<div class="cd-inv">📨 <b>${esc(i.name)}</b> (${esc(i.family)}) fordert dich heraus!
             <div class="btns"><button class="btn" data-ok="${i.id}">Annehmen</button><button class="btn ghost" data-no="${i.id}">Nein</button></div></div>`).join("") : "")
           + (o.length ? `<div class="sub" style="margin-bottom:6px">Jetzt online – tippe auf eine Person:</div>` + o.map(x => `<button class="btn ghost cd-who" data-to="${x.profile_id}">🟢 ${esc(x.name)} <span class="sub">(${esc(x.family_name)})</span></button>`).join("")
-            : `<div class="sub">Gerade ist niemand sonst in der Spielhalle. Sag jemandem Bescheid – diese Seite aktualisiert sich von selbst.</div>`);
+            : `<div class="sub">Gerade ist niemand sonst in der Spielhalle.</div>`)
+          + (off.length ? `<div class="sub" style="margin:10px 0 6px">Nicht in der Spielhalle – bekommt eine Meldung aufs Handy:</div>` + off.map(x => `<button class="btn ghost cd-who" data-to="${x.profile_id}">⚪ ${esc(x.name)}${x.family_name ? ` <span class="sub">(${esc(x.family_name)})</span>` : ""}</button>`).join("") : "");
         box.querySelectorAll("[data-to]").forEach(x => x.onclick = async () => {
           x.disabled = true; const { data, error } = await sb.rpc("duel_invite", { p_to: x.dataset.to });
           if (error) return pick(err(error)); duel = data; wait();

@@ -96,7 +96,7 @@ const ARCADE = (() => {
       <div class="card" id="spiele"><h2>Spiele</h2><div class="apps">${games.map(x => `<button class="app" data-g="${x.id}"><span class="icn" style="background:${x.color || "linear-gradient(145deg,#4f8cff,#7a5cff)"}">${x.icon}</span><b>${esc(x.name)}</b><span class="gs" data-gs="${x.id}"></span></button>`).join("")}</div></div>
       <nav class="nav"><button id="n-app">🏠<span>App</span></button><button id="n-rank">🏆<span>Bestenliste</span></button><button id="n-play">🎮<span>Spiele</span></button></nav>`;
     clearInterval(onlineTimer); loadLive(); onlineTimer = setInterval(() => { if (!document.hidden) loadLive(); }, 15000);
-    clearInterval(inviteTimer); pollInvites(); inviteTimer = setInterval(() => { if (!document.hidden) pollInvites(); }, 8000);
+    clearInterval(inviteTimer); pollInvites(); inviteTimer = setInterval(() => { if (!document.hidden) pollInvites(); }, 4000);
     if ($("#cd")) tick = setInterval(() => { const e = $("#cd"); if (e) e.textContent = left(); else clearInterval(tick); }, 1000);
     $("#home").onclick = $("#n-app").onclick = () => (location.href = "../");
     $("#n-rank").onclick = () => $("#rank").scrollIntoView({ behavior: "smooth" });

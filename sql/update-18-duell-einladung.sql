@@ -1,0 +1,3 @@
+-- Version 22.16: Duell-Einladung (Code knacken) geht auch an Personen ausserhalb der Spielhalle.
+-- duel_invite ohne "muss in der Spielhalle sein"; Trigger duel_push schickt eine Push-Meldung (tab 'duell');
+-- duels ist jetzt im Realtime (die App zeigt sofort einen Hinweis). Als Migration "duell_einladung_push" eingespielt.

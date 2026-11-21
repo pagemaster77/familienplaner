@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.15 (21.11.)";
+const VERSION = "22.16 (21.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -315,7 +315,7 @@ let channel = null;
 function listen() {
   if (channel) sb.removeChannel(channel);
   channel = sb.channel("familie")
-    .on("postgres_changes", { event: "*", schema: "public" }, p => { if (LOAD[p.table]) LOAD[p.table]().then(render); if (p.table === "tasks" || p.table === "point_log") LOAD.flame_state().then(render); })
+    .on("postgres_changes", { event: "*", schema: "public" }, p => { if (LOAD[p.table]) LOAD[p.table]().then(render); if (p.table === "tasks" || p.table === "point_log") LOAD.flame_state().then(render); if (p.table === "duels" && window.duelCheck) duelCheck(); })
     .subscribe();
 }
 
@@ -1535,7 +1535,7 @@ async function start() {
     navigator.serviceWorker.register("sw.js").catch(() => {});
     navigator.serviceWorker.addEventListener("message", ev => { const d = ev.data || {}; if (d.type !== "go") return; if (S.me && !S.booting) goTo(d.tab, d.item); else S.pending = { tab: d.tab, item: d.item }; });
   }
-  document.addEventListener("visibilitychange", () => { if (document.hidden || !S.me || S.booting) return; if (Date.now() - flameAt > 30 * 60e3) flameOpen(); else render(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden || !S.me || S.booting) return; if (Date.now() - flameAt > 30 * 60e3) flameOpen(); else render(); window.duelCheck && duelCheck(); });
   const { data } = await sb.auth.getSession();
   S.user = data.session?.user || null;
   S.booting = !!S.user;

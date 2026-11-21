@@ -340,3 +340,9 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .srow input[type=checkbox]{width:20px;height:20px;flex:none;margin:0 6px 0 0}
 .srow:has(input[type=checkbox]){justify-content:flex-start}
 .srow input.pt{width:70px;flex:none}
+
+/* Duell-Einladung als Hinweis ueber der App */
+#duelnote{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);z-index:90;padding:8px 10px}
+#duelnote .dn{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--card);color:var(--text);border:2px solid var(--primary);border-radius:14px;padding:10px 12px;box-shadow:0 6px 22px #0005;max-width:560px;margin:0 auto}
+#duelnote .dn span{flex:1 1 200px}
+#duelnote .btn{padding:8px 12px}

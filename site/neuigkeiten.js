@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.16", date: "21.11.2026", items: [
+    "Code knacken: Eine Einladung zum Duell kommt jetzt auch an, wenn die andere Person gar nicht in der Spielhalle ist. Sie bekommt eine Meldung aufs Handy und in der App oben einen Hinweis mit „Zur Spielhalle“.",
+  ] },
   { v: "22.0", date: "18.11.2026", items: [
     "Aufgeräumt: Die kleinen Erklärtexte stehen jetzt hinter einem eingekreisten „i“ oben rechts in den Karten. Antippen zeigt eine kurze Anleitung. Der Chat ist von der Startseite verschwunden, du findest ihn im Reiter Chat.",
     "Neues in den Reitern: Ein Reiter leuchtet rot, wenn es dort etwas Neues gibt (Chat, Aufgaben, Einkauf, Termine, Jobs). Sobald du ihn öffnest, ist das Rot weg. Tippst du eine Push-Meldung an, springt die App direkt an die richtige Stelle und der Eintrag blinkt kurz.",
