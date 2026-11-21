@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.16 (21.11.)";
+const VERSION = "22.17 (21.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -552,7 +552,7 @@ function cardPoints(admin) {
   const log = S.pointlog.filter(l => !l.hidden).slice(0, 10);
   const form = adm ? `<form class="add" data-form="pointadj" style="margin-bottom:10px">
       <select id="pjw" name="who" required style="max-width:130px"><option value="">Wer?</option>${S.profiles.map(p => `<option value="${p.id}">${esc(p.name)} (${ptsOf(p)})</option>`).join("")}</select>
-      <select id="pjo" name="op" style="max-width:130px"><option value="-">Abziehen</option><option value="+">Gutschreiben</option></select>
+      <select id="pjo" name="op" style="max-width:130px"><option value="+">Gutschreiben</option><option value="-">Abziehen</option></select>
       <input id="pjp" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
       <input id="pjr" name="reason" placeholder="Grund (optional)" maxlength="120">
       <button class="btn">OK</button></form>` : "";
