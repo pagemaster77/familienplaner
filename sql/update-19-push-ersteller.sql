@@ -1,0 +1,4 @@
+-- Wer etwas anlegt, bekommt dazu selbst keine Push-Meldung.
+-- Als Migration "push_ersteller_ausnehmen" eingespielt: shopping_items.created_by und events.created_by (Default auth.uid()),
+-- notify_push nimmt bei Einkauf/Termin den Ersteller als "actor", notify_job schliesst bei neuem Job den Einsteller aus.
+-- Schon vorher richtig: Aufgaben (created_by), Chat (author), "Ich moechte reden", Weitergeben-Karte, Treffen (Veranstalter), Duell (nur Eingeladene).

@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Datenbank 22.19+: Push-Meldungen gehen nicht mehr an die Person, die etwas anlegt (Einkauf, Termine, neue Jobs). Migration push_ersteller_ausnehmen, sql/update-19-push-ersteller.sql. Keine App-Aenderung noetig.
+
 ## Version 22.19: Wuensche koennen bearbeitet werden (✎ neben ×: Titel, Link, Preis, Anlass, Notiz). Neuigkeiten-Eintrag 22.19.
 
 ## Version 22.18: To-do-Liste und Admin-Liste zeigen „erstellt von <Name>" (Feld created_by). Kein Neuigkeiten-Eintrag.
