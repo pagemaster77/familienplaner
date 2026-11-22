@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.19", date: "22.11.2026", items: [
+    "Wünsche: Du kannst einen Wunsch jetzt nachträglich ändern. Tippe auf den Stift ✎ neben dem Wunsch und passe Titel, Link, Preis, Anlass oder Notiz an.",
+  ] },
   { v: "22.16", date: "21.11.2026", items: [
     "Code knacken: Eine Einladung zum Duell kommt jetzt auch an, wenn die andere Person gar nicht in der Spielhalle ist. Sie bekommt eine Meldung aufs Handy und in der App oben einen Hinweis mit „Zur Spielhalle“.",
   ] },

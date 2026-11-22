@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.18 (22.11.)";
+const VERSION = "22.19 (22.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -17,7 +17,7 @@ const S = {
   booting: false, infoOpen: {}, passTask: null, passTo: null, flames: [], fweek: [], focus: null, focusTries: 0, pending: null,
   user: null, me: null, family: null,
   profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
-  editTask: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
+  editTask: null, editWish: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
   pe: null, mealOpen: false,
@@ -860,13 +860,20 @@ const wprof = id => prof(id) || S.lprof.find(x => x.id === id);
 function wishRow(w, mine) {
   const mk = S.marks.find(m => m.wish_id === w.id), by = mk && wprof(mk.by_profile), u = wishUrl(w.url);
   const own = w.family_id === S.me.family_id, can = mine || (S.me.is_admin && own);
+  if (can && S.editWish === w.id) return `<div class="row"><form class="grow add" data-form="wishedit" style="flex-wrap:wrap;margin:0">
+    <input id="wet-${w.id}" name="title" value="${esc(w.title)}" placeholder="Was wünschst du dir?" required maxlength="120">
+    <input name="url" value="${esc(w.url || "")}" placeholder="Link (optional)" maxlength="600" inputmode="url">
+    <input class="pt" name="price" value="${esc(w.price || "")}" placeholder="Preis" maxlength="30" style="max-width:90px">
+    <select name="occasion" aria-label="Anlass">${OCC.map(o => `<option${o === w.occasion ? " selected" : ""}>${o}</option>`).join("")}</select>
+    <input name="note" value="${esc(w.note || "")}" placeholder="Notiz (Größe, Farbe …)" maxlength="300">
+    <button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></form></div>`;
   const status = mine ? "" : mk
     ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || (S.me.is_admin && prof(mk.by_profile)) ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
     : `<button class="btn small" data-act="buy" data-id="${w.id}">✔ Gekauft</button>`;
   return `<div class="row ${mk ? "done" : ""}"><div class="grow"><div class="t">${OCC_IC[w.occasion] || "🎁"} ${esc(w.title)}${w.price ? ` <span class="sub">· ${esc(w.price)}</span>` : ""}</div>
     ${u ? `<div class="sub"><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen</a></div>` : ""}
     ${w.note ? `<div class="sub">${esc(w.note)}</div>` : ""}</div>${status}
-    ${can ? `<button class="x" data-act="delWish" data-id="${w.id}" title="Wunsch löschen">×</button>` : ""}</div>`;
+    ${can ? `<button class="x" data-act="editWish" data-id="${w.id}" title="Wunsch ändern">✎</button><button class="x" data-act="delWish" data-id="${w.id}" title="Wunsch löschen">×</button>` : ""}</div>`;
 }
 function viewWishes() {
   const mine = S.wishes.filter(w => w.owner === S.me.id);
@@ -1165,7 +1172,8 @@ const ACT = {
   editShop(d) { S.editShop = d.id; render(); },
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
-  cancelEdit() { S.editTask = S.editShop = S.editMeal = S.editReward = null; render(); },
+  editWish(d) { S.editWish = d.id; render(); },
+  cancelEdit() { S.editTask = S.editWish = S.editShop = S.editMeal = S.editReward = null; render(); },
   async claimReward(d) {
     const r = S.rewards.find(x => x.id === d.id); if (!r || r.claimed || !S.me.is_admin) return;
     const who = prof(r.profile_id); const bal = ptsOf(who || { id: r.profile_id });
@@ -1343,6 +1351,13 @@ const FORMS = {
     S.editReward = null; await LOAD.rewards(); render();
   },
   async shop(f) { await q(sb.from("shopping_items").insert({ family_id: S.me.family_id, title: f.get("title"), amount: f.get("amount") || null })); },
+  async wishedit(f) {
+    const title = String(f.get("title") || "").trim(); if (!title || !S.editWish) return;
+    const raw = String(f.get("url") || "").trim(), url = raw ? wishUrl(/^https?:\/\//i.test(raw) ? raw : "https://" + raw) : "";
+    if (raw && !url) return toast("Der Link sieht nicht richtig aus");
+    await q(sb.from("wishes").update({ title, url: url || null, price: String(f.get("price") || "").trim() || null, note: String(f.get("note") || "").trim() || null, occasion: OCC.includes(f.get("occasion")) ? f.get("occasion") : "Sonstiges" }).eq("id", S.editWish));
+    S.editWish = null; await LOAD.wishes(); render(); toast("Wunsch geändert ✏️");
+  },
   async wish(f) {
     const title = String(f.get("title") || "").trim(); if (!title) return;
     const raw = String(f.get("url") || "").trim(), url = raw ? wishUrl(/^https?:\/\//i.test(raw) ? raw : "https://" + raw) : "";
