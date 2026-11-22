@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.18: To-do-Liste und Admin-Liste zeigen „erstellt von <Name>" (Feld created_by). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.17: Punktekonto (Admin): Auswahl steht jetzt standardmaessig auf „Gutschreiben" (vorher „Abziehen"). Kein Neuigkeiten-Eintrag.
 
 ## Version 22.16: Duell-Einladung (Code knacken) kommt auch ausserhalb der Spielhalle an: Migration duell_einladung_push (duel_invite ohne Spielhallen-Pflicht, Trigger duel_push -> push-send mit tab 'duell', duels im Realtime), App zeigt Hinweisleiste #duelnote (duelCheck in extra.js, per Realtime/Start/Sichtbarkeit), goTo('duell') oeffnet die Spielhalle, Code knacken listet auch Offline-Personen. Spielhalle fragt Einladungen wieder alle 4 s. Neuigkeiten-Eintrag 22.16.

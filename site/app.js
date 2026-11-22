@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.17 (21.11.)";
+const VERSION = "22.18 (22.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -485,7 +485,7 @@ function viewAdmin() {
   const wait = S.tasks.filter(t => t.done && !t.approved), reached = rewardsReached();
   const open = S.tasks.filter(t => !t.done);
   const todoRow = t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="sub">${whoIds(t).length ? "für " + whoIds(t).map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
+      <div class="sub">${whoIds(t).length ? "für " + whoIds(t).map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.created_by ? " · erstellt von " + esc(prof(t.created_by)?.name || "?") : ""}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}</div></div>
     <button class="pts" data-act="editPts" data-id="${t.id}" title="Punkte ändern">${t.points} ⭐</button></div>`;
   const people = S.profiles;
   return `<div class="card"><button class="btn ghost small" data-act="tab" data-v="home">← Zurück</button>
@@ -616,7 +616,7 @@ function cardTodo(limit) {
     return `<div class="row ${t.done ? "done" : ""}" data-item="${t.id}">
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}${t.passed_by && !t.done ? " · 🃏 von " + esc(prof(t.passed_by)?.name || "?") + " weitergegeben" + (t.pass_open ? " – wer will?" : "") : ""}</div></div>
+      <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.created_by ? " · erstellt von " + esc(prof(t.created_by)?.name || "?") : ""}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}${t.passed_by && !t.done ? " · 🃏 von " + esc(prof(t.passed_by)?.name || "?") + " weitergegeben" + (t.pass_open ? " – wer will?" : "") : ""}</div></div>
     <span class="pts">${t.points ? t.points + " ⭐" : "ohne Punkte"}</span>${passBtn(t)}
     ${canEdit ? `<button class="x" data-act="editTask" data-id="${t.id}" title="Ändern">✎</button><button class="x" data-act="delTask" data-id="${t.id}">×</button>` : ""}</div>`;
   };
