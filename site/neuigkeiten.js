@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.22", date: "23.11.2026", items: [
+    "Spielhalle: Jedes Spiel hat jetzt oben rechts einen Info-Knopf ⓘ mit einer Anleitung. Dort steht auch, wie die Punkte berechnet werden und wie viele ⭐ es fürs Punktekonto gibt (zum Beispiel bei Memory). Beim ersten Spielen öffnet sich die Anleitung von selbst.",
+  ] },
   { v: "22.21", date: "23.11.2026", items: [
     "Bonbon-Match: Neuer Knopf „Neu mischen“ unter dem Spielfeld. Du darfst ihn einmal pro Spiel drücken, wenn du keine gute Möglichkeit mehr siehst. Das kostet keinen Zug.",
     "Bonbon-Match: Sonder-Bonbons lassen sich jetzt miteinander tauschen. Zum Beispiel Streifen + Bombe, Bombe + Bombe oder Regenbogen + Streifen. Das gibt riesige Explosionen und Extrapunkte. Die Anleitung (ⓘ) zeigt alle Kombinationen.",

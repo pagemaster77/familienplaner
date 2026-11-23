@@ -2,6 +2,18 @@
 ARCADE.register({
   id: "farben", name: "Farbenspiel", color: "linear-gradient(145deg,#f06292,#7e57c2)", icon: "🎨", fmt: v => v + " Runden",
   desc: "Merke dir die Farben und tippe sie nach.",
+  help() {
+    return `<h2>🎨 So geht das Farbenspiel</h2>
+      <p><b>Ziel:</b> Merke dir die Reihenfolge der Farben und tippe sie nach.</p>
+      <h3>So wird gespielt</h3>
+      <ul><li>Der Computer leuchtet eine Farbe auf, jede Farbe hat auch einen Ton. Tippe sie nach.</li>
+      <li>In jeder Runde kommt <b>eine Farbe dazu</b>. Runde 1: eine Farbe, Runde 2: zwei Farben, und so weiter.</li>
+      <li>Tippst du einmal die falsche Farbe, ist das Spiel aus.</li></ul>
+      <h3>Punkte ⭐</h3>
+      <ul><li>Jede <b>geschaffte Runde</b> zählt. Die Runde, in der du dich vertust, zählt nicht.</li>
+      <li>Fürs Punktekonto gibt jede geschaffte Runde <b>2 ⭐</b>, höchstens 200 ⭐.</li></ul>
+      <p class="hx-tip">Tipp: Sprich die Reihenfolge leise mit („grün, rot, gelb …") oder achte auf die Töne.</p>`;
+  },
   start(root, api) {
     const COL = [["#2fae6b", "#6cf0a8"], ["#d83a3f", "#ff8084"], ["#e8c21a", "#fff176"], ["#2f6fe0", "#7fb0ff"]], FREQ = [330, 262, 392, 196];
     root.innerHTML = `<div class="stage"><div class="hud"><span>🎨 Runde <span id="sc">0</span></span></div><div class="fb" id="fb">${COL.map((c, i) => `<button data-i="${i}" style="background:${c[0]}"></button>`).join("")}</div><div class="sub" id="msg" style="margin-top:12px;text-align:center;font-size:18px">Gleich geht’s los …</div></div>`;

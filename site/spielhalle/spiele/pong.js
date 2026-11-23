@@ -3,6 +3,18 @@
 ARCADE.register({
   id: "pong", name: "Pong", color: "linear-gradient(145deg,#ef5b5b,#b02a4a)", icon: "🏓", fmt: v => v + " 🏓",
   desc: "Gegen den Computer – wie lange hältst du durch?",
+  help() {
+    return `<h2>🏓 So geht Pong</h2>
+      <p><b>Ziel:</b> Spiele gegen den Computer und halte den Ball so lange wie möglich im Spiel. Du hast <b>3 Leben</b> ❤️.</p>
+      <h3>Steuerung</h3>
+      <p>Ziehe den Finger auf dem Feld nach links und rechts, dein blauer Schläger unten folgt. Oder halte ◀ ▶ gedrückt. Je weiter außen der Ball auf den Schläger trifft, desto schräger fliegt er.</p>
+      <h3>Punkte</h3>
+      <ul><li>Jeden Ball, den du zurückschlägst = <b>1 Punkt</b>.</li>
+      <li>Schlägst du den Ball am Computer vorbei = <b>5 Punkte</b>.</li>
+      <li>Verpasst du einen Ball, verlierst du ein Leben. Mit jedem Schlag wird der Ball <b>schneller</b>.</li></ul>
+      <h3>Spielpunkte ⭐</h3>
+      <p>Dein Ergebnis geteilt durch 2 (abgerundet), höchstens 300 ⭐. Mit 40 Punkten bekommst du also <b>20 ⭐</b>.</p>`;
+  },
   start(root, api) {
     const W = Math.min(root.clientWidth || 340, 340), H = Math.round(W * 1.4), k = W / 340;
     root.innerHTML = `<div class="stage"><div class="hud"><span id="lv">❤️❤️❤️</span><span>🏓 <span id="sc">0</span></span></div><canvas width="${W}" height="${H}"></canvas><div class="lr"><button data-k="-1">◀</button><button data-k="1">▶</button></div><div class="sub" style="margin-top:8px">Schläger ziehen oder die großen Tasten halten</div></div>`;

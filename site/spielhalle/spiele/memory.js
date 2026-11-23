@@ -2,6 +2,20 @@
 ARCADE.register({
   id: "memory", name: "Memory", color: "linear-gradient(145deg,#a35cf0,#6a3cc2)", icon: "🧠", unit: "Punkte", lower: false,
   desc: "Finde alle Paare – mit wenig Zügen und schnell.",
+  help() {
+    return `<h2>🧠 So geht Memory</h2>
+      <p><b>Ziel:</b> Finde alle <b>8 Paare</b> mit möglichst <b>wenig Zügen</b> und möglichst <b>schnell</b>.</p>
+      <h3>So wird gespielt</h3>
+      <p>Tippe zwei Karten an. Sind es zwei gleiche Bilder, bleiben sie offen. Sonst drehen sie sich nach kurzer Zeit wieder um, und du merkst dir, wo was lag. <b>Zwei aufgedeckte Karten = 1 Zug.</b> Die Uhr startet bei der ersten Karte.</p>
+      <h3>Dein Ergebnis (höchstens 1000)</h3>
+      <ul><li>Du startest bei <b>1000 Punkten</b>.</li>
+      <li>Du brauchst mindestens <b>8 Züge</b>. Jeder Zug mehr kostet <b>25 Punkte</b>.</li>
+      <li>Jede Sekunde kostet <b>5 Punkte</b>.</li></ul>
+      <div class="hx-cap">Beispiel: 14 Züge in 40 Sekunden = 1000 − 6×25 − 40×5 = <b>650 Punkte</b>.</div>
+      <h3>Spielpunkte ⭐</h3>
+      <p>Dein Ergebnis geteilt durch 100 (abgerundet) = ⭐ fürs Punktekonto. Aus <b>650</b> werden <b>6 ⭐</b>, ein perfektes Spiel mit 1000 gibt <b>10 ⭐</b>. Mehr ist bei Memory nicht möglich.</p>
+      <p class="hx-tip">Tipp: Die Zeit zählt stärker als die Züge. Lieber zügig tippen und die Karten merken.</p>`;
+  },
   start(root, api) {
     const faces = ["🍎", "🚀", "🐶", "🎈", "🌟", "🎲", "🍕", "🦄"];
     const cards = faces.concat(faces).map((f, i) => ({ f, i, r: Math.random() })).sort((a, b) => a.r - b.r);

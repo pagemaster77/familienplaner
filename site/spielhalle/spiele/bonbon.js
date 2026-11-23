@@ -41,6 +41,7 @@ ARCADE.register({
       <li><b>Ketten:</b> Fallen beim Nachrutschen von allein wieder 3 gleiche zusammen, zählt das doppelt, dreifach … Das bringt die meisten Punkte.</li>
       <li>Spiele eher <b>unten</b>: Dann rutscht viel nach, und es entstehen Ketten.</li>
       <li>Hebe dir Streifen, Bomben und Regenbogen für volle Bereiche auf.</li>
+      <li><b>Spielpunkte ⭐:</b> Dein Ergebnis geteilt durch 100 (abgerundet) gibt ⭐ fürs Punktekonto, höchstens 300 ⭐. 4.500 Punkte = <b>45 ⭐</b>.</li>
       <li>Geht gar nichts mehr, mischt das Spiel von selbst neu. Den Knopf „Neu mischen" kannst du zusätzlich einmal selbst drücken.</li></ul>`;
   },
   start(root, api) {

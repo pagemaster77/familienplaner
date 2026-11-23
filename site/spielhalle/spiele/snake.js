@@ -2,6 +2,17 @@
 ARCADE.register({
   id: "snake", name: "Snake", color: "linear-gradient(145deg,#2fae6b,#1c7a4a)", icon: "🐍", unit: "Äpfel", lower: false,
   desc: "Friss Äpfel – wer am längsten überlebt, gewinnt.",
+  help() {
+    return `<h2>🐍 So geht Snake</h2>
+      <p><b>Ziel:</b> Friss möglichst viele Äpfel 🍎, ohne gegen die Wand oder gegen dich selbst zu stoßen.</p>
+      <h3>Steuerung</h3>
+      <p>Wische auf dem Spielfeld in die Richtung, in die die Schlange laufen soll. Oder nimm die Tasten ▲ ◀ ▼ ▶ unter dem Feld. Am Computer gehen auch die Pfeiltasten oder W A S D. Rückwärts umdrehen geht nicht.</p>
+      <h3>Punkte ⭐</h3>
+      <ul><li>Jeder Apfel = <b>1 Apfel</b> im Ergebnis, die Schlange wird dabei länger.</li>
+      <li>Fürs Punktekonto der Spielhalle gibt jeder Apfel <b>1 ⭐</b>. 20 Äpfel = 20 ⭐.</li>
+      <li>Die Schlange wird mit jedem Apfel <b>schneller</b>. Je weiter du kommst, desto schwieriger wird es.</li></ul>
+      <p class="hx-tip">Tipp: Lauf in großen Bögen am Rand, dann hast du länger Platz.</p>`;
+  },
   start(root, api) {
     const N = 20, S = Math.min(root.clientWidth || 360, 380), C = Math.floor(S / N), W = C * N;
     root.innerHTML = `<div class="stage"><div class="hud"><span>🍎 <span id="sc">0</span></span></div><canvas width="${W}" height="${W}"></canvas>

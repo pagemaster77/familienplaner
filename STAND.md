@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.22: Anleitungen (ⓘ) fuer alle Spiele: Snake, Memory, Reaktion, Flappy, Frogger, Pong, Farbenspiel (mit Erklaerung, wie Ergebnis und Spielpunkte ⭐ berechnet werden); Bonbon-Match um Spielpunkte ergaenzt. Neuigkeiten-Eintrag 22.22.
+
 ## Version 22.21: Bonbon-Match: Knopf "Neu mischen" (1x pro Spiel, kostet keinen Zug) und Kombinationen zweier Sonder-Bonbons (Streifen+Streifen, Streifen+Bombe, Bombe+Bombe, Regenbogen+Streifen/Bombe/Regenbogen; +150 Punkte). Anleitung (ⓘ) ergaenzt. Neuigkeiten-Eintrag 22.21.
 
 ## Version 22.20: Wochensieger der Spielhalle: Funktion arcade_last_week (letzte abgeschlossene Woche Mo-Mo Berlin, Top 3 Familien + Top 3 Personen). Spielhalle: Karte "Wochensieger" mit Thron-Familie; App-Startseite: Thron-Hinweis in der Spielhalle-Karte. Neuigkeiten-Eintrag 22.20.

@@ -2,6 +2,20 @@
 ARCADE.register({
   id: "frogger", name: "Frogger", color: "linear-gradient(145deg,#66bb6a,#2e7d32)", icon: "🐸", fmt: v => v + " 🐸",
   desc: "Über die Straße und den Fluss – 3 Leben.",
+  help() {
+    return `<h2>🐸 So geht Frogger</h2>
+      <p><b>Ziel:</b> Bring den Frosch ganz nach oben ans andere Ufer. Du hast <b>3 Leben</b> ❤️.</p>
+      <h3>Steuerung</h3>
+      <p>Wische in die Richtung oder nimm die Tasten ▲ ◀ ▼ ▶. Jeder Schritt geht ein Feld weiter.</p>
+      <h3>Der Weg</h3>
+      <ul><li><b>Straße:</b> Weiche den Autos und Lastwagen aus. Wer getroffen wird, verliert ein Leben.</li>
+      <li><b>Fluss:</b> Schwimmen ist verboten! Spring auf die <b>Baumstämme</b> und lass dich tragen. Fällst du ins Wasser, verlierst du ein Leben.</li>
+      <li>Auf dem Stamm bewegst du dich mit. Pass auf, dass du nicht seitlich aus dem Bild getragen wirst.</li></ul>
+      <h3>Punkte ⭐</h3>
+      <ul><li>Jede Rettung ans andere Ufer = <b>1 🐸</b> im Ergebnis.</li>
+      <li>Fürs Punktekonto gibt jede Rettung <b>2 ⭐</b>.</li>
+      <li>Mit jeder Rettung wird alles ein Stück <b>schneller</b>.</li></ul>`;
+  },
   start(root, api) {
     const COLS = 9, ROWS = 11, S = Math.min(root.clientWidth || 360, 396), C = Math.floor(S / COLS), W = C * COLS, H = C * ROWS;
     root.innerHTML = `<div class="stage"><div class="hud"><span id="lv">❤️❤️❤️</span><span>🐸 <span id="sc">0</span></span></div><canvas width="${W}" height="${H}"></canvas>

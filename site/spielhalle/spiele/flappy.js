@@ -2,6 +2,16 @@
 ARCADE.register({
   id: "flappy", name: "Flappy", color: "linear-gradient(145deg,#4fc3f7,#1e88e5)", icon: "🐤", fmt: v => v + " 🚧",
   desc: "Tippen = flattern. Fliege durch die Lücken.",
+  help() {
+    return `<h2>🐤 So geht Flappy</h2>
+      <p><b>Ziel:</b> Fliege mit dem Vogel durch die Lücken zwischen den grünen Röhren.</p>
+      <h3>Steuerung</h3>
+      <p>Jedes <b>Tippen</b> auf das Feld lässt den Vogel nach oben flattern. Dazwischen fällt er von allein. Am Computer geht auch die Leertaste. Berührst du eine Röhre oder den Boden, ist das Spiel aus.</p>
+      <h3>Punkte ⭐</h3>
+      <ul><li>Jede Röhre, durch die du fliegst, = <b>1 Röhre</b> im Ergebnis.</li>
+      <li>Fürs Punktekonto gibt jede Röhre <b>1 ⭐</b>, höchstens 300 ⭐ pro Spiel.</li></ul>
+      <p class="hx-tip">Tipp: Lieber ruhig und gleichmäßig tippen als wild. Zielt auf die Mitte der Lücke.</p>`;
+  },
   start(root, api) {
     const W = Math.min(root.clientWidth || 360, 360), H = Math.round(W * 1.4), k = W / 320;
     root.innerHTML = `<div class="stage"><div class="hud"><span>🚧 <span id="sc">0</span></span></div><canvas width="${W}" height="${H}"></canvas><div class="sub" style="margin-top:8px">Tippen, Leertaste oder ⬆ = flattern</div></div>`;

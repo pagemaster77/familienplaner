@@ -2,6 +2,18 @@
 ARCADE.register({
   id: "reaktion", name: "Reaktion", color: "linear-gradient(145deg,#f5b02e,#e07a1a)", icon: "⚡", unit: "ms", lower: true,
   desc: "Tippe sofort, wenn es grün wird. 5 Runden.",
+  help() {
+    return `<h2>⚡ So geht Reaktion</h2>
+      <p><b>Ziel:</b> Tippe so schnell wie möglich, sobald das Feld <b>grün</b> wird. Weniger Millisekunden sind besser.</p>
+      <h3>So wird gespielt</h3>
+      <ul><li>Tippe zum Starten. Das Feld ist erst „Warten", nach einer zufälligen Zeit wird es grün: <b>JETZT!</b></li>
+      <li>Tippst du <b>zu früh</b>, ist die Runde ungültig und wird wiederholt.</li>
+      <li>Es gibt <b>5 Runden</b>. Dein Ergebnis ist der <b>Durchschnitt</b> aus allen 5 Zeiten.</li></ul>
+      <h3>Spielpunkte ⭐ (höchstens 10)</h3>
+      <p>Je schneller, desto mehr. Bei einem Durchschnitt von 600 ms gibt es 0 ⭐, und alle 50 ms schneller gibt es 1 ⭐ mehr:</p>
+      <ul><li>ca. 350 ms = <b>5 ⭐</b></li><li>ca. 250 ms = <b>7 ⭐</b></li><li>100–150 ms = <b>9–10 ⭐</b></li></ul>
+      <p class="hx-tip">In der Bestenliste steht die beste (niedrigste) Zeit ganz oben. Tipp: Nicht raten, sondern auf Grün warten.</p>`;
+  },
   start(root, api) {
     root.innerHTML = `<div class="stage"><div class="hud"><span>Runde <span id="rd">1</span>/5</span><span id="av"></span></div><div class="react" id="pad">Tippe, um zu starten</div></div>`;
     const pad = root.querySelector("#pad"), rd = root.querySelector("#rd"), av = root.querySelector("#av");
