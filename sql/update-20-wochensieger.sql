@@ -1,0 +1,1 @@
+-- Version 22.20: arcade_last_week() (Wochensieger). Als Migration arcade_last_week eingespielt.

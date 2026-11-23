@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.20", date: "23.11.2026", items: [
+    "Spielhalle: Wer die Wochen-Challenge gewonnen hat, steht jetzt da. Die Siegerfamilie sitzt mit Krone auf dem Thron, dazu die besten Einzelspieler der letzten Woche. Du siehst es in der Spielhalle ganz oben und auf der Startseite in der Spielhalle-Karte.",
+  ] },
   { v: "22.19", date: "22.11.2026", items: [
     "Wünsche: Du kannst einen Wunsch jetzt nachträglich ändern. Tippe auf den Stift ✎ neben dem Wunsch und passe Titel, Link, Preis, Anlass oder Notiz an.",
   ] },

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.19 (22.11.)";
+const VERSION = "22.20 (23.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -275,7 +275,8 @@ const LOAD = {
   shopping_items: async () => (S.shop = await q(sb.from("shopping_items").select("*").order("created_at"))),
   wishes: async () => (S.wishes = await q(sb.from("wishes").select("*").order("created_at"))),
   arcade: async () => { const { data } = await sb.rpc("arcade_me"); const r = data && data[0]; S.arc = r ? { total: Number(r.total), week: Number(r.week) } : null;
-    const bt = await sb.rpc("arcade_battle", { p_days: 7 }); S.arcBat = (bt.data || []).slice(0, 4); },
+    const bt = await sb.rpc("arcade_battle", { p_days: 7 }); S.arcBat = (bt.data || []).slice(0, 4);
+    const lw = await sb.rpc("arcade_last_week"); S.arcLast = lw.data || []; },
   meetups: async () => (S.meetups = await q(sb.from("meetups").select("*, meetup_invites(*)").order("starts_at", { ascending: true }).limit(60))),
   meetup_invites: async () => LOAD.meetups(),
   jobs: async () => (S.jobs = await q(sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(100))),
@@ -774,7 +775,12 @@ function cardMood() {
 function cardArcade() {
   if (isDisplay()) return "";
   const a = S.arc;
-  return `<div class="card"><h2>🎮 Spielhalle</h2>
+  const L = S.arcLast || [], lf = L.filter(x => x.kind === "family"), lp = L.filter(x => x.kind === "person");
+  let thr = "";
+  if (lf.length) { const d0 = new Date(lf[0].week_from + "T12:00:00"), d1 = new Date(d0.getTime() + 6 * 864e5), df = d => d.getDate() + "." + (d.getMonth() + 1) + ".";
+    thr = `<div style="text-align:center;margin:0 0 10px;padding:10px;border-radius:14px;border:2px solid #e0b43a;background:#ffd75e22"><div style="font-size:30px;line-height:1">👑</div><div><b>${esc(lf[0].name)}</b></div>
+      <div class="sub">hat die Spielhalle-Woche ${df(d0)}–${df(d1)} gewonnen · ${lf[0].pts} ⭐${lp.length ? `<br>Beste Einzelperson: 🥇 <b>${esc(lp[0].name)}</b> (${lp[0].pts} ⭐)` : ""}</div></div>`; }
+  return `<div class="card"><h2>🎮 Spielhalle</h2>${thr}
     <p class="sub" style="margin:0 0 8px">${a ? `Deine Spielpunkte: <b>${a.total}</b> ⭐ · diese Woche <b>${a.week}</b>` : "Minispiele und Bestenlisten mit den verbundenen Familien."}</p>
     ${(S.arcBat && S.arcBat.length) ? `<div class="sub" style="margin:0 0 4px"><b>🏆 Familien-Bestenliste (7 Tage)</b></div>${S.arcBat.map((f, i) => `<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${["🥇", "🥈", "🥉", "4."][i]} ${esc(f.family_name)}</span><b>${Number(f.pts)} ⭐</b></div>`).join("")}<div style="height:8px"></div>` : ""}
     <a class="btn block" href="spielhalle/" style="display:block;text-align:center;text-decoration:none">Zur Spielhalle</a></div>`;

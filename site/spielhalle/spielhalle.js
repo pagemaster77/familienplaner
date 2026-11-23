@@ -68,8 +68,13 @@ const ARCADE = (() => {
     if (stopGame) { stopGame(); stopGame = null; }
     curGame = null; ping();
     const days = S.range || null, gid = S.tab; // gid: null = alle Spiele zusammen
-    const [mine, fam, ppl, brd] = await Promise.all([sb.rpc("arcade_me"), sb.rpc("arcade_battle", { p_days: days }), sb.rpc("arcade_people", { p_days: days }),
-      gid ? sb.rpc("arcade_board", { p_game: gid, p_days: days }) : Promise.resolve({ data: null })]);
+    const [mine, fam, ppl, brd, lw] = await Promise.all([sb.rpc("arcade_me"), sb.rpc("arcade_battle", { p_days: days }), sb.rpc("arcade_people", { p_days: days }),
+      gid ? sb.rpc("arcade_board", { p_game: gid, p_days: days }) : Promise.resolve({ data: null }), sb.rpc("arcade_last_week")]);
+    const champ = (() => { const L = lw.data || [], fm = L.filter(x => x.kind === "family"), pp = L.filter(x => x.kind === "person");
+      if (!fm.length) return ""; const d0 = new Date(fm[0].week_from + "T12:00:00"), d1 = new Date(d0.getTime() + 6 * 864e5), df = d => d.getDate() + "." + (d.getMonth() + 1) + ".";
+      return `<div class="card champ"><h2>👑 Wochensieger</h2><div class="sub">Letzte Woche (${df(d0)}–${df(d1)})</div><div class="throne"><div class="crw">👑</div><b>${esc(fm[0].name)}</b><span>${fm[0].pts} ⭐ · Familie auf dem Thron</span></div>
+        ${fm.slice(1).map(x => `<div class="row"><span class="rank">${x.place === 2 ? "🥈" : "🥉"}</span><div class="grow">${esc(x.name)}</div><span class="val">${x.pts} ⭐</span></div>`).join("")}
+        ${pp.length ? `<div class="sub" style="margin:8px 0 4px"><b>🧑 Beste Einzelpersonen</b></div>` + pp.map(x => `<div class="row"><span class="rank">${["🥇", "🥈", "🥉"][x.place - 1]}</span><div class="grow">${esc(x.name)} <span class="sub">(${esc(x.family_name)})</span></div><span class="val">${x.pts} ⭐</span></div>`).join("") : ""}</div>`; })();
     const m = (mine.data && mine.data[0]) || { total: 0, week: 0 };
     const f = fam.data || [], fmax = Math.max(1, ...f.map(x => Number(x.pts)));
     const g = gid && games.find(x => x.id === gid);
@@ -80,6 +85,7 @@ const ARCADE = (() => {
     $("#arc").innerHTML = `<div class="top"><button class="back" id="home">← App</button><h1>🎮 Spielhalle</h1><span></span></div>
       <div class="pts"><span>Hallo <b>${esc(me.name)}</b></span><span>⭐ <b>${m.total}</b> gesamt · <b>${m.week}</b> diese Woche${mineIdx >= 0 ? ` · Platz <b>${mineIdx + 1}</b>` : ""}</span></div>
       <div id="duelbar"></div>
+      ${champ}
       <div class="card online" id="online"><h2>🟢 Jetzt online</h2><div class="sub">Lädt …</div></div>
       <div class="card" id="rank"><h2>🏆 Bestenliste</h2>
         <div class="seg"><button data-r="7" class="${S.range === 7 ? "on" : ""}">Diese Woche</button><button data-r="0" class="${S.range === 0 ? "on" : ""}">Gesamt</button></div>

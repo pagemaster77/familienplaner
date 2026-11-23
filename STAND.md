@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.20: Wochensieger der Spielhalle: Funktion arcade_last_week (letzte abgeschlossene Woche Mo-Mo Berlin, Top 3 Familien + Top 3 Personen). Spielhalle: Karte "Wochensieger" mit Thron-Familie; App-Startseite: Thron-Hinweis in der Spielhalle-Karte. Neuigkeiten-Eintrag 22.20.
+
 ## Datenbank 22.19+: Push-Meldungen gehen nicht mehr an die Person, die etwas anlegt (Einkauf, Termine, neue Jobs). Migration push_ersteller_ausnehmen, sql/update-19-push-ersteller.sql. Keine App-Aenderung noetig.
 
 ## Version 22.19: Wuensche koennen bearbeitet werden (✎ neben ×: Titel, Link, Preis, Anlass, Notiz). Neuigkeiten-Eintrag 22.19.

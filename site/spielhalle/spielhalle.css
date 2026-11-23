@@ -146,3 +146,9 @@ a{color:var(--pri);text-decoration:none}
 
 @media (prefers-color-scheme:dark){:root{color-scheme:dark}}
 @media (prefers-color-scheme:light){:root{color-scheme:dark}}
+
+/* Wochensieger (letzte Woche) */
+.champ .throne{display:flex;flex-direction:column;align-items:center;gap:2px;margin:10px 0 8px;padding:14px 10px;border-radius:16px;text-align:center;background:linear-gradient(180deg,#ffd75e33,#c9962a22);border:2px solid var(--gold)}
+.champ .throne .crw{font-size:40px;line-height:1;animation:rise .6s ease-out}
+.champ .throne b{font-size:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.champ .throne span{color:var(--gold);font-weight:700;font-size:13px}
