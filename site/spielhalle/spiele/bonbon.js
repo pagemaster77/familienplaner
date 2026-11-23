@@ -26,12 +26,22 @@ ARCADE.register({
       <div class="hx-grid">${[1, 0, 0, 1, 0, 0, 1, 1, 1].map(k => (k ? t(4, "hit") : `<i class="hx-t hx-e"></i>`)).join("")}</div>
       <div class="hx-row">${ar}${sp(4, "💥", "hx-bomb")}</div>
       <p>Liegen 3 gleiche in einer Reihe <b>und</b> 3 in einer Spalte, die sich in einem Bonbon kreuzen (L oder T), entsteht eine <b>Bombe 💥</b>. Sie sprengt ein <b>3×3-Feld</b> um sich herum weg.</p>
+      <h3>5 · Sonder-Bonbons kombinieren</h3>
+      <p>Tausche <b>zwei Sonder-Bonbons</b> miteinander, dann passiert etwas Besonderes. Es zählt als ein Zug und gibt Extrapunkte:</p>
+      <ul><li>${sp(3, "↔", "hx-sp")}${sp(3, "↕", "hx-sp")} <b>Streifen + Streifen:</b> räumt Zeile <b>und</b> Spalte.</li>
+      <li>${sp(3, "↔", "hx-sp")}${sp(4, "💥", "hx-bomb")} <b>Streifen + Bombe:</b> räumt 3 Zeilen und 3 Spalten.</li>
+      <li>${sp(4, "💥", "hx-bomb")}${sp(4, "💥", "hx-bomb")} <b>Bombe + Bombe:</b> sprengt ein großes 5×5-Feld.</li>
+      <li>${rb}${sp(3, "↔", "hx-sp")} <b>Regenbogen + Streifen:</b> alle Bonbons der Farbe räumen ihre Zeile oder Spalte.</li>
+      <li>${rb}${sp(4, "💥", "hx-bomb")} <b>Regenbogen + Bombe:</b> alle bunten der Farbe explodieren.</li>
+      <li>${rb}${rb} <b>Regenbogen + Regenbogen:</b> das ganze Feld wird leer.</li></ul>
+      <h3>🔀 Neu mischen</h3>
+      <p>Unter dem Spielfeld steht der Knopf <b>„Neu mischen"</b>. Du darfst ihn <b>einmal pro Spiel</b> benutzen, wenn du keine gute Möglichkeit mehr siehst. Das kostet keinen Zug.</p>
       <h3>Punkte &amp; Tipps</h3>
       <ul><li>Jedes Bonbon gibt 10 Punkte. Spezial-Bonbons geben beim Auslösen Extrapunkte.</li>
       <li><b>Ketten:</b> Fallen beim Nachrutschen von allein wieder 3 gleiche zusammen, zählt das doppelt, dreifach … Das bringt die meisten Punkte.</li>
       <li>Spiele eher <b>unten</b>: Dann rutscht viel nach, und es entstehen Ketten.</li>
       <li>Hebe dir Streifen, Bomben und Regenbogen für volle Bereiche auf.</li>
-      <li>Geht nichts mehr, mischt das Spiel von selbst neu.</li></ul>`;
+      <li>Geht gar nichts mehr, mischt das Spiel von selbst neu. Den Knopf „Neu mischen" kannst du zusätzlich einmal selbst drücken.</li></ul>`;
   },
   start(root, api) {
     const N = 8, MOVES = 25, COLORS = ["#e5484d", "#f5a524", "#f2d33c", "#3ecf8e", "#4f8cff", "#a35cf0"], SHAPES = ["●", "◆", "▲", "■", "★", "♥"];
@@ -39,9 +49,10 @@ ARCADE.register({
     root.innerHTML = `<div class="stage"><div class="hud"><span>🍬 <span id="sc">0</span></span><span>Züge: <b id="mv">${MOVES}</b></span></div>
       <div class="bb" id="bb" style="width:${BW}px;height:${BW}px"></div>
       <div class="sub" id="msg" style="margin-top:10px;min-height:20px">Tausche zwei Nachbarn – antippen oder wischen.</div>
-      <div class="sub" style="margin-top:4px">4er = Streifen · 5er = Regenbogen · L/T-Form = Bombe</div></div>`;
+      <div class="sub" style="margin-top:4px">4er = Streifen · 5er = Regenbogen · L/T-Form = Bombe</div>
+      <div style="margin-top:8px"><button class="btn ghost" id="shuf">🔀 Neu mischen (1×)</button></div></div>`;
     const board = root.querySelector("#bb"), scE = root.querySelector("#sc"), mvE = root.querySelector("#mv"), msg = root.querySelector("#msg");
-    let g = Array.from({ length: N }, () => Array(N).fill(null)), score = 0, moves = MOVES, busy = true, dead = false, sel = null, timers = [], id = 0;
+    let shufLeft = 1, g = Array.from({ length: N }, () => Array(N).fill(null)), score = 0, moves = MOVES, busy = true, dead = false, sel = null, timers = [], id = 0;
     const sl = ms => new Promise(r => timers.push(setTimeout(r, ms)));
     const rnd = () => Math.floor(Math.random() * COLORS.length);
 
@@ -118,22 +129,41 @@ ARCADE.register({
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) for (const [dr, dc] of [[0, 1], [1, 0]]) { const r2 = r + dr, c2 = c + dc; if (r2 >= N || c2 >= N) continue; sw(r, c, r2, c2); const ok = runs().length > 0; sw(r, c, r2, c2); if (ok) return true; }
       return false;
     }
-    async function reshuffle() {
-      msg.textContent = "Keine Züge mehr – Bonbons werden gemischt …"; await sl(500);
+    async function reshuffle(txt) {
+      msg.textContent = txt || "Keine Züge mehr – Bonbons werden gemischt …"; await sl(500);
       do { g.flat().forEach(t => { if (t && !t.sp) { t.type = rnd(); } }); } while (runs().length || !hasMove());
       g.flat().forEach(t => t && look(t)); await sl(300);
     }
     function swapData(a, b) {
       const ta = g[a[0]][a[1]], tb = g[b[0]][b[1]]; g[a[0]][a[1]] = tb; g[b[0]][b[1]] = ta; put(ta, b[0], b[1]); put(tb, a[0], a[1]);
     }
+    // Zwei Sonder-Bonbons getauscht: gibt die Felder zurueck, die weggeraeumt werden, plus Meldung
+    function comboKill(A, B, c0) {
+      const kill = new Set(), add = (r, c) => { if (r >= 0 && r < N && c >= 0 && c < N) kill.add(r * N + c); };
+      const box = (r, c, d) => { for (let i = r - d; i <= r + d; i++) for (let j = c - d; j <= c + d; j++) add(i, j); };
+      const line = t => (t.sp === "h" ? "h" : t.sp === "v" ? "v" : null), isLine = t => t.sp === "h" || t.sp === "v";
+      let text = "";
+      if (A.sp === "r" && B.sp === "r") { g.flat().forEach(t => t && add(t.r, t.c)); text = "🌈🌈 Doppel-Regenbogen: Alles weg!"; }
+      else if (A.sp === "r" || B.sp === "r") {
+        const R = A.sp === "r" ? A : B, X = R === A ? B : A; add(R.r, R.c);
+        const same = g.flat().filter(t => t && t.type === X.type && t !== X && t !== R);
+        if (X.sp === "b") { add(X.r, X.c); same.forEach(t => box(t.r, t.c, 1)); text = "🌈💥 Regenbogen + Bombe: Alle Bonbons der Farbe sprengen!"; }
+        else { add(X.r, X.c); same.forEach((t, i) => { if (i % 2) for (let c = 0; c < N; c++) add(t.r, c); else for (let r = 0; r < N; r++) add(r, t.c); add(t.r, t.c); }); text = "🌈↔ Regenbogen + Streifen: Alle Bonbons der Farbe räumen Reihen!"; }
+      } else if (isLine(A) && isLine(B)) { for (let i = 0; i < N; i++) { add(c0[0], i); add(i, c0[1]); } text = "✚ Doppel-Streifen: Zeile und Spalte!"; }
+      else if (A.sp === "b" && B.sp === "b") { box(c0[0], c0[1], 2); text = "💥💥 Doppel-Bombe: 5×5 weg!"; }
+      else { for (let i = 0; i < N; i++) for (let d = -1; d <= 1; d++) { add(c0[0] + d, i); add(i, c0[1] + d); } text = "✚💥 Streifen + Bombe: 3 Zeilen und 3 Spalten!"; }
+      return { kill, text };
+    }
     async function move(a, b) {
       if (busy || dead || moves <= 0) return; busy = true; select(null);
       swapData(a, b); await sl(230); if (dead) return;
       const ta = g[b[0]][b[1]], tb = g[a[0]][a[1]]; // ta = Bonbon, der nach b gewandert ist
-      if (ta.sp === "r" || tb.sp === "r") {
+      if (ta.sp && tb.sp) { // zwei Sonder-Bonbons: Kombination
+        moves--; upd(); const cb = comboKill(ta, tb, b); [ta, tb].forEach(t => { t.sp = null; });
+        msg.textContent = cb.text; score += 150; upd(); await clear(cb.kill, 1, new Set());
+      } else if (ta.sp === "r" || tb.sp === "r") {
         moves--; upd(); const kill = new Set(), R = ta.sp === "r" ? ta : tb, X = R === ta ? tb : ta;
-        kill.add(R.r * N + R.c); R.sp = null; if (X.sp === "r") X.sp = null;
-        if (X.sp === "r") g.flat().forEach(t => t && kill.add(t.r * N + t.c)); else g.flat().forEach(t => t && t.type === X.type && kill.add(t.r * N + t.c));
+        kill.add(R.r * N + R.c); R.sp = null; g.flat().forEach(t => t && t.type === X.type && kill.add(t.r * N + t.c));
         msg.textContent = "🌈 Regenbogen!"; await clear(kill, 1, new Set());
       } else if (!runs().length) {
         swapData(a, b); await sl(230); busy = false; msg.textContent = "Das ergibt keine Reihe – anderer Zug!"; return;
@@ -153,6 +183,11 @@ ARCADE.register({
       const [r, c] = down.p, q = Math.abs(dx) > Math.abs(dy) ? [r, c + (dx > 0 ? 1 : -1)] : [r + (dy > 0 ? 1 : -1), c];
       if (q[0] >= 0 && q[0] < N && q[1] >= 0 && q[1] < N) move(down.p, q); });
     board.addEventListener("pointerup", () => { if (down && !down.done) select(sel && sel[0] === down.p[0] && sel[1] === down.p[1] ? null : down.p); down = null; });
+    const shufBtn = root.querySelector("#shuf");
+    shufBtn.onclick = async () => {
+      if (busy || dead || shufLeft <= 0 || moves <= 0) return; busy = true; shufLeft--; shufBtn.disabled = true; shufBtn.textContent = "🔀 Neu mischen (0×)";
+      await reshuffle("🔀 Bonbons werden neu gemischt …"); if (dead) return; msg.textContent = "Neu gemischt – kostet keinen Zug."; busy = false;
+    };
     const stop = () => { dead = true; timers.forEach(clearTimeout); };
 
     // Startfeld ohne fertige Reihen

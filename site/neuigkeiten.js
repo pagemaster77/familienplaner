@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.21", date: "23.11.2026", items: [
+    "Bonbon-Match: Neuer Knopf „Neu mischen“ unter dem Spielfeld. Du darfst ihn einmal pro Spiel drücken, wenn du keine gute Möglichkeit mehr siehst. Das kostet keinen Zug.",
+    "Bonbon-Match: Sonder-Bonbons lassen sich jetzt miteinander tauschen. Zum Beispiel Streifen + Bombe, Bombe + Bombe oder Regenbogen + Streifen. Das gibt riesige Explosionen und Extrapunkte. Die Anleitung (ⓘ) zeigt alle Kombinationen.",
+  ] },
   { v: "22.20", date: "23.11.2026", items: [
     "Spielhalle: Wer die Wochen-Challenge gewonnen hat, steht jetzt da. Die Siegerfamilie sitzt mit Krone auf dem Thron, dazu die besten Einzelspieler der letzten Woche. Du siehst es in der Spielhalle ganz oben und auf der Startseite in der Spielhalle-Karte.",
   ] },
