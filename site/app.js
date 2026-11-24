@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.24 (24.11.)";
+const VERSION = "22.25 (24.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -935,8 +935,10 @@ function viewWishes() {
     ${S.me.is_admin ? `<select id="wf" name="owner" aria-label="Für wen"><option value="">für mich</option>${others.map(p => `<option value="${p.id}">für ${esc(p.name)}</option>`).join("")}</select>` : ""}
     <input id="wn" name="note" placeholder="Notiz (Größe, Farbe …)" maxlength="300">
     <button class="btn">Wunsch speichern</button></form>`;
-  return `<div class="card"><h2>🎁 Meine Wünsche</h2>${info("wish")}${form}
-    ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}
+  const mo = S.wMine !== false;
+  return `<div class="card"><button class="foldh" data-act="togMine" aria-expanded="${mo}"><span>🎁 Meine Wünsche<span class="sub" style="display:block;font-weight:400;font-size:13px">${mine.length} ${mine.length === 1 ? "Wunsch" : "Wünsche"}</span></span><i>${mo ? "▾" : "▸"}</i></button>
+    ${mo ? `${info("wish")}${form}
+    ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}` : ""}
     </div>
     ${wishGroup(S.family.name + " (wir)", others)}
     ${[...new Set(S.lprof.map(p => p.family_id))].map(id => wishGroup((S.lprof.find(p => p.family_id === id) || {}).family_name, S.lprof.filter(p => p.family_id === id))).join("")}`;
@@ -1221,6 +1223,7 @@ const ACT = {
   editShop(d) { S.editShop = d.id; render(); },
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
+  togMine() { S.wMine = S.wMine === false; render(); },
   togWish(d) { S.wOpen = S.wOpen || {}; S.wOpen[d.id] = !S.wOpen[d.id]; render(); },
   togglePk() { S.pkOpen = !S.pkOpen; render(); },
   async delTemplate(d) { if (!confirm("Diese wiederkehrende Aufgabe löschen? Schon angelegte Aufgaben bleiben in der Liste.")) return; await q(sb.from("task_templates").delete().eq("id", d.id)); await LOAD.task_templates(); render(); toast("Gelöscht"); },
