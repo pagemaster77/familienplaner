@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.24: Wunschliste: Wuensche der anderen nach Familie gruppiert, darunter Namen mit Anzahl je Anlass (Weihnachten/Geburtstag/Sonstiges), Liste klappt per Tipp auf. Kein Neuigkeiten-Eintrag.
+
 ## Version 22.23: Admin: Haken "Erweitert" bei Aufgaben -> wiederkehrende Aufgaben mit Wochentagen und Kalender-Auswahl (task_templates.weekdays/cal_for, sql/update-21); To-Do: Aufgaben direkt unter Punktestand, Punktekonto aufklappbar. Neuigkeiten-Eintrag 22.23.
 
 ## Version 22.22: Anleitungen (ⓘ) fuer alle Spiele: Snake, Memory, Reaktion, Flappy, Frogger, Pong, Farbenspiel (mit Erklaerung, wie Ergebnis und Spielpunkte ⭐ berechnet werden); Bonbon-Match um Spielpunkte ergaenzt. Neuigkeiten-Eintrag 22.22.

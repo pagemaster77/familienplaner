@@ -355,3 +355,4 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .advchk:checked+.advlab{background:var(--primary);border:1px solid var(--primary);color:#fff}
 .advbox{display:none;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:12px}
 .advchk:checked~.advbox{display:block}
+.wfold{padding:10px 0;border-top:1px solid var(--line,#8883)}.wfold:first-of-type{border-top:0}

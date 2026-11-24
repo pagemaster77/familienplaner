@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.23 (24.11.)";
+const VERSION = "22.24 (24.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -914,6 +914,16 @@ function wishRow(w, mine) {
     ${w.note ? `<div class="sub">${esc(w.note)}</div>` : ""}</div>${status}
     ${can ? `<button class="x" data-act="editWish" data-id="${w.id}" title="Wunsch ändern">✎</button><button class="x" data-act="delWish" data-id="${w.id}" title="Wunsch löschen">×</button>` : ""}</div>`;
 }
+/* Wunschlisten nach Familie: darunter die Namen mit Anzahl je Anlass, Liste klappt auf */
+function wishGroup(famName, people) {
+  if (!people.length) return "";
+  return `<div class="card"><h2>👨‍👩‍👧 ${esc(famName || "Familie")}</h2>${people.map(p => {
+    const l = S.wishes.filter(w => w.owner === p.id), open = !!(S.wOpen || {})[p.id];
+    const cnt = OCC.map(o => [o, l.filter(w => w.occasion === o).length]).filter(x => x[1]).map(x => `${OCC_IC[x[0]]} ${x[1]} ${x[0]}`).join(" · ");
+    return `<div class="wfold"><button class="foldh" style="font-size:16px" data-act="togWish" data-id="${p.id}" aria-expanded="${open}"><span>${esc(p.name)}<span class="sub" style="display:block;font-weight:400;font-size:13px">${cnt || "Noch keine Wünsche"}</span></span><i>${open ? "▾" : "▸"}</i></button>
+      ${open ? l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>` : ""}</div>`;
+  }).join("")}</div>`;
+}
 function viewWishes() {
   const mine = S.wishes.filter(w => w.owner === S.me.id);
   const others = S.profiles.filter(p => p.id !== S.me.id);
@@ -928,8 +938,8 @@ function viewWishes() {
   return `<div class="card"><h2>🎁 Meine Wünsche</h2>${info("wish")}${form}
     ${mine.map(w => wishRow(w, true)).join("") || `<div class="empty">Noch keine Wünsche eingetragen</div>`}
     </div>
-    ${others.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)}</h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}
-    ${S.lprof.map(p => { const l = S.wishes.filter(w => w.owner === p.id); return `<div class="card"><h2>${esc(p.name)} <span class="sub">· ${esc(p.family_name)}</span></h2>${l.map(w => wishRow(w, false)).join("") || `<div class="empty">Noch keine Wünsche</div>`}</div>`; }).join("")}`;
+    ${wishGroup(S.family.name + " (wir)", others)}
+    ${[...new Set(S.lprof.map(p => p.family_id))].map(id => wishGroup((S.lprof.find(p => p.family_id === id) || {}).family_name, S.lprof.filter(p => p.family_id === id))).join("")}`;
 }
 
 function cardLink(admin) {
@@ -1211,6 +1221,7 @@ const ACT = {
   editShop(d) { S.editShop = d.id; render(); },
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
+  togWish(d) { S.wOpen = S.wOpen || {}; S.wOpen[d.id] = !S.wOpen[d.id]; render(); },
   togglePk() { S.pkOpen = !S.pkOpen; render(); },
   async delTemplate(d) { if (!confirm("Diese wiederkehrende Aufgabe löschen? Schon angelegte Aufgaben bleiben in der Liste.")) return; await q(sb.from("task_templates").delete().eq("id", d.id)); await LOAD.task_templates(); render(); toast("Gelöscht"); },
   editWish(d) { S.editWish = d.id; render(); },
