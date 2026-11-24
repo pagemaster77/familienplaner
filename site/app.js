@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.22 (23.11.)";
+const VERSION = "22.23 (24.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -16,7 +16,7 @@ const S = {
   jobSel: [], mtSel: [], mtView: null, meetups: [],
   booting: false, infoOpen: {}, passTask: null, passTo: null, flames: [], fweek: [], focus: null, focusTries: 0, pending: null,
   user: null, me: null, family: null,
-  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], daily: [], dailyPhoto: {}, chefPhoto: null,
+  profiles: [], wishes: [], marks: [], links: [], lprof: [], jobs: [], arc: null, tasks: [], shop: [], msgs: [], chatRoom: null, meals: [], events: [], ical: [], rewards: [], pointlog: [], templates: [], pkOpen: false, advTask: false, daily: [], dailyPhoto: {}, chefPhoto: null,
   editTask: null, editWish: null, editShop: null, editMeal: null, editReward: null, editEv: null, cw: 0, // cw = angezeigte Woche (0 = diese) // gerade bearbeiteter Eintrag
   tab: "home", authMode: "login", err: "",
   ob: { mode: "new", color: COLORS[0], avatar: EMOJIS[0] },
@@ -238,15 +238,28 @@ function expandOwn(list, from, to) {
   }
   return out;
 }
+/* Wiederkehrende Aufgaben, die im Kalender der gewählten Personen stehen sollen */
+function expandTemplates(from, to) {
+  const out = [];
+  for (const t of S.templates || []) {
+    if (t.rhythm !== "days" || !(t.cal_for || []).length || !(t.weekdays || []).length) continue;
+    for (let d = startOfDay(from), n = 0; d <= to && n < 400; d.setDate(d.getDate() + 1), n++) {
+      const iso = d.getDay() === 0 ? 7 : d.getDay(); if (!t.weekdays.includes(iso)) continue;
+      const doneT = S.tasks.some(x => x.template_id === t.id && x.done && x.done_at && dkey(new Date(x.done_at)) === dkey(d));
+      t.cal_for.forEach(pid => out.push({ id: "t-" + t.id, title: "🔁 " + t.title, start: new Date(d), end: null, owner: pid, src: "task", rec: "none", allDay: true, done: doneT }));
+    }
+  }
+  return out;
+}
 function allEvents(days = 14) {
   const from = startOfDay(new Date()); const to = new Date(+from + days * 864e5 - 1);
   const own = expandOwn(S.events, from, to).filter(e => e.start >= from && e.start <= to);
-  return [...own, ...expandIcal(S.ical, from, to).filter(e => e.start >= from && e.start <= to)].sort((a, b) => (dkey(a.start) === dkey(b.start) ? (!!b.allDay - !!a.allDay) : 0) || a.start - b.start);
+  return [...own, ...expandTemplates(from, to), ...expandIcal(S.ical, from, to).filter(e => e.start >= from && e.start <= to)].sort((a, b) => (dkey(a.start) === dkey(b.start) ? (!!b.allDay - !!a.allDay) : 0) || a.start - b.start);
 }
 /* Alle Termine, die in einen Zeitraum fallen (auch mehrtägige) */
 function allEventsRange(from, to) {
   const own = expandOwn(S.events, from, to);
-  return [...own, ...expandIcal(S.ical, from, to)].filter(e => {
+  return [...own, ...expandTemplates(from, to), ...expandIcal(S.ical, from, to)].filter(e => {
     const endEff = e.end && e.end > e.start ? e.end : null;
     return (endEff ? endEff > from : e.start >= from) && e.start <= to;
   }).sort((a, b) => (dkey(a.start) === dkey(b.start) ? (!!b.allDay - !!a.allDay) : 0) || a.start - b.start);
@@ -286,6 +299,7 @@ const LOAD = {
   },
   wish_marks: async () => (S.marks = await q(sb.from("wish_marks").select("*"))),
   rewards: async () => (S.rewards = await q(sb.from("rewards").select("*").order("points"))),
+  task_templates: async () => (S.templates = await q(sb.from("task_templates").select("*").order("created_at"))),
   daily_posts: async () => (S.daily = await q(sb.from("daily_posts").select("*").order("day", { ascending: false }).limit(14))),
   point_log: async () => (S.pointlog = await q(sb.from("point_log").select("*").order("created_at", { ascending: false }).limit(3000))),
   messages: async () => (S.msgs = (await q(sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100))).reverse()),
@@ -509,9 +523,25 @@ function viewAdmin() {
         <input id="atn" name="title" placeholder="Neue Aufgabe mit Punkten" required>
         <input id="atp" class="pt" name="points" type="number" min="0" max="1000" value="5" title="Punkte">
         <button class="btn">+</button>
-        <div style="flex-basis:100%">${whoChips([])}</div></form>
+        <div style="flex-basis:100%">${whoChips([])}</div>
+        <div class="advwrap" style="flex-basis:100%">
+          <input type="checkbox" id="atadv" name="adv" class="advchk" data-keep><label for="atadv" class="advlab">⚙️ Erweitert: wiederkehrende Aufgabe</label>
+          <div class="advbox">
+            <div class="sub">An welchen Wochentagen? (mehrere möglich)</div>
+            <div class="chips">${WD.map((d, i) => `<label class="wchip"><input type="checkbox" id="atwd${i + 1}" data-keep name="wd" value="${i + 1}"><span>${d}</span></label>`).join("")}</div>
+            <div class="sub" style="margin-top:8px">📅 Im Kalender anzeigen bei: (nichts gewählt = nicht im Kalender)</div>
+            <div class="chips">${S.profiles.map(p => `<label class="wchip"><input type="checkbox" id="atcw-${p.id}" data-keep name="calwho" value="${p.id}"><span>${esc(p.name)}</span></label>`).join("")}</div>
+            <div class="sub" style="margin-top:6px">Die Aufgabe erscheint dann an diesen Tagen ab 6 Uhr automatisch in der Aufgabenliste (für die oben gewählten Personen).</div>
+          </div>
+        </div></form>
       ${open.map(todoRow).join("") || `<div class="empty">Keine offenen Aufgaben</div>`}
       </div>
+
+    <div class="card"><h2>🔁 Wiederkehrende Aufgaben</h2>
+      ${(S.templates || []).filter(t => t.rhythm === "days").map(t => `<div class="row"><div class="grow"><div class="t">${esc(t.title)}</div>
+        <div class="sub">${wdText(t.weekdays)} · ${(t.assignees || []).length ? "für " + t.assignees.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${(t.cal_for || []).length ? " · 📅 " + t.cal_for.map(id => esc(prof(id)?.name || "?")).join(", ") : ""}</div></div>
+        <span class="pts">${t.points} ⭐</span><button class="x" data-act="delTemplate" data-id="${t.id}" title="Löschen">×</button></div>`).join("") || `<div class="empty">Noch keine. Oben bei „Neue Aufgabe" ⚙️ Erweitert anhaken.</div>`}
+    </div>
 
     ${cardRewards(true)}
     ${cardPoints(true)}
@@ -557,12 +587,15 @@ function cardPoints(admin) {
       <input id="pjp" class="pt" name="points" type="number" min="1" max="100000" placeholder="Punkte" required>
       <input id="pjr" name="reason" placeholder="Grund (optional)" maxlength="120">
       <button class="btn">OK</button></form>` : "";
-  return `<div class="card"><h2>📒 Punktekonto</h2>${info("points")}${form}
-    ${log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
+  const open = !!S.pkOpen;
+  return `<div class="card"><button class="foldh" data-act="togglePk" aria-expanded="${open}"><span>📒 Punktekonto</span><i>${open ? "▾" : "▸"}</i></button>${open ? info("points") + form : ""}
+    ${!open ? `<div class="sub" style="margin-top:4px">Tippen zum Aufklappen · ${S.pointlog.filter(l => !l.hidden).length ? "letzte Einträge der Familie" : "noch keine Einträge"}</div>` : log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
       <div class="sub">${fmtShort(l.created_at)} · ${l.kind === "reward" ? "🎁 " : l.kind === "manual" ? "✎ " : "✅ "}${esc(l.reason || (l.kind === "task" ? "Aufgabe" : ""))}</div></div>
       ${adm ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Aus der Liste ausblenden (Punkte bleiben)">×</button>` : ""}</div>`).join("") || `<div class="empty">Keine Einträge in der Liste</div>`}
     </div>`;
 }
+const WD = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const wdText = a => (a || []).slice().sort((x, y) => x - y).map(n => WD[n - 1]).join(", ");
 // Für wen gilt die Aufgabe? (leer = für alle)
 const whoIds = t => (t.assignees && t.assignees.length ? t.assignees : t.assigned_to ? [t.assigned_to] : []);
 const whoChips = (sel = []) => `<div class="who"><span class="sub">Für wen? (nichts gewählt = für alle)</span><div class="chips">${S.profiles.map(p =>
@@ -626,11 +659,11 @@ function cardTodo(limit) {
       <button class="btn">+</button>
       <div style="flex-basis:100%">${whoChips([])}</div></form>`;
   const waitCard = wait.length ? `<div class="card"><h2>⏳ Wartet auf Freigabe</h2>${wait.map(row).join("")}</div>` : "";
-  return `${limit ? "" : cardRank()}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}${waitCard}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>${info("todo")}
+  return `${limit ? "" : cardRank()}<div class="card"><h2>✅ Gemeinsame Aufgaben</h2>${info("todo")}
     ${shown.map(row).join("") || `<div class="empty">Alles erledigt 🎉</div>`}
     ${limit && open.length > limit ? `<div class="sub">… und ${open.length - limit} weitere</div>` : ""}
-    ${form}</div>
-    ${limit || !done.length ? "" : `<div class="card"><h2>Zuletzt erledigt</h2>${done.map(row).join("")}</div>`}`;
+    ${form}</div>${waitCard}
+    ${limit || !done.length ? "" : `<div class="card"><h2>Zuletzt erledigt</h2>${done.map(row).join("")}</div>`}${limit ? "" : cardRewards()}${limit ? "" : cardPoints()}`;
 }
 
 function cardShop(compact) {
@@ -722,7 +755,7 @@ function untilDate(f, starts, allDay) {
 function evRow(e) {
   const p = prof(e.owner);
   const lp = e.src === "own" && !isDisplay();
-  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""} data-item="${e.id}"><div class="time">${e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
+  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""} data-item="${e.id}"><div class="time">${e.src === "task" ? (e.done ? "✅" : "Aufgabe") : e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
     <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${evMulti(e) ? " · bis " + evUntil(e) : ""}</div></div></div>`;
 }
 
@@ -1178,6 +1211,8 @@ const ACT = {
   editShop(d) { S.editShop = d.id; render(); },
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
+  togglePk() { S.pkOpen = !S.pkOpen; render(); },
+  async delTemplate(d) { if (!confirm("Diese wiederkehrende Aufgabe löschen? Schon angelegte Aufgaben bleiben in der Liste.")) return; await q(sb.from("task_templates").delete().eq("id", d.id)); await LOAD.task_templates(); render(); toast("Gelöscht"); },
   editWish(d) { S.editWish = d.id; render(); },
   cancelEdit() { S.editTask = S.editWish = S.editShop = S.editMeal = S.editReward = null; render(); },
   async claimReward(d) {
@@ -1378,8 +1413,16 @@ const FORMS = {
   },
   async admintask(f) {
     const title = String(f.get("title") || "").trim(); if (!title) return;
-    const who = f.getAll("who");
-    await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points: Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0)), assignees: who, assigned_to: who.length === 1 ? who[0] : null }));
+    const who = f.getAll("who"), pts = Math.max(0, Math.min(1000, parseInt(f.get("points"), 10) || 0));
+    if (f.get("adv")) { // erweitert: wiederkehrend an bestimmten Wochentagen
+      const wd = f.getAll("wd").map(Number).filter(n => n >= 1 && n <= 7);
+      if (!wd.length) return toast("Bitte mindestens einen Wochentag anhaken");
+      await q(sb.from("task_templates").insert({ family_id: S.me.family_id, title, points: pts, assignees: who, rhythm: "days", weekdays: wd, cal_for: f.getAll("calwho") }));
+      try { await sb.rpc("spawn_task_templates"); } catch (_e) { /* wird sonst stuendlich erledigt */ }
+      await Promise.all([LOAD.task_templates(), LOAD.tasks()]);
+      return toast("Wiederkehrende Aufgabe angelegt 🔁");
+    }
+    await q(sb.from("tasks").insert({ family_id: S.me.family_id, title, points: pts, assignees: who, assigned_to: who.length === 1 ? who[0] : null }));
     toast("Aufgabe angelegt ✔");
   },
   async meetup(f) {

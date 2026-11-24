@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.23: Admin: Haken "Erweitert" bei Aufgaben -> wiederkehrende Aufgaben mit Wochentagen und Kalender-Auswahl (task_templates.weekdays/cal_for, sql/update-21); To-Do: Aufgaben direkt unter Punktestand, Punktekonto aufklappbar. Neuigkeiten-Eintrag 22.23.
+
 ## Version 22.22: Anleitungen (ⓘ) fuer alle Spiele: Snake, Memory, Reaktion, Flappy, Frogger, Pong, Farbenspiel (mit Erklaerung, wie Ergebnis und Spielpunkte ⭐ berechnet werden); Bonbon-Match um Spielpunkte ergaenzt. Neuigkeiten-Eintrag 22.22.
 
 ## Version 22.21: Bonbon-Match: Knopf "Neu mischen" (1x pro Spiel, kostet keinen Zug) und Kombinationen zweier Sonder-Bonbons (Streifen+Streifen, Streifen+Bombe, Bombe+Bombe, Regenbogen+Streifen/Bombe/Regenbogen; +150 Punkte). Anleitung (ⓘ) ergaenzt. Neuigkeiten-Eintrag 22.21.

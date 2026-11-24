@@ -346,3 +346,12 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 #duelnote .dn{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--card);color:var(--text);border:2px solid var(--primary);border-radius:14px;padding:10px 12px;box-shadow:0 6px 22px #0005;max-width:560px;margin:0 auto}
 #duelnote .dn span{flex:1 1 200px}
 #duelnote .btn{padding:8px 12px}
+
+/* Aufklappbares Punktekonto, Erweitert-Bereich bei Aufgaben */
+.foldh{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:0;color:var(--text);font:inherit;font-size:18px;font-weight:700;cursor:pointer;text-align:left}
+.foldh i{font-style:normal;color:var(--muted);font-size:20px}
+.advchk{position:absolute;opacity:0;pointer-events:none}
+.advlab{display:inline-block;padding:7px 12px;border-radius:99px;border:1px dashed var(--line);cursor:pointer;font-size:14px;user-select:none;margin-top:4px}
+.advchk:checked+.advlab{background:var(--primary);border:1px solid var(--primary);color:#fff}
+.advbox{display:none;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:12px}
+.advchk:checked~.advbox{display:block}

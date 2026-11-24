@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.23", date: "24.11.2026", items: [
+    "Admin: Aufgaben mit Haken „Erweitert“ – dann kannst du wiederkehrende Aufgaben anlegen. Wochentage anhaken (auch mehrere) und per Liste wählen, in welchem Kalender sie bei den Kindern erscheinen sollen. Die Aufgabe kommt dann an diesen Tagen von selbst in die To-Do-Liste.",
+    "To-Do: Die Aufgaben stehen jetzt direkt unter dem Punktestand. Das Punktekonto lässt sich ein- und aufklappen.",
+  ] },
   { v: "22.22", date: "23.11.2026", items: [
     "Spielhalle: Jedes Spiel hat jetzt oben rechts einen Info-Knopf ⓘ mit einer Anleitung. Dort steht auch, wie die Punkte berechnet werden und wie viele ⭐ es fürs Punktekonto gibt (zum Beispiel bei Memory). Beim ersten Spielen öffnet sich die Anleitung von selbst.",
   ] },
