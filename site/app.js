@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.27 (25.11.)";
+const VERSION = "22.28 (26.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -588,7 +588,7 @@ function cardPoints(admin) {
       <input id="pjr" name="reason" placeholder="Grund (optional)" maxlength="120">
       <button class="btn">OK</button></form>` : "";
   const open = !!S.pkOpen;
-  return `<div class="card"><button class="foldh" data-act="togglePk" aria-expanded="${open}"><span>📒 Punktekonto</span><i>${open ? "▾" : "▸"}</i></button>${open ? info("points") + form : ""}
+  return `<div class="card"><button class="foldh foldi" data-act="togglePk" aria-expanded="${open}"><span>📒 Punktekonto</span><i>${open ? "▾" : "▸"}</i></button>${open ? info("points") + form : ""}
     ${!open ? `<div class="sub" style="margin-top:4px">Tippen zum Aufklappen · ${S.pointlog.filter(l => !l.hidden).length ? "letzte Einträge der Familie" : "noch keine Einträge"}</div>` : log.map(l => `<div class="row"><div class="grow"><div class="t">${esc(prof(l.profile_id)?.name || "?")} · ${l.points > 0 ? "+" : ""}${l.points} ⭐</div>
       <div class="sub">${fmtShort(l.created_at)} · ${l.kind === "reward" ? "🎁 " : l.kind === "manual" ? "✎ " : "✅ "}${esc(l.reason || (l.kind === "task" ? "Aufgabe" : ""))}</div></div>
       ${adm ? `<button class="x" data-act="delPointLog" data-id="${l.id}" title="Aus der Liste ausblenden (Punkte bleiben)">×</button>` : ""}</div>`).join("") || `<div class="empty">Keine Einträge in der Liste</div>`}
