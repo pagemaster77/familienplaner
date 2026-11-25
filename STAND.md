@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.27: Neues deutlich markieren: Beim Oeffnen eines roten Reiters (To-Do, Einkauf, Chat, Termine) bekommen neue Eintraege roetlichen Hintergrund und dicke Schrift; im Kalender zusaetzlich Karte "Neu eingetragen" mit Sprung zur Woche des Termins. Kein Neuigkeiten-Eintrag.
+
 ## Version 22.26: Wunschliste: oben Karte "Wunsch eintragen"; eigene Wuensche stehen eingeklappt mit dem eigenen Namen in der Familienkarte. Kein Neuigkeiten-Eintrag.
 
 ## Version 22.25: Wunschliste: "Meine Wuensche" ebenfalls aufklappbar (standardmaessig offen). Kein Neuigkeiten-Eintrag.

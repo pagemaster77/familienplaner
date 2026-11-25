@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.26 (24.11.)";
+const VERSION = "22.27 (25.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -647,7 +647,7 @@ function cardTodo(limit) {
       ${whoChips(whoIds(t))}
       <div class="add" style="margin:6px 0 0"><button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></div></form></div>`;
     const ids = whoIds(t);
-    return `<div class="row ${t.done ? "done" : ""}" data-item="${t.id}">
+    return `<div class="row ${t.done ? "done" : ""}${!t.done && t.created_by !== S.me.id && isNewItem("todo", t.created_at) ? " isnew" : ""}" data-item="${t.id}">
     <button class="chk ${t.done ? "on" : ""}" data-act="toggleTask" data-id="${t.id}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>
       <div class="sub">${ids.length ? "für " + ids.map(id => esc(prof(id)?.name || "?")).join(", ") : "für alle"}${t.created_by ? " · erstellt von " + esc(prof(t.created_by)?.name || "?") : ""}${t.done && t.done_by ? " · erledigt von " + esc(prof(t.done_by)?.name || "?") : ""}${t.done && !t.approved ? " · ⏳ wartet auf Freigabe" : ""}${t.passed_by && !t.done ? " · 🃏 von " + esc(prof(t.passed_by)?.name || "?") + " weitergegeben" + (t.pass_open ? " – wer will?" : "") : ""}</div></div>
@@ -673,7 +673,7 @@ function cardShop(compact) {
       <input id="set-${i.id}" name="title" value="${esc(i.title)}" required>
       <input id="sea-${i.id}" class="pt" name="amount" value="${esc(i.amount || "")}" placeholder="Menge">
       <button class="btn">${i.checked ? "Wieder auf die Liste" : "Speichern"}</button><button type="button" class="btn ghost" data-act="cancelEdit">×</button></form></div>`;
-    return `<div class="row ${i.checked ? "done" : ""}" data-item="${i.id}">
+    return `<div class="row ${i.checked ? "done" : ""}${!i.checked && isNewItem("shop", i.created_at) ? " isnew" : ""}" data-item="${i.id}">
     <button class="chk ${i.checked ? "on" : ""}" data-act="toggleShop" data-id="${i.id}">${i.checked ? "✓" : ""}</button>
     <div class="grow t">${esc(i.title)}${i.amount ? ` <span class="tag">${esc(i.amount)}</span>` : ""}</div>
     ${compact ? "" : `<button class="x" data-act="editShop" data-id="${i.id}" title="${i.checked ? "Wieder auf die Liste / ändern" : "Ändern"}">✎</button><button class="x" data-act="delShop" data-id="${i.id}">×</button>`}</div>`;
@@ -728,7 +728,7 @@ function cardChat(compact) {
       ? `<b class="who" style="color:${esc(p?.color || "inherit")}">${esc(p?.name || "?")}${room === "all" && p?.family_name ? ` <span class="sub">· ${esc(p.family_name)}</span>` : ""}</b>` : "";
     lastDay = day; lastAuthor = m.author;
     const del = S.me.is_admin && m.family_id === S.me.family_id;
-    return `${sep}<div class="msg wa ${me ? "me" : ""}" data-item="${m.id}">${head}${esc(m.body)}<small class="tm">${fmtTime(d)}</small>${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`;
+    return `${sep}<div class="msg wa ${me ? "me" : ""}${!me && isNewItem("chat", m.created_at) ? " isnew" : ""}" data-item="${m.id}">${head}${esc(m.body)}<small class="tm">${fmtTime(d)}</small>${del ? `<button class="mx" data-act="delMsg" data-id="${m.id}" title="Nachricht löschen">×</button>` : ""}</div>`;
   }).join("") || `<div class="empty">Noch keine Nachrichten</div>`;
   return `<div class="chatview"><div class="chathead">${canAll ? `<button class="cback" data-act="room" data-v="list" aria-label="Zurück zu den Chats">‹</button>` : ""}
       <span class="cav">${CHAT_ROOMS[room].ic}</span><span class="cmid"><b>${esc(CHAT_ROOMS[room].title())}</b><small>${esc(CHAT_ROOMS[room].sub)}</small></span></div>
@@ -755,7 +755,9 @@ function untilDate(f, starts, allDay) {
 function evRow(e) {
   const p = prof(e.owner);
   const lp = e.src === "own" && !isDisplay();
-  return `<div class="ev${lp ? " lp" : ""}"${lp ? ` data-ev="${e.id}"` : ""} data-item="${e.id}"><div class="time">${e.src === "task" ? (e.done ? "✅" : "Aufgabe") : e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
+  const raw = e.src === "own" ? (S.events || []).find(x => x.id === e.id) : null;
+  const nw = raw && !raw.meetup_id && raw.owner !== S.me.id && isNewItem("cal", raw.created_at);
+  return `<div class="ev${lp ? " lp" : ""}${nw ? " isnew" : ""}"${lp ? ` data-ev="${e.id}"` : ""} data-item="${e.id}"><div class="time">${e.src === "task" ? (e.done ? "✅" : "Aufgabe") : e.allDay ? "ganztags" : fmtTime(e.start)}</div><span class="dot" style="background:${esc(p?.color || "#999")};margin-top:6px"></span>
     <div class="grow">${esc(e.title)}<div class="sub">${esc(p?.name || "Familie")}${evMulti(e) ? " · bis " + evUntil(e) : ""}</div></div></div>`;
 }
 
@@ -837,7 +839,10 @@ function viewCal() {
     const di = window.dayInfo ? dayInfo(d) : {};
     days += `<div class="day${k === todayK ? " today" : ""}${di.holiday ? " hol" : di.ferien ? " fer" : ""}">${k === todayK ? `<span class="todaybadge">HEUTE</span> ` : ""}${fmtDay(d)}${di.holiday ? " · " + esc(di.holiday) : di.ferien ? " · " + esc(di.ferien) : ""}</div>${list.map(evRow).join("") || `<div class="sub" style="padding:2px 0 6px">–</div>`}`;
   }
-  return `<div class="card calweek"><div class="wk"><button class="btn small ghost" data-act="calNav" data-v="-1">‹</button>
+  const t0 = startOfDay(new Date());
+  const fresh = (S.events || []).filter(e => !e.meetup_id && e.owner !== S.me.id && isNewItem("cal", e.created_at) && new Date(e.starts_at) >= t0).sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+  const banner = fresh.length ? `<div class="card newbox"><h2>🆕 Neu eingetragen</h2>${fresh.map(e => { const d = new Date(e.starts_at), p = prof(e.owner); return `<button class="newrow" data-act="calJump" data-v="${esc(e.starts_at)}"><b>${esc(e.title)}</b><span>${fmtDay(d)}${e.all_day ? "" : ", " + fmtTime(d)}${p ? " · " + esc(p.name) : ""}</span></button>`; }).join("")}</div>` : "";
+  return `${banner}<div class="card calweek"><div class="wk"><button class="btn small ghost" data-act="calNav" data-v="-1">‹</button>
       <div class="wkt"><b>${S.cw === 0 ? "Ab heute" : S.cw < 0 ? "Rückblick" : "Vorschau"}</b><span class="sub">${esc(w.title)}</span></div>
       <button class="btn small ghost" data-act="calNav" data-v="1">›</button></div>
     ${S.cw !== 0 ? `<button class="btn small ghost block" data-act="calNav" data-v="0" style="margin-bottom:4px">Zurück zu heute</button>` : ""}
@@ -1139,7 +1144,7 @@ const ACT = {
   backLogin() { S.authMode = "login"; S.err = ""; S.info = ""; render(); },
   async switchAuth() { S.authMode = S.authMode === "login" ? "signup" : "login"; S.err = ""; render(); },
   async logout() { await sb.auth.signOut(); },
-  tab(d) { if (d.v === "chat" && S.tab !== "chat") S.chatRoom = null; S.tab = d.v; render(); window.scrollTo(0, 0); },
+  tab(d) { if (d.v === "chat" && S.tab !== "chat") S.chatRoom = null; if (d.v !== S.tab) newOpen(d.v); S.tab = d.v; render(); window.scrollTo(0, 0); },
   room(d) { S.chatRoom = d.v === "all" ? "all" : d.v === "family" ? "family" : null; render(); window.scrollTo(0, S.chatRoom ? document.body.scrollHeight : 0); },
   obMode(d) { S.ob.mode = d.v; render(); },
   ob(d) { S.ob[d.k] = d.v; render(); },
@@ -1276,6 +1281,7 @@ const ACT = {
     await q(sb.from("events").delete().eq("id", d.id));
     await LOAD.events(); render();
   },
+  calJump(d) { const a = startOfDay(new Date()), b = startOfDay(new Date(d.v)); S.cw = Math.floor(Math.round((b - a) / 864e5) / 7); render(); window.scrollTo(0, 0); },
   calNav(d) { S.cw = +d.v === 0 ? 0 : S.cw + +d.v; render(); window.scrollTo(0, 0); },
   cancelEvEdit() { S.editEv = null; render(); },
   toggleMealForm() { S.mealOpen = !S.mealOpen; render(); },

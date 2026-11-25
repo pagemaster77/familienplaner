@@ -356,3 +356,9 @@ button.pts{background:none;border:0;cursor:pointer;font:inherit;font-weight:700;
 .advbox{display:none;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:12px}
 .advchk:checked~.advbox{display:block}
 .wfold{padding:10px 0;border-top:1px solid var(--line,#8883)}.wfold:first-of-type{border-top:0}
+/* Neu eingetroffen: rötlicher Hintergrund, dicke Schrift */
+.isnew{background:#e5252b26!important;box-shadow:inset 4px 0 0 #e5252b;border-radius:8px;font-weight:700}
+.isnew *{font-weight:700}
+.newbox{background:#e5252b1c;border:1px solid #e5252b66}
+.newrow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;background:#e5252b26;border:0;border-left:4px solid #e5252b;border-radius:8px;padding:8px 10px;margin:6px 0;color:var(--text);font:inherit;cursor:pointer}
+.newrow span{font-size:13px;color:var(--muted)}

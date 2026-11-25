@@ -38,6 +38,15 @@ function tabSeen(k) {
   try { const v = localStorage.getItem(tabSeenKey(k)); if (v) return +v; localStorage.setItem(tabSeenKey(k), String(Date.now())); return Date.now(); }
   catch (_e) { return Date.now(); }
 }
+/* "Neu"-Markierung innerhalb des Reiters: merkt sich beim Öffnen, seit wann etwas neu ist */
+function newOpen(k) {
+  let raw = null; try { const v = localStorage.getItem(tabSeenKey(k)); raw = v ? +v : null; } catch (_e) { /* egal */ }
+  S.newSince = raw ? { [k]: raw } : {};
+}
+function isNewItem(k, created) {
+  if (!S.newSince || S.newSince[k] == null || !S.family || !S.family.red_tabs_on || isDisplay()) return false;
+  return tms(created) > S.newSince[k];
+}
 function tabMark(k) { try { localStorage.setItem(tabSeenKey(k), String(Date.now())); } catch (_e) { /* egal */ } }
 const tms = x => new Date(x).getTime();
 function tabNew(k) {
@@ -56,6 +65,7 @@ const TAB_KEYS = ["home", "todo", "shop", "meals", "cal", "wish", "jobs", "chat"
 async function goTo(tab, item) {
   if (tab === "duell") { location.href = "spielhalle/"; return; } /* Push "Duell-Einladung": direkt in die Spielhalle */
   if (!TAB_KEYS.includes(tab)) return;
+  if (tab !== S.tab || !S.newSince) newOpen(tab);
   S.tab = tab; S.chatRoom = tab === "chat" ? "family" : null;
   S.focus = item || null; S.focusTries = 0;
   /* Termin-Push: Der Kalender zeigt nur eine Woche. Darum erst die Woche des Termins aufschlagen, sonst gibt es nichts zum Blinken. */
