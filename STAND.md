@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Spiele-Test (ohne Versionssprung): Neues Spiel "Breakout 2" in site/spiele-test (10 Level, Steine mit Haerte 1-4, Stahl, Sprengsteine, Extras W/N/M/G/S/P/L, Schlaeger schiesst, Baelle teilen sich). Noch nicht in der Spielhalle; soll spaeter Pong ersetzen.
+
 ## Version 22.28: Punktekonto: Auf-/Zuklapp-Pfeil liegt nicht mehr unter dem Info-Knopf i. Kein Neuigkeiten-Eintrag.
 
 ## Version 22.27: Neues deutlich markieren: Beim Oeffnen eines roten Reiters (To-Do, Einkauf, Chat, Termine) bekommen neue Eintraege roetlichen Hintergrund und dicke Schrift; im Kalender zusaetzlich Karte "Neu eingetragen" mit Sprung zur Woche des Termins. Kein Neuigkeiten-Eintrag.
