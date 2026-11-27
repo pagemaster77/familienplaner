@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.33", date: "27.11.2026", items: [
+    "Neues Design: Die App ist jetzt dunkel, mit Farbverlauf in der Kopfleiste und klaren Linien zwischen den Reitern.",
+    "Farbwelten: Ein Admin kann unter „Verwalten“ → „🎨 Farbwelt“ für die ganze Familie wählen: Standard, Spinnenheld (Rot und Blau), Eisenheld (Rot und Gold), Gold, Bronze oder Ozean (Blau).",
+  ] },
   { v: "22.32", date: "27.11.2026", items: [
     "Wunschlisten teilen: In „Wünsche“ den Namen aufklappen und „🔗 Liste teilen“ antippen. Der Link geht per WhatsApp & Co. an Oma, Opa, Tanten … Sie brauchen kein Konto, sehen die Wünsche und können „Gekauft“ anhaken (mit ihrem Namen), damit nichts doppelt gekauft wird. Jeder kann seine eigene Liste teilen, auch die Kinder. Mit „🚫 Link beenden“ ist der Link wieder tot.",
   ] },
