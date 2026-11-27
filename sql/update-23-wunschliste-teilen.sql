@@ -1,0 +1,7 @@
+-- Update 23 (bereits eingespielt als Migration "wunschliste_teilen"): Wunschlisten per Link teilen
+-- wish_shares(profile_id, family_id, token): geheimer Code (64 Zeichen) je Person, RLS ohne Policies (Zugriff nur ueber Funktionen)
+-- wish_marks.by_profile darf leer sein, dann steht der Name aus dem Link in by_name (max. 30 Zeichen)
+-- marks_delete: Haken von Link-Besuchern (by_profile leer) darf jedes Familienmitglied (ausser dem Wunschbesitzer) entfernen
+-- Funktionen: wish_share_enable(profile) / wish_share_disable(profile) (nur angemeldet, eigene Liste oder Admin),
+--             public_wishlist(token) und public_wish_mark(token, wish, name, on) (anon erlaubt, nur mit gueltigem Code)
+-- Den vollstaendigen Text der Migration siehe Supabase (Migrationsliste).

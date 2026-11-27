@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.32", date: "27.11.2026", items: [
+    "Wunschlisten teilen: In „Wünsche“ den Namen aufklappen und „🔗 Liste teilen“ antippen. Der Link geht per WhatsApp & Co. an Oma, Opa, Tanten … Sie brauchen kein Konto, sehen die Wünsche und können „Gekauft“ anhaken (mit ihrem Namen), damit nichts doppelt gekauft wird. Jeder kann seine eigene Liste teilen, auch die Kinder. Mit „🚫 Link beenden“ ist der Link wieder tot.",
+  ] },
   { v: "22.29", date: "27.11.2026", items: [
     "Spielhalle: Zwei neue Spiele! „Breakout 2“ mit 10 Leveln, Extras (Schläger größer oder kleiner, Bälle teilen sich, Schläger schießt) und Steinen mit verschiedenen Härtegraden. Und „Weltraum-Abwehr“: Aliens abwehren und Extras sammeln. Beide bringen Spielpunkte ⭐ und kommen in die Bestenliste.",
     "Pong und Reaktion gibt es in der Spielhalle nicht mehr. Alte Punkte bleiben erhalten.",

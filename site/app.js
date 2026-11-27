@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.31 (27.11.)";
+const VERSION = "22.32 (27.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -902,7 +902,7 @@ const OCC = ["Geburtstag", "Weihnachten", "Sonstiges"], OCC_IC = { Geburtstag: "
 const wishUrl = u => { try { const t = String(u).trim(); if (/\s/.test(t)) return ""; const x = new URL(t); return (x.protocol === "https:" || x.protocol === "http:") && x.hostname.includes(".") ? x.toString() : ""; } catch (_) { return ""; } };
 const wprof = id => prof(id) || S.lprof.find(x => x.id === id);
 function wishRow(w, mine) {
-  const mk = S.marks.find(m => m.wish_id === w.id), by = mk && wprof(mk.by_profile), u = wishUrl(w.url);
+  const mk = S.marks.find(m => m.wish_id === w.id), by = mk && (mk.by_profile ? wprof(mk.by_profile) : { name: (mk.by_name || "Link") + " (per Link)" }), u = wishUrl(w.url);
   const own = w.family_id === S.me.family_id, can = mine || (S.me.is_admin && own);
   if (can && S.editWish === w.id) return `<div class="row"><form class="grow add" data-form="wishedit" style="flex-wrap:wrap;margin:0">
     <input id="wet-${w.id}" name="title" value="${esc(w.title)}" placeholder="Was wünschst du dir?" required maxlength="120">
@@ -912,7 +912,7 @@ function wishRow(w, mine) {
     <input name="note" value="${esc(w.note || "")}" placeholder="Notiz (Größe, Farbe …)" maxlength="300">
     <button class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancelEdit">Abbrechen</button></form></div>`;
   const status = mine ? "" : mk
-    ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || (S.me.is_admin && prof(mk.by_profile)) ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
+    ? `<span class="tag">✔ gekauft${by ? " von " + esc(by.name) : ""}</span>${mk.by_profile === S.me.id || !mk.by_profile || (S.me.is_admin && prof(mk.by_profile)) ? `<button class="x" data-act="unbuy" data-id="${w.id}" title="Haken entfernen">↺</button>` : ""}`
     : `<button class="btn small" data-act="buy" data-id="${w.id}">✔ Gekauft</button>`;
   return `<div class="row ${mk ? "done" : ""}"><div class="grow"><div class="t">${OCC_IC[w.occasion] || "🎁"} ${esc(w.title)}${w.price ? ` <span class="sub">· ${esc(w.price)}</span>` : ""}</div>
     ${u ? `<div class="sub"><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen</a></div>` : ""}
@@ -926,7 +926,7 @@ function wishGroup(famName, people) {
     const l = S.wishes.filter(w => w.owner === p.id), open = !!(S.wOpen || {})[p.id];
     const cnt = OCC.map(o => [o, l.filter(w => w.occasion === o).length]).filter(x => x[1]).map(x => `${OCC_IC[x[0]]} ${x[1]} ${x[0]}`).join(" · ");
     return `<div class="wfold"><button class="foldh" style="font-size:16px" data-act="togWish" data-id="${p.id}" aria-expanded="${open}"><span>${esc(p.name)}<span class="sub" style="display:block;font-weight:400;font-size:13px">${cnt || "Noch keine Wünsche"}</span></span><i>${open ? "▾" : "▸"}</i></button>
-      ${open ? l.map(w => wishRow(w, p.id === S.me.id)).join("") || `<div class="empty">Noch keine Wünsche</div>` : ""}</div>`;
+      ${open ? `${p.id === S.me.id || (S.me.is_admin && p.family_id === S.me.family_id) ? `<div class="row" style="gap:8px;margin:8px 0"><button class="btn small" data-act="shareWish" data-id="${p.id}">🔗 Liste teilen</button><button class="btn small ghost" data-act="stopShare" data-id="${p.id}">🚫 Link beenden</button></div>` : ""}` + l.map(w => wishRow(w, p.id === S.me.id)).join("") || `<div class="empty">Noch keine Wünsche</div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 function viewWishes() {
@@ -1223,6 +1223,19 @@ const ACT = {
   editShop(d) { S.editShop = d.id; render(); },
   editMeal(d) { S.editMeal = d.id; render(); },
   editReward(d) { S.editReward = d.id; render(); },
+  async shareWish(d) {
+    const p = prof(d.id) || wprof(d.id); if (!p) return;
+    try {
+      const t = await q(sb.rpc("wish_share_enable", { p_profile: d.id })), url = location.origin + "/wunsch.html?t=" + t, text = "🎁 Wunschliste von " + p.name + ":";
+      if (navigator.share) { try { await navigator.share({ title: "Wunschliste von " + p.name, text, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+      try { await navigator.clipboard.writeText(text + "\n" + url); toast("Link kopiert 📋"); } catch (e) { /* egal */ }
+      window.open("https://wa.me/?text=" + encodeURIComponent(text + "\n" + url), "_blank");
+    } catch (e) { toast(e.message || "Teilen hat nicht geklappt"); }
+  },
+  async stopShare(d) {
+    if (!confirm("Link beenden? Dann funktioniert der bisher verschickte Link nicht mehr.")) return;
+    try { await q(sb.rpc("wish_share_disable", { p_profile: d.id })); toast("Link beendet"); } catch (e) { toast(e.message || "Hat nicht geklappt"); }
+  },
   togWish(d) { S.wOpen = S.wOpen || {}; S.wOpen[d.id] = !S.wOpen[d.id]; render(); },
   togglePk() { S.pkOpen = !S.pkOpen; render(); },
   async delTemplate(d) { if (!confirm("Diese wiederkehrende Aufgabe löschen? Schon angelegte Aufgaben bleiben in der Liste.")) return; await q(sb.from("task_templates").delete().eq("id", d.id)); await LOAD.task_templates(); render(); toast("Gelöscht"); },
