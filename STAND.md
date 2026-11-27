@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## DB-Nachtrag 27.11. (ohne Versionssprung): submit_score nimmt bei breakout/weltraum bis 5.000.000 Punkte an (vorher 60000, lange Weltraum-Spiele gingen verloren).
+
 ## Version 22.29: Spielhalle: Pong und Reaktion ersetzt durch Breakout 2 und Weltraum-Abwehr (spiele/breakout.js, weltraum.js, kit.js; sql/update-22). Spielpunkte = Ergebnis/50, max. 300. Alte pong/reaktion-Werte bleiben in der Datenbank. Neuigkeiten-Eintrag 22.29.
 
 ## Spiele-Test (ohne Versionssprung): Neues Spiel "Breakout 2" in site/spiele-test (10 Level, Steine mit Haerte 1-4, Stahl, Sprengsteine, Extras W/N/M/G/S/P/L, Schlaeger schiesst, Baelle teilen sich). Noch nicht in der Spielhalle; soll spaeter Pong ersetzen.
