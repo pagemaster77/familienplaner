@@ -154,6 +154,27 @@ function passModal() {
   </div></div>`;
 }
 
+/* ---------- Admin: Farbwelt ---------- */
+const THEMES = [
+  ["standard", "Standard", "Blau und Orange", ["#4a90e2", "#f0a24a", "#10141c"]],
+  ["spinne", "Spinnenheld", "Rot und Blau", ["#ff3050", "#5b8cff", "#0c1022"]],
+  ["eisen", "Eisenheld", "Rot und Gold", ["#e23a3f", "#f5c02e", "#140d0b"]],
+  ["ozean", "Ozean", "Türkis und Tiefblau", ["#2cc4dc", "#5b9bff", "#08171c"]],
+  ["wald", "Wald", "Grün und Erde", ["#5fcf6e", "#e0a64e", "#0c140b"]],
+  ["sonne", "Sonnenuntergang", "Orange und Pink", ["#ff7a4a", "#ff5c9a", "#170d0b"]],
+];
+function applyTheme() {
+  const t = (S.family && S.family.theme) || "standard";
+  document.documentElement.dataset.theme = THEMES.some(x => x[0] === t) ? t : "standard";
+}
+function cardTheme() {
+  const cur = (S.family && S.family.theme) || "standard";
+  return `<div class="card"><h2>🎨 Farbwelt</h2>
+    <div class="sub" style="margin-bottom:10px">Gilt für die ganze Familie. Alle Farbwelten sind dunkel.</div>
+    <div class="themes">${THEMES.map(([k, n, d, c]) => `<button type="button" class="${cur === k ? "on" : ""}" data-act="setTheme" data-v="${k}" aria-pressed="${cur === k}">
+      <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div></div>`;
+}
+
 /* ---------- Admin: Schalter für neue Funktionen ---------- */
 function cardSettings() {
   const f = S.family, chk = (n, label) => `<label class="srow"><input type="checkbox" name="${n}" ${f[n] ? "checked" : ""}><span>${label}</span></label>`;
@@ -179,6 +200,13 @@ function cardSettings() {
 
 /* ---------- Aktionen und Formulare (werden von app.js mit ACT/FORMS zusammen benutzt) ---------- */
 const EXTRA_ACT = {
+  async setTheme(d) {
+    if (!THEMES.some(x => x[0] === d.v)) return;
+    const was = S.family.theme; S.family = { ...S.family, theme: d.v }; applyTheme(); render();
+    const rows = await sb.from("families").update({ theme: d.v }).eq("id", S.family.id).select();
+    if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, theme: was }; applyTheme(); render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
+    else toast("Farbwelt geändert 🎨");
+  },
   info(d) { S.infoOpen[d.v] = !S.infoOpen[d.v]; render(); },
   passOpen(d) { S.passTask = d.id; S.passTo = null; render(); },
   passClose() { S.passTask = null; S.passTo = null; render(); },

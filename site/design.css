@@ -1,0 +1,82 @@
+/* =====================================================================
+   Design-Überarbeitung (Version 23): Farbwelten, Kopfleiste, Reiter, Karten.
+   Wird nach styles.css geladen und überschreibt dort nur Optik.
+   Farbwelt wählen: Verwalten -> Farbwelt (gilt für die ganze Familie).
+   ===================================================================== */
+
+/* ---------- Grundwerte (Farbwelt "Standard"): immer dunkel ---------- */
+:root{
+  color-scheme:dark;
+  --bg:#10141c; --card:#1a202c; --text:#eef1f7; --muted:#9aa4b8; --line:#2b3447;
+  --primary:#4a90e2; --primary-d:#2f6fb8; --accent:#f0a24a; --ok:#3fbf75; --warn:#f0a24a; --danger:#e5585a;
+  --top-a:#1d2f4d; --top-b:#161d2b; --tab-line:#34405a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+}
+
+/* ---------- Farbwelten (Verwalten -> Farbwelt), alle dunkel ---------- */
+/* Spinnenheld: Rot und Blau */
+html[data-theme="spinne"]{--primary:#ff3050;--primary-d:#c91631;--accent:#5b8cff;--bg:#0c1022;--card:#151a33;--text:#f2f4ff;--muted:#9aa3c7;--line:#262d52;--top-a:#3a1220;--top-b:#14234d;--tab-line:#2e3766}
+/* Eisenheld: Rot und Gold */
+html[data-theme="eisen"]{--primary:#e23a3f;--primary-d:#b52529;--accent:#f5c02e;--bg:#140d0b;--card:#211613;--text:#fbf1e4;--muted:#b9a592;--line:#3a2a22;--top-a:#4a1614;--top-b:#3b2c0e;--tab-line:#4a352b}
+/* Ozean: Türkis und Tiefblau */
+html[data-theme="ozean"]{--primary:#2cc4dc;--primary-d:#1590a5;--accent:#5b9bff;--bg:#08171c;--card:#102229;--text:#e8f6f9;--muted:#8fb0b9;--line:#1f3a43;--top-a:#0f3a45;--top-b:#142a4d;--tab-line:#25474f}
+/* Wald: Grün und Erde */
+html[data-theme="wald"]{--primary:#5fcf6e;--primary-d:#37993f;--accent:#e0a64e;--bg:#0c140b;--card:#142112;--text:#ecf6e6;--muted:#9ab08f;--line:#243822;--top-a:#1b3b1a;--top-b:#3a2c12;--tab-line:#2d4529}
+/* Sonnenuntergang: Orange und Pink */
+html[data-theme="sonne"]{--primary:#ff7a4a;--primary-d:#d0502a;--accent:#ff5c9a;--bg:#170d0b;--card:#25161a;--text:#fff0ea;--muted:#c4a39a;--line:#42262a;--top-a:#4d2312;--top-b:#4a1530;--tab-line:#52322f}
+
+/* ---------- Seite darf nicht zur Seite wackeln ---------- */
+html,body{overflow-x:clip}
+.shell,.main{max-width:100%;overflow-x:clip}
+.card{min-width:0;overflow-wrap:anywhere}
+.rank{overscroll-behavior-x:contain}
+.sub b,.sub code{overflow-wrap:anywhere;word-break:break-all}
+
+/* ---------- Kopfleiste mit Farbverlauf (Familienname) ---------- */
+.top-wrap{background:linear-gradient(135deg,var(--top-a),var(--top-b));border-bottom:0;
+  box-shadow:0 2px 10px rgba(20,30,60,.10)}
+.top-wrap::after{content:"";display:block;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.top-wrap .top{background:transparent;padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:8px}
+.top h1{font-size:21px;letter-spacing:.01em}
+.top .who{color:var(--text)}
+
+/* ---------- Reiter: klar abgegrenzt durch Linien ---------- */
+.top-wrap .tabs{background:var(--card);border-top:1px solid var(--tab-line);border-bottom:1px solid var(--tab-line);margin:0}
+.top-wrap .tabs button{border-left:1px solid var(--tab-line);padding:6px 1px 8px;color:var(--muted);transition:background .15s}
+.top-wrap .tabs button:first-child{border-left:0}
+.top-wrap .tabs button.on{color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,var(--card));box-shadow:inset 0 -3px 0 var(--primary),inset 0 3px 0 var(--accent)}
+.top-wrap .tabs button.nw{box-shadow:inset 0 -3px 0 #e5252b}
+.top-wrap .tabs button:active{background:var(--line)}
+
+/* ---------- Karten und Abstände ---------- */
+.main{padding:16px 14px 28px}
+.card{border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{font-size:18px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid color-mix(in srgb,var(--primary) 22%,var(--card));justify-content:flex-start;gap:8px}
+.card h2 .tag{margin-left:auto}
+.card h2 > :last-child:not(:first-child){margin-left:auto}
+.row{padding:11px 0}
+.sh{color:var(--primary);text-transform:uppercase;letter-spacing:.05em;font-size:12px;margin:18px 0 4px}
+.day{color:var(--primary)}
+.rank .p{background:color-mix(in srgb,var(--primary) 7%,var(--bg));border:1px solid var(--line)}
+.tag{background:color-mix(in srgb,var(--primary) 12%,var(--bg));color:var(--text)}
+
+/* ---------- Knöpfe, Eingaben, Chips ---------- */
+.btn{color:#fff;background:linear-gradient(180deg,var(--primary),var(--primary-d));box-shadow:0 2px 6px color-mix(in srgb,var(--primary) 35%,transparent)}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--primary);border:1px solid var(--tab-line)}
+.btn.danger{background:var(--danger)}
+input,select,textarea{border-color:var(--tab-line);background:color-mix(in srgb,var(--bg) 60%,var(--card))}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--primary) 55%,transparent);outline-offset:1px;border-color:var(--primary)}
+.link{color:var(--primary)}
+.msg.me{background:linear-gradient(180deg,var(--primary),var(--primary-d))}
+
+/* ---------- Farbwelt-Auswahl (Verwalten) ---------- */
+.themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.themes button{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;border:2px solid var(--tab-line);background:var(--card);border-radius:14px;padding:10px;cursor:pointer;color:var(--text)}
+.themes button.on{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent)}
+.themes b{font-size:14px}
+.themes small{color:var(--muted);font-size:12px}
+.themes .sw{display:flex;width:100%;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--tab-line)}
+.themes .sw i{flex:1}
+
+/* Zeitangabe im Kalender: "ganztags" darf nicht umbrechen */
+.ev .time{width:68px;font-size:13px;white-space:nowrap}

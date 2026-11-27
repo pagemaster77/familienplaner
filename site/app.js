@@ -546,6 +546,7 @@ function viewAdmin() {
     ${cardRewards(true)}
     ${cardPoints(true)}
 
+    ${cardTheme()}
     ${cardSettings()}
 
     <div class="card"><h2>👪 Familie</h2>
@@ -1607,6 +1608,7 @@ function checkRewards() {
 function render() {
   window.CHEF_ID = (chefFor(new Date()) || {}).id || null;
   if (S.me && S.tab && S.tab !== "home" && !document.hidden && !isDisplay()) tabMark(S.tab);
+  window.applyTheme && applyTheme();
   const saved = saveInputs();
   if (S.booting) $app.innerHTML = viewLoading();
   else if (!S.user || S.recovery) $app.innerHTML = viewAuth();
