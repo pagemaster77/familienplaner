@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.31: Weltraum-Abwehr: keine Extra-Leben mehr (Herz-Kapsel entfernt). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.30: Weltraum-Abwehr wird mit den Wellen schwerer (ab Welle 5 haben Aliens mehr Leben, alle 4 Wellen eins mehr; schnelleres Schiessen, ab Welle 12 Doppelschuss). Bleibt endlos, Punkte/Sterne unveraendert. Kein Neuigkeiten-Eintrag.
 
 ## DB-Nachtrag 27.11. (ohne Versionssprung): submit_score nimmt bei breakout/weltraum bis 5.000.000 Punkte an (vorher 60000, lange Weltraum-Spiele gingen verloren).

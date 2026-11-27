@@ -7,7 +7,7 @@
     const stars = Array.from({ length: 60 }, () => ({ x: rnd(0, W), y: rnd(0, H), z: rnd(0.3, 1) }));
     const COLS = ["#ff5d8f", "#ffb02e", "#4dd8ff", "#a78bfa", "#5eead4"], keys = {};
     const PU = { D: { t: "2x", c: "#5eead4", n: "Doppelschuss" }, F: { t: "F", c: "#a78bfa", n: "Fächerschuss" }, S: { t: "S", c: "#ffd166", n: "Schnellfeuer" }, L: { t: "L", c: "#ff7a59", n: "Durchschlag" }, O: { t: "O", c: "#4dd8ff", n: "Schutzschild" }, H: { t: "♥", c: "#ff5d8f", n: "Extraleben" }, Z: { t: "Z", c: "#c4b5fd", n: "Zeitlupe" }, B: { t: "B", c: "#ffffff", n: "Nova-Bombe" } };
-    const POOL = "DDDFFFSSLLOOHZZB";
+    const POOL = "DDDFFFSSLLOOZZB";
     let st, tx = W / 2, best = +store.get("arc_space") || 0;
     const onKey = v => e => { if (e.key === "ArrowLeft" || e.key === "a") keys.l = v; if (e.key === "ArrowRight" || e.key === "d") keys.r = v; if (e.key.startsWith("Arrow")) e.preventDefault(); };
     const kd = onKey(true), ku = onKey(false); addEventListener("keydown", kd); addEventListener("keyup", ku);
@@ -98,7 +98,7 @@
         <h3>Steuerung</h3>
         <p>Ziehe den Finger nach links und rechts, dein Schiff folgt und <b>schießt von allein</b>. Am Computer: ◀ ▶.</p>
         <h3>Extras</h3>
-        <p>Aus abgeschossenen Aliens fallen Kapseln. Fange sie mit dem Schiff: Doppelschuss, Fächerschuss, Schnellfeuer, Durchschlag, Schutzschild, Zeitlupe, Extra-Leben und eine Bombe.</p>
+        <p>Aus abgeschossenen Aliens fallen Kapseln. Fange sie mit dem Schiff: Doppelschuss, Fächerschuss, Schnellfeuer, Durchschlag, Schutzschild, Zeitlupe und eine Bombe.</p>
         <h3>Punkte</h3>
         <p>Aliens in den vorderen Reihen bringen weniger, die hinteren mehr (10 bis 30 Punkte). Das UFO oben bringt Extrapunkte.</p>
         <p><b>Wird immer schwerer:</b> Ab Welle 5 halten die Aliens mehr aus (die Zahl unter dem Alien zeigt die Treffer, die es noch braucht). Außerdem schießen sie öfter. Wie weit kommst du?</p>
