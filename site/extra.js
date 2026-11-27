@@ -175,6 +175,16 @@ function cardTheme() {
       <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div></div>`;
 }
 
+/* Farbwelt der Wandanzeige (getrennt von der App; Standard = die bisherige helle Wand) */
+function wallThemes() {
+  const cur = (S.family && S.family.wall_theme) || "standard";
+  const list = THEMES.map(t => t[0] === "standard" ? ["standard", "Standard", "Hell, wie bisher", ["#2b6cb0", "#2e9d5b", "#eef2f8"]] : t);
+  return `<h3 class="sh" style="margin-top:14px">🎨 Farbwelt der Wandanzeige</h3>
+    <div class="sub" style="margin-bottom:10px">Gilt nur für das Display, nicht für die App.</div>
+    <div class="themes">${list.map(([k, n, d, c]) => `<button type="button" class="${cur === k ? "on" : ""}" data-act="setWallTheme" data-v="${k}" aria-pressed="${cur === k}">
+      <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div>`;
+}
+
 /* ---------- Admin: Schalter für neue Funktionen ---------- */
 function cardSettings() {
   const f = S.family, chk = (n, label) => `<label class="srow"><input type="checkbox" name="${n}" ${f[n] ? "checked" : ""}><span>${label}</span></label>`;
@@ -206,6 +216,13 @@ const EXTRA_ACT = {
     const rows = await sb.from("families").update({ theme: d.v }).eq("id", S.family.id).select();
     if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, theme: was }; applyTheme(); render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
     else toast("Farbwelt geändert 🎨");
+  },
+  async setWallTheme(d) {
+    if (!THEMES.some(x => x[0] === d.v)) return;
+    const was = S.family.wall_theme; S.family = { ...S.family, wall_theme: d.v }; render();
+    const rows = await sb.from("families").update({ wall_theme: d.v }).eq("id", S.family.id).select();
+    if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, wall_theme: was }; render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
+    else toast("Wand-Farbwelt geändert 📺 (das Display zieht in ca. 30 Sekunden nach)");
   },
   info(d) { S.infoOpen[d.v] = !S.infoOpen[d.v]; render(); },
   passOpen(d) { S.passTask = d.id; S.passTo = null; render(); },

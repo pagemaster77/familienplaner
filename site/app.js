@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.33 (27.11.)";
+const VERSION = "22.34 (28.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -1085,6 +1085,7 @@ function wallCard() {
     ${on ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn small ghost" data-act="wallNew">Alle Displays abmelden</button>
       <button class="btn small ghost" data-act="wallOff">Wandanzeige ausschalten</button></div>
+    ${typeof wallThemes === "function" ? wallThemes() : ""}
     <details style="margin-top:10px"><summary class="sub" style="cursor:pointer">Erweitert: Direktlink</summary>
       <p class="sub">Alternative zum Code. Wer den Link kennt, kann die Familiendaten ansehen. Nicht weitergeben.</p>
       <input id="wallurl" readonly value="${esc(wallUrl())}" onclick="this.select()" style="font-size:13px">

@@ -179,3 +179,28 @@ body:has(.nightscr){background:#000}
 .flw.sm.fx-flame .avatar{box-shadow:0 0 5px 2px #ffb300,0 -2px 8px 3px #ff5a00}
 .flw.sm.fx-heart .avatar{box-shadow:0 0 5px 2px #ff8fb1,0 -2px 8px 3px #ff2d6f}
 .flw.sm.fx-poop .avatar{box-shadow:0 0 5px 2px #b07a3c,0 -2px 8px 3px #6b4423}
+
+/* ---- Farbwelten der Wandanzeige (html[data-wt]); ohne Wert bleibt die helle Standard-Wand ---- */
+html[data-wt]{color-scheme:dark}
+html[data-wt="spinne"]{--bg:#0c1022;--card:#151a33;--head2:#1c2342;--text:#f2f4ff;--muted:#9aa3c7;--line:#262d52;--primary:#ff3050;--today:#3a1a2e;--we:#1a1830;--fer:#1d3a6e;--ferc:#131f40;--pts:#2a2350;--on-primary:#fff}
+html[data-wt="eisen"]{--bg:#140d0b;--card:#211613;--head2:#2b1d18;--text:#fbf1e4;--muted:#b9a592;--line:#3a2a22;--primary:#e23a3f;--today:#43251b;--we:#2a1816;--fer:#1f3556;--ferc:#14233d;--pts:#3d2a22;--on-primary:#fff}
+html[data-wt="gold"]{--bg:#0e0c07;--card:#1c1810;--head2:#272113;--text:#fbf3dc;--muted:#bcab7c;--line:#3a3018;--primary:#f0c040;--today:#3d3210;--we:#241c12;--fer:#1f3556;--ferc:#14233d;--pts:#3a2f10;--on-primary:#1c1500}
+html[data-wt="bronze"]{--bg:#130c07;--card:#231710;--head2:#2e1e14;--text:#f8ebdd;--muted:#bba089;--line:#3d2a1d;--primary:#d98a3d;--today:#43281a;--we:#2b1a12;--fer:#1f3556;--ferc:#14233d;--pts:#442a15;--on-primary:#1f1005}
+html[data-wt="ozean"]{--bg:#0a1226;--card:#111d3a;--head2:#182850;--text:#eaf1ff;--muted:#94a8d4;--line:#1f3160;--primary:#3b8bff;--today:#1b3a70;--we:#14214a;--fer:#26508f;--ferc:#162b57;--pts:#1b3770;--on-primary:#fff}
+html[data-wt],html[data-wt] body{background:var(--bg)!important;color:var(--text)}
+html[data-wt] .btn.on{color:var(--on-primary)}
+html[data-wt] .btn{box-shadow:0 .1em .3em rgba(0,0,0,.4)}
+html[data-wt] .stale{background:#4a1c1c;color:#ffb3b3}
+html[data-wt] .grid{background:var(--line);box-shadow:0 .25em 1.2em rgba(0,0,0,.5)}
+html[data-wt] .dayh:not(.today):not(.fer):not(.hol),html[data-wt] .corner,html[data-wt] .person{background:var(--head2)!important}
+html[data-wt] .dayh.fer:not(.today):not(.hol){background:var(--fer)!important}
+html[data-wt] .dayh.we .wd,html[data-wt] .dayh.we .dn{color:#ff8a78}
+html[data-wt] .dayh.today.we .wd,html[data-wt] .dayh.today.we .dn{color:#fff}
+html[data-wt] .cell.we:not(.today){background:var(--we)!important}
+html[data-wt] .cell.fer:not(.today){background:var(--ferc)!important}
+html[data-wt] .cell.hol:not(.today){background:#3a1517!important}
+html[data-wt] .chip{box-shadow:0 .08em .2em rgba(0,0,0,.4)}
+html[data-wt] .pts{background:var(--pts)}
+html[data-wt] .meal .d{background:var(--head2)}
+html[data-wt] .meal .img{background-color:var(--line)}
+html[data-wt] .bdg{box-shadow:0 0 0 2px var(--bg)}

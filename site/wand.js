@@ -382,6 +382,7 @@ function checkRewards() {
 }
 
 function render() {
+  { const t = (W.data && W.data.family && W.data.family.theme) || "standard"; if (t === "standard") delete document.documentElement.dataset.wt; else document.documentElement.dataset.wt = t; }
   window.CHEF_ID = (W.data && W.data.chef) || null;
   if (W.data && TOKEN && !nightActive() && wantSaver()) {
     W.saver = true; W.night = false;

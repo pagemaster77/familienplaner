@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.34", date: "28.11.2026", items: [
+    "Wandanzeige mit Farbwelt: Ein Admin kann unter „Verwalten“ → „📺 Wandanzeige“ die gleichen Farbwelten wie in der App auch für das Display wählen. „Standard“ bleibt die bisherige helle Wand.",
+  ] },
   { v: "22.33", date: "27.11.2026", items: [
     "Neues Design: Die App ist jetzt dunkel, mit Farbverlauf in der Kopfleiste und klaren Linien zwischen den Reitern.",
     "Farbwelten: Ein Admin kann unter „Verwalten“ → „🎨 Farbwelt“ für die ganze Familie wählen: Standard, Spinnenheld (Rot und Blau), Eisenheld (Rot und Gold), Gold, Bronze oder Ozean (Blau).",

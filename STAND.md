@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.34: Wandanzeige hat eigene Farbwelt (families.wall_theme, sql/update-25; Admin -> Wandanzeige -> Farbwelt; wall-data liefert family.theme; wand.css Bloecke html[data-wt]). Standard = bisherige helle Wand. wall-data in Supabase neu veroeffentlicht (Version 14). Neuigkeiten-Eintrag 22.34.
+
 ## Version 23 = 22.33: Neues dunkles Design (site/design.css nach styles.css), Kopfleiste mit Verlauf, Reiter mit Linien, Seite wackelt nicht mehr seitlich; Farbwelten pro Familie (families.theme, Admin -> Farbwelt: standard/spinne/eisen/gold/bronze/ozean; sql/update-24). Wandanzeige und wunsch.html noch hell. Neuigkeiten-Eintrag 22.33.\n\n## Version 22.32: Wunschlisten per Link teilen (site/wunsch.html, ohne Anmeldung; Tabelle wish_shares, Funktionen wish_share_enable/disable, public_wishlist, public_wish_mark; wish_marks.by_name; sql/update-23). Neuigkeiten-Eintrag 22.32.
 
 ## Version 22.31: Weltraum-Abwehr: keine Extra-Leben mehr (Herz-Kapsel entfernt). Kein Neuigkeiten-Eintrag.
