@@ -18,12 +18,8 @@
 html[data-theme="spinne"]{--primary:#ff3050;--primary-d:#c91631;--accent:#5b8cff;--bg:#0c1022;--card:#151a33;--text:#f2f4ff;--muted:#9aa3c7;--line:#262d52;--top-a:#3a1220;--top-b:#14234d;--tab-line:#2e3766}
 /* Eisenheld: Rot und Gold */
 html[data-theme="eisen"]{--primary:#e23a3f;--primary-d:#b52529;--accent:#f5c02e;--bg:#140d0b;--card:#211613;--text:#fbf1e4;--muted:#b9a592;--line:#3a2a22;--top-a:#4a1614;--top-b:#3b2c0e;--tab-line:#4a352b}
-/* Ozean: Türkis und Tiefblau */
-html[data-theme="ozean"]{--primary:#2cc4dc;--primary-d:#1590a5;--accent:#5b9bff;--bg:#08171c;--card:#102229;--text:#e8f6f9;--muted:#8fb0b9;--line:#1f3a43;--top-a:#0f3a45;--top-b:#142a4d;--tab-line:#25474f}
-/* Wald: Grün und Erde */
-html[data-theme="wald"]{--primary:#5fcf6e;--primary-d:#37993f;--accent:#e0a64e;--bg:#0c140b;--card:#142112;--text:#ecf6e6;--muted:#9ab08f;--line:#243822;--top-a:#1b3b1a;--top-b:#3a2c12;--tab-line:#2d4529}
-/* Sonnenuntergang: Orange und Pink */
-html[data-theme="sonne"]{--primary:#ff7a4a;--primary-d:#d0502a;--accent:#ff5c9a;--bg:#170d0b;--card:#25161a;--text:#fff0ea;--muted:#c4a39a;--line:#42262a;--top-a:#4d2312;--top-b:#4a1530;--tab-line:#52322f}
+/* Ozean: Blau */
+html[data-theme="ozean"]{--primary:#3b8bff;--primary-d:#1f5fd0;--accent:#7cc4ff;--bg:#0a1226;--card:#111d3a;--text:#eaf1ff;--muted:#94a8d4;--line:#1f3160;--top-a:#16408c;--top-b:#0d1f45;--tab-line:#27407a}
 
 /* Gold: Gold und Champagner */
 html[data-theme="gold"]{--primary:#f0c040;--primary-d:#b8901c;--accent:#ffe9a8;--on-primary:#1c1500;--bg:#0e0c07;--card:#1c1810;--text:#fbf3dc;--muted:#bcab7c;--line:#3a3018;--top-a:#4d3c0c;--top-b:#2a2108;--tab-line:#51431f}
