@@ -2,6 +2,10 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.29", date: "27.11.2026", items: [
+    "Spielhalle: Zwei neue Spiele! „Breakout 2“ mit 10 Leveln, Extras (Schläger größer oder kleiner, Bälle teilen sich, Schläger schießt) und Steinen mit verschiedenen Härtegraden. Und „Weltraum-Abwehr“: Aliens abwehren und Extras sammeln. Beide bringen Spielpunkte ⭐ und kommen in die Bestenliste.",
+    "Pong und Reaktion gibt es in der Spielhalle nicht mehr. Alte Punkte bleiben erhalten.",
+  ] },
   { v: "22.23", date: "24.11.2026", items: [
     "Admin: Aufgaben mit Haken „Erweitert“ – dann kannst du wiederkehrende Aufgaben anlegen. Wochentage anhaken (auch mehrere) und per Liste wählen, in welchem Kalender sie bei den Kindern erscheinen sollen. Die Aufgabe kommt dann an diesen Tagen von selbst in die To-Do-Liste.",
     "To-Do: Die Aufgaben stehen jetzt direkt unter dem Punktestand. Das Punktekonto lässt sich ein- und aufklappen.",

@@ -152,3 +152,12 @@ a{color:var(--pri);text-decoration:none}
 .champ .throne .crw{font-size:40px;line-height:1;animation:rise .6s ease-out}
 .champ .throne b{font-size:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .champ .throne span{color:var(--gold);font-weight:700;font-size:13px}
+/* Zeichenfläche für Weltraum-Abwehr und Breakout 2 */
+.kcvw{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:#000;width:100%;max-width:420px;margin:0 auto}
+.kcvw canvas{display:block;width:100%;height:100%;border:0;border-radius:0;touch-action:none;user-select:none;-webkit-user-select:none;max-width:none}
+.kov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#080a1ccc;padding:16px}
+.kov[hidden]{display:none}
+.kcard{background:#161a31;border:1px solid #2b3160;border-radius:18px;padding:20px;text-align:center;max-width:300px;color:#eef0ff}
+.kcard h2{margin:0 0 6px;font-size:22px}
+.kcard p{margin:0 0 14px;color:#9aa1c9;font-size:14px}
+.kgo{font:inherit;font-weight:600;background:#7c9cff;color:#0b0f26;border:0;border-radius:12px;padding:12px 22px;font-size:16px;cursor:pointer}
