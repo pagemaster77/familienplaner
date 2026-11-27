@@ -25,6 +25,11 @@ html[data-theme="wald"]{--primary:#5fcf6e;--primary-d:#37993f;--accent:#e0a64e;-
 /* Sonnenuntergang: Orange und Pink */
 html[data-theme="sonne"]{--primary:#ff7a4a;--primary-d:#d0502a;--accent:#ff5c9a;--bg:#170d0b;--card:#25161a;--text:#fff0ea;--muted:#c4a39a;--line:#42262a;--top-a:#4d2312;--top-b:#4a1530;--tab-line:#52322f}
 
+/* Gold: Gold und Champagner */
+html[data-theme="gold"]{--primary:#f0c040;--primary-d:#b8901c;--accent:#ffe9a8;--on-primary:#1c1500;--bg:#0e0c07;--card:#1c1810;--text:#fbf3dc;--muted:#bcab7c;--line:#3a3018;--top-a:#4d3c0c;--top-b:#2a2108;--tab-line:#51431f}
+/* Bronze: Bronze und Kupfer */
+html[data-theme="bronze"]{--primary:#d98a3d;--primary-d:#99591f;--accent:#f0b98a;--on-primary:#1f1005;--bg:#130c07;--card:#231710;--text:#f8ebdd;--muted:#bba089;--line:#3d2a1d;--top-a:#4d2b14;--top-b:#2e1b0f;--tab-line:#55391f}
+
 /* ---------- Seite darf nicht zur Seite wackeln ---------- */
 html,body{overflow-x:clip}
 .shell,.main{max-width:100%;overflow-x:clip}
@@ -61,13 +66,13 @@ html,body{overflow-x:clip}
 .tag{background:color-mix(in srgb,var(--primary) 12%,var(--bg));color:var(--text)}
 
 /* ---------- Knöpfe, Eingaben, Chips ---------- */
-.btn{color:#fff;background:linear-gradient(180deg,var(--primary),var(--primary-d));box-shadow:0 2px 6px color-mix(in srgb,var(--primary) 35%,transparent)}
+.btn{color:var(--on-primary,#fff);background:linear-gradient(180deg,var(--primary),var(--primary-d));box-shadow:0 2px 6px color-mix(in srgb,var(--primary) 35%,transparent)}
 .btn.ghost{background:transparent;box-shadow:none;color:var(--primary);border:1px solid var(--tab-line)}
 .btn.danger{background:var(--danger)}
 input,select,textarea{border-color:var(--tab-line);background:color-mix(in srgb,var(--bg) 60%,var(--card))}
 input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--primary) 55%,transparent);outline-offset:1px;border-color:var(--primary)}
 .link{color:var(--primary)}
-.msg.me{background:linear-gradient(180deg,var(--primary),var(--primary-d))}
+.msg.me{color:var(--on-primary,#fff);background:linear-gradient(180deg,var(--primary),var(--primary-d))}
 
 /* ---------- Farbwelt-Auswahl (Verwalten) ---------- */
 .themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}

@@ -159,6 +159,8 @@ const THEMES = [
   ["standard", "Standard", "Blau und Orange", ["#4a90e2", "#f0a24a", "#10141c"]],
   ["spinne", "Spinnenheld", "Rot und Blau", ["#ff3050", "#5b8cff", "#0c1022"]],
   ["eisen", "Eisenheld", "Rot und Gold", ["#e23a3f", "#f5c02e", "#140d0b"]],
+  ["gold", "Gold", "Gold und Champagner", ["#f0c040", "#ffe9a8", "#0e0c07"]],
+  ["bronze", "Bronze", "Bronze und Kupfer", ["#d98a3d", "#f0b98a", "#130c07"]],
   ["ozean", "Ozean", "Türkis und Tiefblau", ["#2cc4dc", "#5b9bff", "#08171c"]],
   ["wald", "Wald", "Grün und Erde", ["#5fcf6e", "#e0a64e", "#0c140b"]],
   ["sonne", "Sonnenuntergang", "Orange und Pink", ["#ff7a4a", "#ff5c9a", "#170d0b"]],
