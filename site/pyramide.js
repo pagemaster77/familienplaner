@@ -1,9 +1,9 @@
 /* Versteckte Spielerei: "Gipfelstürmer".
    Jedes Familienmitglied klettert als Männchen mit dem Gesicht des Profilbilds eine Pyramide hoch.
-   Alle 10 Punkte eine Stufe. Ab 100 Punkten sitzt das Männchen oben auf einem Thron (auch mehrere gleichzeitig).
+   Alle 20 Punkte eine Stufe. Ab 200 Punkten sitzt das Männchen oben auf einem Thron (auch mehrere gleichzeitig).
    Aufruf: showPyramid([{ name, color, avatar, photo, points }, ...]) */
 (function () {
-  const CX = 400, GY = 540, STEP = 40, TOP = 10;
+  const CX = 400, GY = 540, STEP = 40, TOP = 10, PPS = 20; // PPS = Punkte pro Stufe, Thron ab TOP*PPS = 200
   const hw = k => 380 - 28 * k; // halbe Breite der Stufe k
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const okColor = c => (/^#[0-9a-f]{3,8}$/i.test(c || "") ? c : "#4f8cff");
@@ -58,7 +58,7 @@
   window.showPyramid = function (people) {
     if (document.querySelector(".pyr")) return;
     const list = (people || []).map(p => ({ ...p, points: Math.max(0, Math.round(+p.points || 0)) })).sort((a, b) => b.points - a.points);
-    const lvl = p => Math.min(TOP, Math.floor(p.points / 10));
+    const lvl = p => Math.min(TOP, Math.floor(p.points / PPS));
     // Stufen der Pyramide
     let steps = "";
     for (let j = 0; j < TOP; j++) {
@@ -87,7 +87,7 @@
     // Sterne
     let stars = ""; for (let s = 0; s < 40; s++) stars += `<circle class="star" cx="${(s * 197 % 800)}" cy="${(s * 83 % 230) + 8}" r="${1 + (s % 3) * 0.6}" fill="#fff" style="animation-delay:${(s % 7) * 0.3}s"/>`;
     const el = document.createElement("div"); el.className = "pyr";
-    el.innerHTML = `<style>${CSS}</style><h1>🏔️ Gipfelstürmer<small>alle 10 Punkte eine Stufe · ab 100 Punkten auf den Thron 👑</small></h1>
+    el.innerHTML = `<style>${CSS}</style><h1>🏔️ Gipfelstürmer<small>alle 20 Punkte eine Stufe · ab 200 Punkten auf den Thron 👑</small></h1>
       <button class="pyr-x" aria-label="Schließen">✕</button>
       <svg viewBox="0 -90 800 730" preserveAspectRatio="xMidYMid meet">${stars}
         <circle cx="690" cy="95" r="34" fill="#fff6c9" opacity=".95"/><circle class="glow" cx="690" cy="95" r="52" fill="#fff6c9" opacity=".3"/>

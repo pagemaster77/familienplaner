@@ -5,6 +5,8 @@ Zum Nachschlagen für spätere Updates. Keine Passwörter oder geheimen Schlüss
 ## Regel für Updates (Wunsch von Sascha)
 Bei kleinen Anpassungen (Optik, Texte, Kleinigkeiten, Fehlerbehebungen) KEINEN Eintrag in site/neuigkeiten.js anlegen, damit kein „Was ist neu?“-Fenster bei allen Mitgliedern aufgeht. Nur bei neuen oder geänderten Funktionen einen Eintrag machen. VERSION und sw.js-Cache trotzdem hochzählen.
 
+## Version 22.36: Pyramide (Gipfelstuermer): alle 20 Punkte eine Stufe, Thron ab 200 Punkten (vorher 10/100). Kein Neuigkeiten-Eintrag.
+
 ## Version 22.35: App-Farbwelt jetzt pro Person (profiles.theme, sql/update-26; Familie -> Meine Farbwelt). Vorgabe solange NULL = families.theme. Wand-Farbwelt weiter nur Admins (Verwalten -> Wandanzeige). Neuigkeiten-Eintrag 22.35.
 
 ## Version 22.34: Wandanzeige hat eigene Farbwelt (families.wall_theme, sql/update-25; Admin -> Wandanzeige -> Farbwelt; wall-data liefert family.theme; wand.css Bloecke html[data-wt]). Standard = bisherige helle Wand. wall-data in Supabase neu veroeffentlicht (Version 14). Neuigkeiten-Eintrag 22.34.
