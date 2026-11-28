@@ -182,8 +182,21 @@ function wallThemes() {
   return `<h3 class="sh" style="margin-top:14px">🎨 Farbwelt der Wandanzeige</h3>
     <div class="sub" style="margin-bottom:10px">Gilt nur für das Display, nicht für die App.</div>
     <div class="themes">${list.map(([k, n, d, c]) => `<button type="button" class="${cur === k ? "on" : ""}" data-act="setWallTheme" data-v="${k}" aria-pressed="${cur === k}">
-      <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div>`;
+      <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div>
+    ${wallColorPick("btn", "Farbe der Tasten", S.family.wall_btn_color)}
+    ${wallColorPick("today", "Farbe des heutigen Tages", S.family.wall_today_color)}`;
 }
+
+const WALL_SWATCHES = ["#ff2d4d", "#ff8a1f", "#ffc61a", "#22c55e", "#14b8a6", "#22b8ff", "#2f6bff", "#8b5cf6", "#ff4fa3", "#ffffff"];
+const hslHex = (h, sat = 90, l = 50) => { sat /= 100; l /= 100; const f = n => { const k = (n + h / 30) % 12, a = sat * Math.min(l, 1 - l); const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); return Math.round(255 * c).toString(16).padStart(2, "0"); }; return "#" + f(0) + f(8) + f(4); };
+function wallColorPick(key, label, col, dflt) {
+  const cur = col || "";
+  return `<div class="wcp"><div class="wcl"><b>${label}</b><small>${cur ? "eigene Farbe" : "Vorgabe der Farbwelt"}</small></div>
+    <div class="wcs">${WALL_SWATCHES.map(c => `<button type="button" class="${cur === c ? "on" : ""}" style="background:${c}" data-act="setWallColor" data-k="${key}" data-v="${c}" aria-label="${c}"></button>`).join("")}</div>
+    <input type="range" class="wcr" min="0" max="359" value="${cur ? Math.round(hexHue(cur)) : 200}" data-wallhue="${key}" aria-label="${label}: Farbverlauf">
+    <button type="button" class="btn small ghost" data-act="setWallColor" data-k="${key}" data-v="" ${cur ? "" : "disabled"}>Zurücksetzen</button></div>`;
+}
+function hexHue(hex) { const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return 0; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; }
 
 /* ---------- Admin: Schalter für neue Funktionen ---------- */
 function cardSettings() {
@@ -223,6 +236,14 @@ const EXTRA_ACT = {
     const rows = await sb.from("families").update({ wall_theme: d.v }).eq("id", S.family.id).select();
     if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, wall_theme: was }; render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
     else toast("Wand-Farbwelt geändert 📺 (das Display zieht in ca. 30 Sekunden nach)");
+  },
+  async setWallColor(d) {
+    const col = { btn: "wall_btn_color", today: "wall_today_color" }[d.k]; if (!col) return;
+    const v = d.v === "" ? null : d.v; if (v !== null && !/^#[0-9a-f]{6}$/.test(v)) return;
+    const was = S.family[col]; S.family = { ...S.family, [col]: v }; render();
+    const rows = await sb.from("families").update({ [col]: v }).eq("id", S.family.id).select();
+    if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, [col]: was }; render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
+    else toast("Wand-Farbe geändert 📺");
   },
   info(d) { S.infoOpen[d.v] = !S.infoOpen[d.v]; render(); },
   passOpen(d) { S.passTask = d.id; S.passTo = null; render(); },
@@ -271,3 +292,9 @@ async function duelCheck() {
   clearTimeout(duelTimer); if (inv.length) duelTimer = setTimeout(duelCheck, 185000); /* Einladung gilt 3 Minuten */
 }
 window.duelCheck = duelCheck;
+
+/* Regenbogen-Schieber der Wand-Farben: beim Loslassen speichern */
+document.addEventListener("change", e => {
+  const t = e.target, k = t && t.dataset && t.dataset.wallhue; if (!k) return;
+  EXTRA_ACT.setWallColor({ k, v: hslHex(+t.value) });
+});

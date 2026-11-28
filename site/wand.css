@@ -96,7 +96,7 @@ button{font:inherit;color:inherit;cursor:none}
 .dayh small{font-size:.75em;margin-top:.05em}
 .dayh.we .wd,.dayh.we .dn{color:#b4503f}
 .dayh.today{background:var(--primary)!important;color:#fff}
-.dayh.today .wd,.dayh.today .dn,.dayh.today small{color:#fff}
+.dayh.today .wd,.dayh.today .dn,.dayh.today small{color:var(--today-text,#fff)}
 .dayh.past .dn,.dayh.past .wd{opacity:.5}
 .cell.we{background:#fcf7f6!important}
 .cell.past{opacity:.6}
@@ -111,7 +111,7 @@ button{font:inherit;color:inherit;cursor:none}
 /* heute = grün */
 :root{--green:#2e9d5b}
 .dayh.today{background:var(--green)!important}
-.todaybox{border-color:var(--green);box-shadow:0 0 1em rgba(46,157,91,.4)}
+.todaybox{border-color:var(--green);box-shadow:0 0 1em var(--green-glow,rgba(46,157,91,.4))}
 
 /* Feiertage (rot) und Schulferien NRW (blau): Hintergrund von Kopf und Spalte */
 .dayh.fer{background:#cfe3fa!important}
@@ -180,27 +180,40 @@ body:has(.nightscr){background:#000}
 .flw.sm.fx-heart .avatar{box-shadow:0 0 5px 2px #ff8fb1,0 -2px 8px 3px #ff2d6f}
 .flw.sm.fx-poop .avatar{box-shadow:0 0 5px 2px #b07a3c,0 -2px 8px 3px #6b4423}
 
-/* ---- Farbwelten der Wandanzeige (html[data-wt]); ohne Wert bleibt die helle Standard-Wand ---- */
-html[data-wt]{color-scheme:dark}
-html[data-wt="spinne"]{--bg:#0c1022;--card:#151a33;--head2:#1c2342;--text:#f2f4ff;--muted:#9aa3c7;--line:#262d52;--primary:#ff3050;--today:#3a1a2e;--we:#1a1830;--fer:#1d3a6e;--ferc:#131f40;--pts:#2a2350;--on-primary:#fff}
-html[data-wt="eisen"]{--bg:#140d0b;--card:#211613;--head2:#2b1d18;--text:#fbf1e4;--muted:#b9a592;--line:#3a2a22;--primary:#e23a3f;--today:#43251b;--we:#2a1816;--fer:#1f3556;--ferc:#14233d;--pts:#3d2a22;--on-primary:#fff}
-html[data-wt="gold"]{--bg:#0e0c07;--card:#1c1810;--head2:#272113;--text:#fbf3dc;--muted:#bcab7c;--line:#3a3018;--primary:#f0c040;--today:#3d3210;--we:#241c12;--fer:#1f3556;--ferc:#14233d;--pts:#3a2f10;--on-primary:#1c1500}
-html[data-wt="bronze"]{--bg:#130c07;--card:#231710;--head2:#2e1e14;--text:#f8ebdd;--muted:#bba089;--line:#3d2a1d;--primary:#d98a3d;--today:#43281a;--we:#2b1a12;--fer:#1f3556;--ferc:#14233d;--pts:#442a15;--on-primary:#1f1005}
-html[data-wt="ozean"]{--bg:#0a1226;--card:#111d3a;--head2:#182850;--text:#eaf1ff;--muted:#94a8d4;--line:#1f3160;--primary:#3b8bff;--today:#1b3a70;--we:#14214a;--fer:#26508f;--ferc:#162b57;--pts:#1b3770;--on-primary:#fff}
+/* ---- Farbwelten der Wandanzeige (html[data-wt]); ohne Wert bleibt die helle Standard-Wand ----
+   Klare, leuchtende Farben: neutraler dunkler Grund, die Farbe sitzt in der Kopfleiste, den Tageskoepfen, Tasten und Rahmen. */
+html[data-wt]{color-scheme:dark;--hd-text:#fff;--on-primary:#fff;--text:#fff}
+html[data-wt="spinne"]{--bg:#0a0e22;--card:#131a3b;--head2:#1d2b73;--muted:#aab6f0;--line:#2a3a8c;--primary:#ff2d4d;--accent:#6ea0ff;--hd-a:#e5203f;--hd-b:#2f55e0;--today:#243079;--we:#0f1534;--fer:#2563eb;--ferc:#10265e;--pts:#2a3a8c}
+html[data-wt="eisen"]{--bg:#0e0f12;--card:#1a1b20;--head2:#7a1419;--muted:#c4c4cc;--line:#34353c;--primary:#ee2a31;--accent:#ffc61a;--hd-a:#d71f26;--hd-b:#f5b800;--hd-text:#fff;--today:#2d2e36;--we:#131418;--fer:#2563eb;--ferc:#10265e;--pts:#4a1a1c}
+html[data-wt="gold"]{--bg:#0d0d0f;--card:#19191d;--head2:#2b2b32;--muted:#c4c4cc;--line:#37373f;--primary:#ffc61a;--accent:#ffc61a;--hd-a:#ffc61a;--hd-b:#ffe27a;--hd-text:#14110a;--on-primary:#14110a;--today:#2d2d35;--we:#121215;--fer:#2563eb;--ferc:#10265e;--pts:#3a3a44}
+html[data-wt="bronze"]{--bg:#0e0e10;--card:#1a1a1e;--head2:#2c2c33;--muted:#c4c4cc;--line:#38383f;--primary:#ff8a1f;--accent:#ff9d3d;--hd-a:#f06a10;--hd-b:#ffa94d;--hd-text:#150b02;--on-primary:#150b02;--today:#2e2e36;--we:#131316;--fer:#2563eb;--ferc:#10265e;--pts:#3a3a44}
+html[data-wt="ozean"]{--bg:#07112b;--card:#0f2149;--head2:#17418f;--muted:#a9c4f5;--line:#1f4aa6;--primary:#2f86ff;--accent:#5cc8ff;--hd-a:#1565ff;--hd-b:#2fb4ff;--today:#1c4aa0;--we:#0b1a3c;--fer:#2f86ff;--ferc:#12306e;--pts:#1f4aa6}
 html[data-wt],html[data-wt] body{background:var(--bg)!important;color:var(--text)}
-html[data-wt] .btn.on{color:var(--on-primary)}
-html[data-wt] .btn{box-shadow:0 .1em .3em rgba(0,0,0,.4)}
-html[data-wt] .stale{background:#4a1c1c;color:#ffb3b3}
-html[data-wt] .grid{background:var(--line);box-shadow:0 .25em 1.2em rgba(0,0,0,.5)}
+/* Kopfleiste: leuchtender Farbverlauf */
+html[data-wt] .head{background:linear-gradient(90deg,var(--hd-a),var(--hd-b));color:var(--hd-text);padding:.35em .8em;border-radius:1em;box-shadow:0 .2em .8em rgba(0,0,0,.5)}
+html[data-wt] .head .range,html[data-wt] .clock span{color:var(--hd-text);opacity:.85}
+html[data-wt] .btn{background:rgba(10,12,20,.78);color:#fff;border-color:rgba(255,255,255,.28);box-shadow:none}
+html[data-wt] .btn.on{background:#fff;color:#10131c;border-color:#fff}
+html[data-wt] .stale{background:#5a1010;color:#ffd0d0}
+html[data-wt] .grid{background:var(--line);box-shadow:0 .25em 1.2em rgba(0,0,0,.55)}
 html[data-wt] .dayh:not(.today):not(.fer):not(.hol),html[data-wt] .corner,html[data-wt] .person{background:var(--head2)!important}
+html[data-wt] .dayh .wd{color:var(--accent)}
 html[data-wt] .dayh.fer:not(.today):not(.hol){background:var(--fer)!important}
-html[data-wt] .dayh.we .wd,html[data-wt] .dayh.we .dn{color:#ff8a78}
-html[data-wt] .dayh.today.we .wd,html[data-wt] .dayh.today.we .dn{color:#fff}
+html[data-wt] .dayh.fer:not(.today) .wd{color:#fff}
+html[data-wt] .dayh.we:not(.hol) .wd,html[data-wt] .dayh.we:not(.hol) .dn{color:#ff8f7a}
+html[data-wt] .dayh.today.we .wd,html[data-wt] .dayh.today.we .dn{color:var(--today-text,#fff)}
+html[data-wt] .cell{background:var(--card)}
 html[data-wt] .cell.we:not(.today){background:var(--we)!important}
 html[data-wt] .cell.fer:not(.today){background:var(--ferc)!important}
-html[data-wt] .cell.hol:not(.today){background:#3a1517!important}
-html[data-wt] .chip{box-shadow:0 .08em .2em rgba(0,0,0,.4)}
-html[data-wt] .pts{background:var(--pts)}
+html[data-wt] .cell.hol:not(.today){background:#4a1218!important}
+html[data-wt] .cell.today{background:var(--today)!important}
+html[data-wt] .chip{box-shadow:0 .08em .2em rgba(0,0,0,.45)}
+html[data-wt] .pts{background:var(--pts);color:#fff}
 html[data-wt] .meal .d{background:var(--head2)}
 html[data-wt] .meal .img{background-color:var(--line)}
 html[data-wt] .bdg{box-shadow:0 0 0 2px var(--bg)}
+html[data-wt] .foot{color:var(--muted)}
+
+/* frei gewaehlte Tastenfarbe */
+html[data-bc] .btn{background:var(--btn-c)!important;color:var(--btn-t)!important;border-color:rgba(255,255,255,.35)!important}
+html[data-bc] .btn.on{font-weight:800;box-shadow:0 0 0 .2em var(--btn-t),0 0 .9em .25em var(--btn-c)!important}

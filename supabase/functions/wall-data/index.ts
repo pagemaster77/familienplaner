@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (typeof token !== "string" || !/^[0-9a-f]{32}$/.test(token)) return json({ ok: false, error: "invalid" }, 403);
-    const { data: fam } = await db.from("families").select("id,name,wall_theme,chef_order,flame_on,flame_symbol,flame1_days,flame2_days,flame3_tasks").eq("wall_token", token).maybeSingle();
+    const { data: fam } = await db.from("families").select("id,name,wall_theme,wall_btn_color,wall_today_color,chef_order,flame_on,flame_symbol,flame1_days,flame2_days,flame3_tasks").eq("wall_token", token).maybeSingle();
     if (!fam) return json({ ok: false, error: "invalid" }, 403);
 
     // Datum in Berlin, Tages-Chef (Reihenfolge rotiert taeglich)
@@ -126,7 +126,7 @@ Deno.serve(async (req: Request) => {
       : null;
     const payload = {
       ok: true,
-      family: { name: fam.name, theme: fam.wall_theme ?? "standard" },
+      family: { name: fam.name, theme: fam.wall_theme ?? "standard", btn: fam.wall_btn_color ?? null, today: fam.wall_today_color ?? null },
       profiles: (pr.data ?? []).map((p: any) => { const { photo, ...rest } = p; return { ...rest, photo_v: photo ? photo.length + ":" + photo.slice(-24) : "", points: pts[p.id] ?? 0 }; }),
       tasks: tasks.filter((t: any) => !t.done || !t.approved || (t.done_at && new Date(t.done_at).getTime() > recent)),
       shopping: sh.data ?? [],

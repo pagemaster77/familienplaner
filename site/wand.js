@@ -383,6 +383,12 @@ function checkRewards() {
 
 function render() {
   { const t = (W.data && W.data.family && W.data.family.theme) || "standard"; if (t === "standard") delete document.documentElement.dataset.wt; else document.documentElement.dataset.wt = t; }
+  { // frei gewaehlte Farben (Tasten, heutiger Tag); ohne Wert gilt die Farbwelt
+    const f = (W.data && W.data.family) || {}, root = document.documentElement, ok = c => typeof c === "string" && /^#[0-9a-f]{6}$/.test(c);
+    const txt = c => (0.299 * parseInt(c.slice(1, 3), 16) + 0.587 * parseInt(c.slice(3, 5), 16) + 0.114 * parseInt(c.slice(5, 7), 16)) > 160 ? "#10131c" : "#fff";
+    if (ok(f.btn)) { root.dataset.bc = "1"; root.style.setProperty("--btn-c", f.btn); root.style.setProperty("--btn-t", txt(f.btn)); } else { delete root.dataset.bc; root.style.removeProperty("--btn-c"); root.style.removeProperty("--btn-t"); }
+    if (ok(f.today)) { root.style.setProperty("--green", f.today); root.style.setProperty("--green-glow", f.today + "66"); root.style.setProperty("--today-text", txt(f.today)); } else { ["--green", "--green-glow", "--today-text"].forEach(n => root.style.removeProperty(n)); }
+  }
   window.CHEF_ID = (W.data && W.data.chef) || null;
   if (W.data && TOKEN && !nightActive() && wantSaver()) {
     W.saver = true; W.night = false;

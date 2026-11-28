@@ -81,3 +81,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 
 /* Zeitangabe im Kalender: "ganztags" darf nicht umbrechen */
 .ev .time{width:68px;font-size:13px;white-space:nowrap}
+
+/* Wand-Farben (Tasten / heute) */
+.wcp{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.wcl{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}.wcl small{color:var(--muted)}
+.wcs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.wcs button{width:34px;height:34px;border-radius:50%;border:2px solid var(--tab-line);cursor:pointer;padding:0}
+.wcs button.on{border-color:#fff;box-shadow:0 0 0 3px var(--primary)}
+.wcr{-webkit-appearance:none;appearance:none;width:100%;height:16px;border-radius:8px;margin:0 0 10px;border:1px solid var(--tab-line);
+  background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.wcr::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #222;box-shadow:0 1px 4px #0008}
+.wcr::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #222}
