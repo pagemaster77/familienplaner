@@ -164,13 +164,13 @@ const THEMES = [
   ["ozean", "Ozean", "Blau und Hellblau", ["#3b8bff", "#7cc4ff", "#0a1226"]],
 ];
 function applyTheme() {
-  const t = (S.family && S.family.theme) || "standard";
+  const t = (S.me && S.me.theme) || (S.family && S.family.theme) || "standard";
   document.documentElement.dataset.theme = THEMES.some(x => x[0] === t) ? t : "standard";
 }
 function cardTheme() {
-  const cur = (S.family && S.family.theme) || "standard";
-  return `<div class="card"><h2>🎨 Farbwelt</h2>
-    <div class="sub" style="margin-bottom:10px">Gilt für die ganze Familie. Alle Farbwelten sind dunkel.</div>
+  const cur = (S.me && S.me.theme) || (S.family && S.family.theme) || "standard";
+  return `<div class="card"><h2>🎨 Meine Farbwelt</h2>
+    <div class="sub" style="margin-bottom:10px">Gilt nur für dich, jeder in der Familie kann seine eigene wählen. Alle Farbwelten sind dunkel.</div>
     <div class="themes">${THEMES.map(([k, n, d, c]) => `<button type="button" class="${cur === k ? "on" : ""}" data-act="setTheme" data-v="${k}" aria-pressed="${cur === k}">
       <span class="sw">${c.map(x => `<i style="background:${x}"></i>`).join("")}</span><b>${n}</b><small>${d}</small></button>`).join("")}</div></div>`;
 }
@@ -212,9 +212,9 @@ function cardSettings() {
 const EXTRA_ACT = {
   async setTheme(d) {
     if (!THEMES.some(x => x[0] === d.v)) return;
-    const was = S.family.theme; S.family = { ...S.family, theme: d.v }; applyTheme(); render();
-    const rows = await sb.from("families").update({ theme: d.v }).eq("id", S.family.id).select();
-    if (rows.error || !(rows.data || []).length) { S.family = { ...S.family, theme: was }; applyTheme(); render(); toast(rows.error ? "Hat nicht geklappt" : "Nur Admins dürfen das ändern"); }
+    const was = S.me.theme; S.me = { ...S.me, theme: d.v }; applyTheme(); render();
+    const rows = await sb.from("profiles").update({ theme: d.v }).eq("id", S.me.id).select();
+    if (rows.error || !(rows.data || []).length) { S.me = { ...S.me, theme: was }; applyTheme(); render(); toast("Hat nicht geklappt"); }
     else toast("Farbwelt geändert 🎨");
   },
   async setWallTheme(d) {

@@ -1,7 +1,7 @@
 /* Familienplaner – die ganze App in einer Datei.
    Aufbau: Hilfsfunktionen -> Daten laden -> Ansichten (Bildschirme) -> Aktionen -> Start */
 
-const VERSION = "22.34 (28.11.)";
+const VERSION = "22.35 (28.11.)";
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 const $app = document.getElementById("app");
 
@@ -546,7 +546,6 @@ function viewAdmin() {
     ${cardRewards(true)}
     ${cardPoints(true)}
 
-    ${cardTheme()}
     ${cardSettings()}
 
     <div class="card"><h2>👪 Familie</h2>
@@ -966,6 +965,7 @@ function viewFamily() {
     ${S.profiles.map(x => `<div class="row">${avatar(x)}<div class="grow">${esc(x.name)}${x.is_admin ? ` <span class="tag">Admin</span>` : ""}<div class="sub">${x.ical_url ? "Kalender verbunden" : "kein Kalender"}</div></div></div>`).join("")}
     </div>
     ${cardLink(false)}
+    ${cardTheme()}
     <div class="card"><h2>Mein Profil</h2>${info("profile")}<form data-form="profile">
       <label class="field"><span>Name</span><input id="pn" name="name" value="${esc(S.me.name)}" required></label>
       <span class="sub">Farbe</span>${swatches(p.color, "pe")}

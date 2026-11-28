@@ -2,6 +2,9 @@
    Neue Version? -> oben in NEWS einen Eintrag einfügen (neueste zuerst). Der Rest läuft von selbst. */
 
 const NEWS = [
+  { v: "22.35", date: "28.11.2026", items: [
+    "Farbwelt für jeden selbst: Unter „Familie“ → „🎨 Meine Farbwelt“ wählt jede Person ihre eigene Farbe für die App. Wer noch nichts gewählt hat, behält die bisherige Farbe. Die Farbe der Wandanzeige stellen weiterhin die Eltern (Admins) unter „Verwalten“ ein.",
+  ] },
   { v: "22.34", date: "28.11.2026", items: [
     "Wandanzeige mit Farbwelt: Ein Admin kann unter „Verwalten“ → „📺 Wandanzeige“ die gleichen Farbwelten wie in der App auch für das Display wählen. „Standard“ bleibt die bisherige helle Wand.",
   ] },
